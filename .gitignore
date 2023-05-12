@@ -1,0 +1,14 @@
+**/.DS_Store_/**
+
+**/__pycache__/**
+__pycache__/**
+**.pyd
+**.pyo
+**.pyc
+
+cached_file
+data/**
+savedmodels/
+predictions/
+
+README.md
