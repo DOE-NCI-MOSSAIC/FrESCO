@@ -32,14 +32,19 @@ conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 cpuonly -c 
 Further PyTorch instructions may be found in the [PyTorch docs](https://pytorch.org/docs/stable/index.html).
 
 ### Data Preparation
-The data used must be generated prior to inference. Add the path to existing data in the the 
-`data_path` argument. The required data files are:
+We have supplied three different datasets as examples, each must be
+unzipped before any model training via the `tar -xf dataset.tar.gz` command. The three datasets are:
+  - imdb: binary sentiment classification with the imdb dataset,
+  - P3B3: benchmark multi-task classification task, and
+  - clc: case-level context multi-task classfication data.
+
+Add the path to the desired dataset in the the `data_path` argument in the `model_args.yml` file. The required data files are:
 - `data_fold0.csv`: Pandas dataframe with columns:
     - `X`: list of input values, of `int` type
     - `task_n`: output for task `n`, a `string` type (these are the y-values)
     - `split`: one of `train`, `test`, or `val`
 - `id2labels_fold0.json`: index to label dictionary mapping for each of the string representations of the outputs to an integer value, dict keys must match the y-values label
-- `word_embeds_fold0.npy`: word embedding matrix for the vocabulary, dimensions are `words x embedding_dim` 
+- `word_embeds_fold0.npy`: word embedding matrix for the vocabulary, dimensions are `words x embedding_dim`. If no word embedding exists, the model will use randomly generated embeddings.
 
 You will also need to set the `tasks`, these must correspond to the task columns in the `data_fold0.csv` file and keys in the `id2labels_fold0.json` dictionary.
 For example, in the P3B3 data, the task columns are `task_n, n = 1,2,3,4`. Whereas the imdb data has the `sentiment` task.
