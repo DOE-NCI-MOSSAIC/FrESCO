@@ -9,7 +9,7 @@ The National Cancer Institute (NCI) monitors population level cancer trends as p
 ### Initial Setup
 Clone the repo
 ```shell
-git clone https://code.ornl.gov/mossiac/fresco
+git clone https://github.com/DOE-NCI-MOSSAIC/FrESCO.git
 ```
 Load the working branch and pull in the subrepos
 ```shell
