@@ -88,16 +88,17 @@ The default setting, if the `-m ` argument is omitted, is information extraction
 
 ### Deep-Abstaining Classifier and Ntask
 
-Both information extraction and case-level context models have the ability to incorporate abstention or Ntask. The deep abstaining classifier (DAC)
-from the [CANDLE](https://github.com/ECP-CANDLE/Candle) repository, allows the model to
-not make a prediction on a sample if the softmax score does not meet a predetermined threshold. It can be tuned to meet a threshold of accuracy, minimum number of samples
-abstained, or both through adapting the values of alpha through the training process. This adapation is automated in the code, only requires the user to specify the initial
-values, tuning mode, and scaling. 
 
-Ntask is useful for multi-task learning on the P3B3 dataset. It creates and additional 'task' that predicts if the softmax scores from all
-of the tasks meet a specified threshold. It has its own parameters that are tuned during the training process to obtain a minimum of abstained
-samples and maximum accuracy on the predicted samples. Ntask may not be enabled without abstention being enabled as well. The code will
-throw an exception and halt if such configuration is passed.
+Both information extraction and case-level context models have the ability to incorporate abstention or Ntask. The deep abstaining 
+classifier (DAC) from the [CANDLE](https://github.com/ECP-CANDLE/Candle) repository, allows the model to not make a prediction on a 
+sample if the softmax score does not meet a predetermined threshold specified in the min_acc keyword ofthe model-args.yml file. It 
+can be tuned to meet a threshold of accuracy, minimum number of samples abstained, or both through adapting the values of alpha through 
+the training process. This adapation is automated in the code, only requires the user to specify the initial values, tuning mode, and scaling.
+
+Ntask is useful for multi-task learning. It creates and additional 'task' that predicts if the softmax scores from all of the 
+tasks do not meet a specified threshold within the model_args file . It has its own parameters that are tuned during the training 
+process to obtain a minimum of abstained samples and maximum accuracy on the predicted samples. Ntask may not be enabled without 
+abstention being enabled as well. The code will throw an exception and halt if such configuration is passed.
 
 ### Expected Results
 
