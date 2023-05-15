@@ -1,0 +1,100 @@
+\usepackage{amsthm}
+
+
+%\documentclass[twocolumn]{bmcart}% uncomment this for twocolumn layout and comment line below
+%%% Load packages
+\usepackage{newtxtext,newtxmath}       % selects Times Roman as basic font
+\usepackage{helvet}         % selects Helvetica as sans-serif font
+\usepackage{courier}        % selects Courier as typewriter font
+%\usepackage{type1cm}        % activate if the above 3 fonts are not available on your system
+%\usepackage{makeidx}         % allows index generation
+\usepackage{graphicx}        % standard LaTeX graphics tool
+\usepackage{multicol}        % used for the two-column index
+\usepackage[bottom]{footmisc}  % places footnotes at page bottom
+\usepackage{amsmath, amsfonts, mathtools}       % AMS math packages
+\usepackage{verbatim, booktabs}
+\usepackage{bbm, bm}
+\usepackage{multirow}
+\usepackage{csvsimple}
+\usepackage{longtable}
+\usepackage{authblk}
+\usepackage{hyperref}
+\usepackage[capitalise]{cleveref}
+
+% \usepackage{pgfplots,pgfplotstable}
+\usepackage{epstopdf}
+%\usepackage{algorithmic}
+%\usepackage{algorithm}
+\usepackage{color}
+%\usepackage[table]{xcolor}
+
+\usepackage{graphicx}
+\usepackage{subfigure}
+% \usepackage{amsmath,amssymb,verbatim,amsthm}
+
+
+\usepackage{color}
+\usepackage{xcolor}
+
+
+%\RequirePackage[numbers]{natbib}
+%\RequirePackage[authoryear]{natbib}% uncomment this for author-year bibliography
+%\RequirePackage{hyperref}
+\usepackage[utf8]{inputenc} %unicode support
+%\usepackage[applemac]{inputenc} %applemac support if unicode package fails
+%\usepackage[latin1]{inputenc} %UNIX support if unicode package fails
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                             %%
+%%  If you wish to display your graphics for   %%
+%%  your own use using includegraphic or       %%
+%%  includegraphics, then comment out the      %%
+%%  following two lines of code.               %%
+%%  NB: These line *must* be included when     %%
+%%  submitting to BMC.                         %%
+%%  All figure files must be submitted as      %%
+%%  separate graphics through the BMC          %%
+%%  submission process, not included in the    %%
+%%  submitted article.                         %%
+%%                                             %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \def\includegraphic{}
+% \def\includegraphics{}
+
+
+%%% Put your definitions there:
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Ind}{\mathbbm{1}}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator{\Var}{\mathrm{Var}}
+\DeclareMathOperator{\diag}{diag}
+\newcommand{\given}{\,|\,}
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section] % reset theorem numbering for each chapter
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition} % definition numbers are dependent on theorem numbers
+\newtheorem{exmp}[thm]{Example} % same for example numbers
+\newtheorem*{defn*}{Definition}
+
+%\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+\ifpdf
+\DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg}
+\else
+\DeclareGraphicsExtensions{.eps}
+\fi
+
+\newcommand{\creflastconjunction}{, and~}
+\newcommand{\todo}[1]{({\color{blue}{#1}})}
+\newcommand{\rev}[1]{({\color{blue}{#1}})}
+
