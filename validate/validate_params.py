@@ -67,7 +67,6 @@ class ValidateParams():
         if len(cli_args.data_path) > 0:
             self.model_args['data_kwargs']['data_path'] = cli_args.data_path
 
-
         if not os.path.exists(self.model_args['data_kwargs']['data_path']):
             raise exceptions.ParamError("User provided data path does not exist.")
 

@@ -4,21 +4,20 @@ import os
 import random
 import sys 
 
+import torch
+
 import pandas as pd
 import numpy as np
 
+sys.path.append("../")
 from validate import exceptions
 from validate import validate_params
 from data_loaders import data_utils
 from abstention import abstention
-from keywords import keywords
 from models import mthisan, mtcnn
 from training import training
 from predict import predictions
 
-import torch
-
-torch.backends.cudnn.benchmark = True
 
 def get_params():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -32,10 +31,9 @@ def get_params():
                         help="""file specifying the model_args; default is in
                                 the model_suite directory""")
     args = parser.parse_args()
-    cache_class = [False]
     data_source = 'pre-generated'
 
-    valid_params = validate_params.ValidateParams(cache_class, args, data_source=data_source)
+    valid_params = validate_params.ValidateParams(args, data_source=data_source)
 
     valid_params.check_data_train_args()
 
@@ -47,7 +45,7 @@ def get_params():
     if valid_params.model_args['abstain_kwargs']['abstain_flag']:
         valid_params.check_abstain_args()
 
-    valid_params.check_data_files(args.data_path)
+    valid_params.check_data_files()
 
     if valid_params.model_args['data_kwargs']['reproducible']:
         seed = valid_params.model_args['data_kwargs']['random_seed']
@@ -83,12 +81,6 @@ def load_data(valid_params, seed):
            reproducible=valid_params.model_args['data_kwargs']['reproducible'],
            seed=seed)
 
-    if valid_params.model_args['train_kwargs']['keywords']:
-        kwds = keywords.Keywords(valid_params.model_args['data_kwargs']['tasks'],
-                                 dw.dict_maps['id2word'],
-                                 dw.dict_maps['id2label'],
-                                 device)
-        kwds.load_keyword_lists()
     return data_loaders, dw, device
 
 def get_trainer(valid_params, dw, device):
@@ -99,7 +91,7 @@ def get_trainer(valid_params, dw, device):
     batch = valid_params.model_args['data_kwargs']['batch_per_gpu']
 
     trainer = training.ModelTrainer(valid_params.model_args,
-                                    model,
+                                    model, dw,
                                     class_weights=dw.weights,
                                     device=device)
     return model, trainer
@@ -134,22 +126,22 @@ def test_loss_multiple(params, seed, data_loaders, dw, device, mode ):
     print('------testing loss multiple tasks')
     params.model_args['train_kwargs']['class_weights'] = None
     if mode=='train':
-        run_train_test(params, seed, data_loaders, dw, device, 5)     
+        run_train_test(params, seed, data_loaders, dw, device, 4)     
     elif mode=='evaluate':
-        run_eval_test(params, seed, data_loaders, dw, device, 5)
+        run_eval_test(params, seed, data_loaders, dw, device, 4)
 
 def test_weighted_loss_multiple(params, seed, data_loaders, dw, device, mode ):
     print('------testing weighted loss multiple tasks')
-    params.model_args['train_kwargs']['class_weights'] = 'weights/random_weights.pickle'
+    params.model_args['train_kwargs']['class_weights'] = '../weights/P3B3_weights.pickle'
     model, trainer = get_trainer(params, dw, device)
     if mode=='train':
-        run_train_test(params, seed, data_loaders, dw, device, 5)     
+        run_train_test(params, seed, data_loaders, dw, device, 4)     
     elif mode=='evaluate':
-        run_eval_test(params, seed, data_loaders, dw, device, 5)
+        run_eval_test(params, seed, data_loaders, dw, device, 4)
 
 def test_weighted_loss_single(params, seed, data_loaders, dw, device, mode ):
     print('------testing weighted loss single task')
-    params.model_args['train_kwargs']['class_weights'] = 'weights/random_weights.pickle'
+    params.model_args['train_kwargs']['class_weights'] = '../weights/P3B3_weights.pickle'
     if mode=='train':
         run_train_test(params, seed, data_loaders, dw, device, 1)     
     elif mode=='evaluate':
@@ -175,9 +167,9 @@ def run_eval_test(params, seed, data_loaders, dw, device, nloss):
     model, trainer = get_trainer(params, dw, device)
     evaluator = predictions.ScoreModel(params.model_args, data_loaders, model, device)
     assert len(evaluator.loss_funs) == nloss 
-    evaluator.evaluate_model(dw.metadata['metadata'], dw.dict_maps['id2label'], dac=None)
+    evaluator.evaluate_model(dw.dict_maps['id2label'], dac=None)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     ## trainer tests
     print('*****************************')
     print('***********Testing trainer...')
@@ -188,7 +180,7 @@ if __name__=='__main__':
     test_loss_multiple(params, seed, data_loaders, dw, device, mode='train')
 
     # test singletask, weighted and unweighted
-    params.model_args['data_kwargs']['tasks'] = ['site']
+    params.model_args['data_kwargs']['tasks'] = ['task_1']
     data_loaders, dw, device = load_data(params, seed)
     test_weighted_loss_single(params, seed, data_loaders, dw, device, mode='train')
     test_loss_single(params, seed, data_loaders, dw, device, mode='train')
@@ -203,7 +195,7 @@ if __name__=='__main__':
     test_loss_multiple(params, seed, data_loaders, dw, device, mode='evaluate')
 
     # test singletask, weighted and unweighted
-    params.model_args['data_kwargs']['tasks'] = ['site']
+    params.model_args['data_kwargs']['tasks'] = ['task_1']
     data_loaders, dw, device = load_data(params, seed)
     test_weighted_loss_single(params, seed, data_loaders, dw, device, mode='evaluate')
     test_loss_single(params, seed, data_loaders, dw, device, mode='evaluate')

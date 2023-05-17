@@ -445,7 +445,6 @@ class ScoreModel():
 
         for split in data.keys():
             print(f"\nEvaluating {split} set", flush=True)
-            timer1 = time.time()
             self.clear_pred_lists()
             preds = self.pred_and_score(data[split],
                                         split,
@@ -458,14 +457,10 @@ class ScoreModel():
                 for task in self.tasks:
                     preds[f"{task}_probs"] = preds['probs'][task]
                     probs_df.append(self.probs_to_dataframe(preds, id2label))
-            print(f"\ntime1 {time.time() - timer1:.2f}", flush=True)
 
-            timer2 = time.time()
             self.metrics[f'{split}'] = {}
             self.metrics[f'{split}'] = self.compute_scores(dac)
-            print(f"\ntime2 {time.time() - timer2:.2f}", flush=True)
 
-        timer3 = time.time()
         self.save_scores()
 
         print("Saving predictions to csv", flush=True)
@@ -483,7 +478,6 @@ class ScoreModel():
 
             # if you want the index, set index=True
             all_probs.to_csv(self.savepath + f"_probs_{now}.csv", float_format='%7.6f', index=False)
-        print(f"\ntime3 {time.time() - timer3:.2f}", flush=True)
 
     def pred_and_score(self, data_loader, split, save_probs=False, dac=None, training_phase=False):
         """Make predictions and score from a trained model.
