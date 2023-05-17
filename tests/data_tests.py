@@ -4,16 +4,12 @@ import json
 import os
 import sys
 
-import torch
 import numpy as np
 import pandas as pd
 
-from collections import Counter
 sys.path.append("../")
 from validate import validate_params
 from data_loaders import data_utils
-from training import training
-
 
 
 def subset_check_X(dw, data, split):
@@ -35,11 +31,10 @@ def subset_check_X(dw, data, split):
     return [1 if m else 0 for m in matches]
 
 
-def verify_subset(params, dw):
+def verify_subset(dw):
     """Test subetting original dataframe does not lose X infomation.
 
     """
-    tasks = dw.model_args['data_kwargs']['tasks']
     splits = ['train', 'test', 'val']
     fold = 0
     data_path = dw.model_args['data_kwargs']['data_path']
@@ -47,7 +42,7 @@ def verify_subset(params, dw):
 
     with open(os.path.join(data_path, 'id2labels_fold' + str(fold) + '.json'),
               'r', encoding='utf-8') as f:
-            tmp = json.load(f)
+        tmp = json.load(f)
 
     id2label = {task: {int(k): str(v) for k, v in labels.items()}
                       for task, labels in tmp.items()}
@@ -59,7 +54,7 @@ def verify_subset(params, dw):
                      dtype=str, engine='c')
 
     for split in splits:
-        data = df[df['split'] == split]['X'].apply(lambda x: np.array(json.loads(x), dtype=np.int32))
+        data = df[df['split'] == split]['X'].apply(lambda x: np.array(json.loads(x), dtype=np.intc))
         val = subset_check_X(dw, data, split)
         if sum(val) != len(dw.inference_data["X"][split]):
             print("Error, X arrays do not match")
@@ -87,11 +82,6 @@ def check_dataloader(dw):
 
     splits =  {'train': 0, 'test': 1, 'val': 2}
 
-
-
-    vocab_size = dw.inference_data['word_embedding'].shape[0]
-    unk_tok = vocab_size - 1
-
     for split in splits.keys():
         check_pathreports(dw, df, split)
 
@@ -113,9 +103,7 @@ def check_pathreports(dw, df, split):
 
     for i in range(len(data)):
         X = data[i]["X"]
-        X = X[X != 0]  # 0 is <pad>
-        # have to remove 0 from both
-        # X = X[X != vocab_size-1]
+        X = X[X != 0]
 
         idx = data[i]['index']
         iidx = np.nonzero(df.index == idx)[0]
@@ -136,7 +124,7 @@ def check_pathreports(dw, df, split):
             print(f"split: {split} PathReports class {k} are correct")
 
 
-def check_loaded_data(params, dw):
+def check_loaded_data(dw):
     """Check loaded and processed y-values match those on disk.
 
         Sanity check to ensure the output, the Ys, match those generated from the
@@ -152,7 +140,7 @@ def check_loaded_data(params, dw):
 
     with open(os.path.join(data_path, 'id2labels_fold' + str(fold) + '.json'),
               'r', encoding='utf-8') as f:
-            tmp = json.load(f)
+        tmp = json.load(f)
 
     id2label = {task: {int(k): str(v) for k, v in labels.items()}
                       for task, labels in tmp.items()}
@@ -174,33 +162,6 @@ def check_loaded_data(params, dw):
             correct = np.all(res)
             res = []
             print(f"Task: {task} split: {split} correct: {correct}")
-
-
-def check_saved_data(params, dw):
-    fold = 0
-    data_path = dw.model_args['data_kwargs']['data_path']
-    save_path = dw.model_args['save_name']
-
-    # original data
-    pre = pd.read_csv(os.path.join(data_path, 'data_fold' + str(fold) + '.csv'),
-                      dtype=str, engine='c')
-
-    post = pd.read_csv('predictions/' + save_path + "_preds.csv", dtype=str, engine='c')
-    post.set_index('Unnamed: 0', inplace=True)
-
-    index = np.array(post.index.values, dtype=np.int32)
-    res = []
-
-    for i, idx in enumerate(index):
-        postdoc = post['recordDocumentId'].iat[i]
-        iidx = pre.index.values[pre.index.values == idx][0]
-        res.append(postdoc == pre['recordDocumentId'].iat[iidx])
-
-    if not np.all(res):
-        ctr = Counter(res)
-        print(ctr)
-    else:
-        print("All processed data is correct.")
 
 
 def main():
@@ -243,14 +204,14 @@ def main():
     dw.load_folds()
 
     print("\nVerifying subset is correct")
-    verify_subset(valid_params, dw)
+    verify_subset(dw)
 
     # maps labels to ints, eg, C50 -> <some int>
     dw.convert_y()
     print("\nVerifying loaded data matches that on disk")
-    check_loaded_data(valid_params, dw)
+    check_loaded_data(dw)
 
-    # check torch dataLoders
+    # check PathReports class
     print("\nVerifying PathReports class is correct")
     check_dataloader(dw)
 
