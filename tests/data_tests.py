@@ -9,26 +9,26 @@ import numpy as np
 import pandas as pd
 
 from collections import Counter
-
+sys.path.append("../")
 from validate import validate_params
 from data_loaders import data_utils
 from training import training
 
 
 
-def subset_check_X(dw, data, split_idx):
+def subset_check_X(dw, data, split):
 
 
-    size = len(dw.inference_data["X"][split_idx]) / data.shape[0]
+    size = len(dw.inference_data["X"][split]) / data.shape[0]
     print(f"Original shape: {data.shape[0]} " +
-          f"New shape: {len(dw.inference_data['X'][split_idx])} " +
+          f"New shape: {len(dw.inference_data['X'][split])} " +
           f"Subset proportion: {size}")
 
     matches = []
-    for i, idx in enumerate(dw.inference_data['X'][split_idx].index):
+    for i, idx in enumerate(dw.inference_data['X'][split].index):
         iidx = np.nonzero(data.index == idx)[0]
         x1 = data.iat[iidx[0]]
-        x2 = dw.inference_data['X'][split_idx].iat[i]
+        x2 = dw.inference_data['X'][split].iat[i]
         ret = np.allclose(x1, x2)
         matches.append(ret)
 
@@ -58,10 +58,10 @@ def verify_subset(params, dw):
     df = pd.read_csv(os.path.join(data_path, 'data_fold' + str(fold) + '.csv'),
                      dtype=str, engine='c')
 
-    for s, split in enumerate(splits):
+    for split in splits:
         data = df[df['split'] == split]['X'].apply(lambda x: np.array(json.loads(x), dtype=np.int32))
-        val = subset_check_X(dw, data, s)
-        if sum(val) != len(dw.inference_data["X"][s]):
+        val = subset_check_X(dw, data, split)
+        if sum(val) != len(dw.inference_data["X"][split]):
             print("Error, X arrays do not match")
         else:
             print(f"Split: {split} X-arrays are correct")
@@ -84,41 +84,32 @@ def check_dataloader(dw):
     df = pd.read_csv(os.path.join(data_path, 'data_fold' + str(fold) + '.csv'),
                      dtype=str, engine='c')
     df["X"] = df["X"].apply(lambda x: np.asarray(json.loads(x),dtype=np.int32))
-    df = df[df['split'] == split]
 
     splits =  {'train': 0, 'test': 1, 'val': 2}
-    split_idx = splits[split]
 
-    switch_rate = 0
 
-    tasks = list(dw.dict_maps['id2label'].keys())
-
-    label2id = []
-    res = {"X": [], "y": []}
-
-    for task in dw.dict_maps['id2label'].keys():
-        label2id.append({v: k for k, v in dw.dict_maps['id2label'][task].items()})
 
     vocab_size = dw.inference_data['word_embedding'].shape[0]
     unk_tok = vocab_size - 1
 
-    for k, v in splits.items():
-        check_pathreports(dw, k, v)
+    for split in splits.keys():
+        check_pathreports(dw, df, split)
 
-def check_pathreports(dw, split, split_idx):
+def check_pathreports(dw, df, split):
 
-    data = data_utils.PathReports(dw.inference_data['X'][split_idx],
-                                  dw.inference_data['y'][split_idx],
+    df = df[df['split'] == split]
+    res = {"X": [], "y": []}
+
+    tasks = list(dw.dict_maps['id2label'].keys())
+    label2id = []
+    for task in dw.dict_maps['id2label'].keys():
+        label2id.append({v: k for k, v in dw.dict_maps['id2label'][task].items()})
+
+    data = data_utils.PathReports(dw.inference_data['X'][split],
+                                  dw.inference_data['y'][split],
                                   tasks=dw.model_args['data_kwargs']['tasks'],
                                   label_encoders=dw.dict_maps['id2label'],
-                                  max_len=dw.model_args['train_kwargs']['doc_max_len'])  # ,
-                                  # transform=data_utils.AddNoise(unk_tok,
-                                  #                               dw.model_args['train_kwargs']['doc_max_len'],
-                                  #                              vocab_size,
-                                  #                              switch_rate
-                                  #                             )
-                                  # )
-
+                                  max_len=dw.model_args['train_kwargs']['doc_max_len'])
 
     for i in range(len(data)):
         X = data[i]["X"]
@@ -174,8 +165,8 @@ def check_loaded_data(params, dw):
 
     res = []
     for t, task in enumerate(tasks):
-        for s, split in enumerate(splits):
-            processed = dw.inference_data["y"][s][task]
+        for split in splits:
+            processed = dw.inference_data["y"][split][task]
             loaded = df[df['split'] == split][task].map(label2idx[t])
             for i, idx in enumerate(processed.index):
                 idx = np.nonzero(loaded.index == idx)[0]
@@ -221,17 +212,18 @@ def main():
     parser.add_argument('--data_path', '-dp', type=str, default='',
                         help="""where the data will load from. The default is
                                 the path saved in the model""")
-
+    parser.add_argument('--model_args', '-args', type=str, default='',
+                        help="""file specifying the model or clc args; default is in
+                                the model_suite directory""")
     if not os.path.exists('predictions'):
         os.makedirs('predictions')
     args = parser.parse_args()
 
     # 1. validate model/data args
     print("Validating kwargs in model_args.yml file")
-    cache_class = [False]
     data_source = 'pre-generated'
 
-    valid_params = validate_params.ValidateParams(cache_class, data_source=data_source)
+    valid_params = validate_params.ValidateParams(args, data_source=data_source)
 
     valid_params.check_data_train_args()
 
@@ -247,23 +239,21 @@ def main():
 
     # 2. load data
     print("Loading data ")
-    dw = data_utils.DataHandler(data_source, valid_params.model_args, cache_class)
+    dw = data_utils.DataHandler(data_source, valid_params.model_args)
     dw.load_folds()
 
     print("\nVerifying subset is correct")
-    #verify_subset(valid_params, dw)
+    verify_subset(valid_params, dw)
 
     # maps labels to ints, eg, C50 -> <some int>
     dw.convert_y()
     print("\nVerifying loaded data matches that on disk")
-    #check_loaded_data(valid_params, dw)
+    check_loaded_data(valid_params, dw)
 
     # check torch dataLoders
     print("\nVerifying PathReports class is correct")
     check_dataloader(dw)
 
-    print("Checking postprocessing data")
-    check_saved_data(valid_params, dw)
 
 if __name__ == "__main__":
     main()
