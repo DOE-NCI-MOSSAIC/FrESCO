@@ -32,7 +32,7 @@ class ValidateParams():
 
         if model_args is None:
             if len(cli_args.model_args) > 0:
-                mod_args_file = cli_args.model_args + "/model_args.yml"
+                mod_args_file = cli_args.model_args
             else:
                 mod_args_file = 'model_args.yml'
 
@@ -40,7 +40,7 @@ class ValidateParams():
                 with open(mod_args_file, "r", encoding="utf-8") as f_in:
                     self.model_args = yaml.safe_load(f_in)
             else:
-                raise exceptions.ParamError("within the Model_Suite the " +
+                raise exceptions.ParamError("within FrESCO the " +
                                             "model_args.yml file is needed to set " +
                                             "the model arguments")
         else:
