@@ -35,11 +35,6 @@ def main():
     data = [gensim.parsing.preprocessing.strip_short(d, minsize=2) for d in data]
     data = [d.split(' ') for d in data]
 
-    print("Creating vocab and word embeddings")
-    model = gensim.models.word2vec.Word2Vec(vector_size=embed_dim, min_count=2, epochs=25, workers=8)
-    model.build_vocab(data)
-    model.train(data, total_examples=model.corpus_count, epochs=model.epochs)
-
     # create train, test, val splits
     x_train, x_tmp, y_train, y_tmp = train_test_split(df['review'], df['sentiment'], test_size=1-train_split,
                                                     random_state=seed)
@@ -59,14 +54,29 @@ def main():
     val_df['sentiment'] = y_val 
     test_df['sentiment'] = y_test
 
+    print("Creating vocab and word embeddings")
+    model = gensim.models.word2vec.Word2Vec(vector_size=embed_dim, min_count=2, epochs=25, workers=8)
+    model.build_vocab(data)
+    model.train(data, total_examples=model.corpus_count, epochs=model.epochs)
+    
+    # tokenize data
     train_df['X'] = train_df['review'].progress_apply(lambda d: word2int(d, model))
     val_df['X'] = val_df['review'].progress_apply(lambda d: word2int(d, model))
     test_df['X'] = test_df['review'].progress_apply(lambda d: word2int(d, model))
-
+    
     # add <unk> token
     word_vecs = [model.wv.vectors[index] for index in model.wv.key_to_index.values()]
     rng = np.random.default_rng(seed)
-    w2v = np.append(word_vecs, rng.normal(size=(1, embed_dim), scale=0.1), axis=0)
+    unk_embed = rng.normal(size=(1, embed_dim), scale=0.1)
+    w2v = np.append(word_vecs, unk_embed, axis=0)
+    
+    # map words only in test to unk
+    train_data = pd.concat([train_df, val_df])
+    train_tok = set([tok for dat in train_data['X'] for tok in dat])
+    test_tok = set([tok for dat in test_df['X'] for tok in dat])
+    unks = list(set(test_tok).difference(train_tok))
+    w2v[unks] = unk_embed
+    
     id2word = {v: k for k, v in model.wv.key_to_index.items()}
     id2word[len(model.wv.key_to_index)] = "<unk>"
 
