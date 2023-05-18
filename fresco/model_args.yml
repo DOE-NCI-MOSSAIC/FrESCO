@@ -11,7 +11,7 @@ data_kwargs:
   tasks: ["task_1", "task_2", "task_3", "task_4"]
   # tasks: ['sentiment']  # ["task_1", "task_2", "task_3", "task_4"]
   fold_number: 0  # 0-based fold indexing
-  data_path: './data/P3B3/'
+  data_path: '../data/P3B3/'
   subset_proportion: 1.0
   add_noise_flag: True
   add_noise: 0.1

@@ -9,7 +9,8 @@ import argparse
 import os
 import time
 
-from fresco import run_ie, run_clc
+import run_ie
+import run_clc
 
 from fresco.validate import exceptions
 
@@ -36,7 +37,7 @@ def main():
                                 the path saved in the model""")
     parser.add_argument('--model_args', '-args', type=str, default='',
                         help="""file specifying the model or clc args; default is in
-                                the fresco directory""")
+                                the model_suite directory""")
 
     args = parser.parse_args()
 

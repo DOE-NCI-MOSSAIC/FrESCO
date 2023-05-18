@@ -18,7 +18,7 @@ import pandas as pd
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
-from validate import exceptions
+from fresco.validate import exceptions
 
 
 class LabelDict(dict):

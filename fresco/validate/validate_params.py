@@ -11,7 +11,7 @@ import os
 
 import yaml
 
-from validate import exceptions
+from fresco.validate import exceptions
 
 
 class ValidateParams():
