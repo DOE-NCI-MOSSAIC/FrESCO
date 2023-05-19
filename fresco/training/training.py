@@ -58,7 +58,7 @@ class ModelTrainer():
 
         class_weights (list): List of floats for class weighting schemes.
     """
-def __init__(self, kw_args, model, dw, class_weights=None, device=None, fold=None, clc=False):
+    def __init__(self, kw_args, model, dw, class_weights=None, device=None, fold=None, clc=False):
 
         path = 'savedmodels/' + kw_args['save_name'] + "/"
         if not os.path.exists(path):

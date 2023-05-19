@@ -457,25 +457,24 @@ class AddNoise():
 
 
 class PathReports(Dataset):
-"""
-Torch DataLoader class for cancer path reports from generate_data.py.
-
-    Parameters:
-        X (pandas.DataFrame): DataFrame of tokenized path report data. Entries are numpy arrays generated from generate_data.py.
-        Y (pd.DataFrame): DataFrame of ground truth values.
-        tasks (list[str]): List of tasks to generate labels for.
-        label_encoders (dict): Dictionary of task-to-label encoders to convert raw labels into integers.
-        max_len (int, default: 3000): Maximum length for a document. Should match the value in data_args.json. Longer documents will be cut, and shorter documents will be zero-padded.
-        transform (object, default: None): Optional transform to apply to document tensors.
-
-    Outputs per batch:
-        dict[str, torch.Tensor]: A sample dictionary with the following keys and values:
-            - 'X': torch.Tensor (int) [max_len]: Document converted to integer word-mappings, zero-padded to max_len.
-            - 'y_%s % task': torch.Tensor (int) [] or torch.Tensor (int) [num_classes]: Integer label for a given task if label encoders are used. One-hot vectors for a given task if label binarizers are used.
-            - 'index': int: DataFrame index to match up with metadata stored in the original DataFrame.
-    """
-
     def __init__(self, X, Y, tasks, label_encoders, max_len=3000, transform=None, multilabel=False):
+        """
+        Torch DataLoader class for cancer path reports from generate_data.py.
+
+        Args:
+            X (pandas.DataFrame): DataFrame of tokenized path report data. Entries are numpy arrays generated from generate_data.py.
+            Y (pd.DataFrame): DataFrame of ground truth values.
+            tasks (list[str]): List of tasks to generate labels for.
+            label_encoders (dict): Dictionary of task-to-label encoders to convert raw labels into integers.
+            max_len (int, default: 3000): Maximum length for a document. Should match the value in data_args.json. Longer documents will be cut, and shorter documents will be zero-padded.
+            transform (object, default: None): Optional transform to apply to document tensors.
+
+        Outputs per batch:
+            dict[str, torch.Tensor]: A sample dictionary with the following keys and values:
+                - 'X': torch.Tensor (int) [max_len]: Document converted to integer word-mappings, zero-padded to max_len.
+                - 'y_%s % task': torch.Tensor (int) [] or torch.Tensor (int) [num_classes]: Integer label for a given task if label encoders are used. One-hot vectors for a given task if label binarizers are used.
+                - 'index': int: DataFrame index to match up with metadata stored in the original DataFrame.
+        """
 
         self.X = X
         self.ys = {}
@@ -523,23 +522,7 @@ Torch DataLoader class for cancer path reports from generate_data.py.
         return sample
 
 class GroupedCases(Dataset):
-    """
-    Create grouped cases for torch DataLoaders.
-
-    Args:
-        doc_embeds (np.ndarray): Document embeddings from a trained model.
-        Y (dict): Dictionary of integer Y values, where keys are the splits.
-        tasks (list): List of tasks.
-        metadata (dict): Dictionary of model metadata.
-        device (torch.device): Device to use (either cuda or cpu).
-        exclude_single (bool, default: True): Whether to exclude single cases.
-        shuffle_case_order (bool, default: True): Whether to shuffle the order of cases.
-        split_by_tumor_id (bool, default: True): Whether to split the cases by tumorId.
-
-    Returns:
-        torch.utils.data.DataLoader: A grouped DataLoader object.
-
-    """
+    """Class for grouping cases for clc."""
 
     def __init__(self,
                  doc_embeds,
@@ -549,7 +532,21 @@ class GroupedCases(Dataset):
                  device,
                  exclude_single=True,
                  shuffle_data_order=True):
-        """Class for grouping cases for clc.
+        """
+        Create grouped cases for torch DataLoaders.
+
+        Args:
+            doc_embeds (np.ndarray): Document embeddings from a trained model.
+            Y (dict): Dictionary of integer Y values, where keys are the splits.
+            tasks (list): List of tasks.
+            metadata (dict): Dictionary of model metadata.
+            device (torch.device): Device to use (either cuda or cpu).
+            exclude_single (bool, default: True): Whether to exclude single cases.
+            shuffle_case_order (bool, default: True): Whether to shuffle the order of cases.
+            split_by_tumor_id (bool, default: True): Whether to split the cases by tumorId.
+
+        Returns:
+            torch.utils.data.DataLoader: A grouped DataLoader object.
 
         """
         self.embed_size = doc_embeds.shape[1]
