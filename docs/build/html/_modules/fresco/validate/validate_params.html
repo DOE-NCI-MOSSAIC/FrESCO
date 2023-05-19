@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.validate.validate_params &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">fresco.validate.validate_params</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for fresco.validate.validate_params</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">Module for sanity checking parameters for data and model building.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">from</span> <span class="nn">fresco.validate</span> <span class="kn">import</span> <span class="n">exceptions</span>
+
+
+<div class="viewcode-block" id="ValidateParams"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams">[docs]</a><span class="k">class</span> <span class="nc">ValidateParams</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to validate model-specific parameters for MOSSAIC models.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cli_args: argparse list of command line args.</span>
+<span class="sd">        data_source (str): Indicates where the data will come from. Should be one of:</span>
+<span class="sd">            - pre-generated: data_args.yml will indicate the source.</span>
+
+<span class="sd">    Post-condition: model_args dict loaded and sanity checked.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cli_args</span><span class="p">,</span>
+                 <span class="n">data_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;pre-generated&#39;</span><span class="p">,</span>
+                 <span class="n">model_args</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">model_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">model_args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">mod_args_file</span> <span class="o">=</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">model_args</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mod_args_file</span> <span class="o">=</span> <span class="s1">&#39;model_args.yml&#39;</span>
+
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">mod_args_file</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">mod_args_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f_in</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;within FrESCO the &quot;</span> <span class="o">+</span>
+                                            <span class="s2">&quot;model_args.yml file is needed to set &quot;</span> <span class="o">+</span>
+                                            <span class="s2">&quot;the model arguments&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span> <span class="o">=</span> <span class="n">model_args</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mtcnn&#39;</span><span class="p">,</span> <span class="s1">&#39;mthisan&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;model type was not found &quot;</span> <span class="o">+</span>
+                                        <span class="s2">&quot;to be &#39;mtcnn&#39; or &#39;mthisan&#39;. &quot;</span> <span class="o">+</span>
+                                        <span class="s2">&quot;Currently these are the only expected options.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;model_</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;savedmodels&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;savepath </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">)</span><span class="si">}</span><span class="s1"> does not exist, creating it&#39;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">))</span>
+
+        <span class="n">fold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;fold_number&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">data_path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">data_path</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;User provided data path does not exist.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fold</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;fold_number&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fold</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Model building does not presently support &gt; 1 fold.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;subset_proportion&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;subset_proportion&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;subset proportion must be float value between 0 and 1.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Batch size must be an int value.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2048</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Batch size must be an int value between 1 and 2048.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;mixed_precision&#39;</span><span class="p">],</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Mixed precision must be boolean.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ValidateParams.hisan_arg_check"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.hisan_arg_check">[docs]</a>    <span class="k">def</span> <span class="nf">hisan_arg_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check and modify HiSAN specific args.</span>
+
+<span class="sd">        Parameters: none</span>
+
+<span class="sd">        Pre-condition: self.model_args is not None</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            self.model_args[&#39;MTHiSAN_kwargs&#39;][&#39;max_lines&#39;] modified to be the ceiling of the doc_max_len / max_words_per_line.</span>
+<span class="sd">            self.model_args[&#39;train_kwargs&#39;][&#39;doc_max_len&#39;] modified to be max_words_per_line * max_lines.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;max_lines&#39;</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">]</span> <span class="o">//</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;max_words_per_line&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;max_words_per_line&#39;</span><span class="p">]</span> <span class="o">*</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;max_lines&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check_weights</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ValidateParams.mtcnn_arg_check"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.mtcnn_arg_check">[docs]</a>    <span class="k">def</span> <span class="nf">mtcnn_arg_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check the number of filters matchesthe number of windows.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTCNN_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;num_filters&#39;</span><span class="p">])</span> <span class="o">!=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTCNN_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;window_sizes&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of filters must match the number of window_sizes.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check_weights</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ValidateParams.check_data_train_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_data_train_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_train_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_pretrained</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify arguments are appropriate for the chosen model options.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            from_pretrained (bool): Checking model args from a pretrained model. Pretrained model args are different,</span>
+<span class="sd">            some are copied from data_kwargs to train_kwargs.</span>
+
+<span class="sd">        Pre-condition: self.model_args is not None.</span>
+
+<span class="sd">        Post-condition: self.model_args[&#39;train_kwargs&#39;][&#39;doc_max_len&#39;] is updated from the data_kwargs,</span>
+<span class="sd">        &#39;max_lines&#39; is added to the hisan kw_args.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">,</span> <span class="s1">&#39;fold_number&#39;</span><span class="p">,</span> <span class="s1">&#39;data_path&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;mutual_info_filter&#39;</span><span class="p">,</span> <span class="s1">&#39;mutual_info_threshold&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;subset_proportion&#39;</span><span class="p">,</span> <span class="s1">&#39;add_noise&#39;</span><span class="p">,</span> <span class="s1">&#39;add_noise_flag&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;multilabel&#39;</span><span class="p">,</span> <span class="s1">&#39;random_seed&#39;</span><span class="p">,</span> <span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">,</span> <span class="s1">&#39;reproducible&#39;</span><span class="p">],</span>
+                  <span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;max_words_per_line&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;att_heads&#39;</span><span class="p">,</span> <span class="s1">&#39;att_dim_per_head&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;att_dropout&#39;</span><span class="p">,</span> <span class="s1">&#39;bag_of_embeddings&#39;</span><span class="p">,</span> <span class="s1">&#39;embeddings_scale&#39;</span><span class="p">],</span>
+                  <span class="s1">&#39;MTCNN_kwargs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;window_sizes&#39;</span><span class="p">,</span> <span class="s1">&#39;num_filters&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;dropout&#39;</span><span class="p">,</span> <span class="s1">&#39;bag_of_embeddings&#39;</span><span class="p">,</span> <span class="s1">&#39;embeddings_scale&#39;</span><span class="p">],</span>
+                  <span class="s1">&#39;train_kwargs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;max_epochs&#39;</span><span class="p">,</span> <span class="s1">&#39;patience&#39;</span><span class="p">,</span> <span class="s1">&#39;mixed_precision&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;class_weights&#39;</span><span class="p">]}</span>
+
+        <span class="k">if</span> <span class="n">from_pretrained</span><span class="p">:</span>
+            <span class="n">schema</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">,</span> <span class="s1">&#39;class_weights&#39;</span><span class="p">,</span> <span class="s1">&#39;doc_max_len&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;max_epochs&#39;</span><span class="p">,</span> <span class="s1">&#39;multilabel&#39;</span><span class="p">,</span> <span class="s1">&#39;patience&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;random_seed&#39;</span><span class="p">,</span> <span class="s1">&#39;reproducible&#39;</span><span class="p">,</span> <span class="s1">&#39;mixed_precision&#39;</span><span class="p">]</span>
+            <span class="n">schema</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;max_words_per_line&#39;</span><span class="p">,</span> <span class="s1">&#39;max_lines&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;att_heads&#39;</span><span class="p">,</span> <span class="s1">&#39;att_dim_per_head&#39;</span><span class="p">,</span>
+                                        <span class="s1">&#39;att_dropout&#39;</span><span class="p">,</span> <span class="s1">&#39;bag_of_embeddings&#39;</span><span class="p">,</span> <span class="s1">&#39;embeddings_scale&#39;</span><span class="p">]</span>
+
+
+        <span class="n">model_kwds</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MTCNN_kwargs&#39;</span><span class="p">,</span> <span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">,</span> <span class="s1">&#39;Transformers_kwargs&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">,</span> <span class="s1">&#39;data_kwargs&#39;</span><span class="p">,</span> <span class="s1">&#39;model_type&#39;</span><span class="p">,</span> <span class="s1">&#39;save_name&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;task_unks&#39;</span><span class="p">,</span> <span class="s1">&#39;train_kwargs&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="n">model_kwds</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected: &quot;</span><span class="p">,</span> <span class="n">model_kwds</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;model_arg keys do not match the schema&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">kwrd</span><span class="p">,</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">kwrd</span> <span class="o">==</span> <span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># these are checked in a separate function</span>
+            <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="n">kwrd</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="n">kwrd</span><span class="p">]))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;model args </span><span class="si">{</span><span class="n">kwrd</span><span class="si">}</span><span class="s2"> does not have &quot;</span> <span class="o">+</span>
+                                            <span class="s2">&quot;the expected variables&quot;</span><span class="p">))</span>
+
+        <span class="c1"># copy data kwargs to train kwds</span>
+        <span class="n">copy_kwds</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">,</span> <span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">,</span> <span class="s1">&#39;random_seed&#39;</span><span class="p">,</span> <span class="s1">&#39;multilabel&#39;</span><span class="p">,</span> <span class="s1">&#39;reproducible&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">copy_kwds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="n">word</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="n">word</span><span class="p">])])</span></div>
+
+<div class="viewcode-block" id="ValidateParams.check_abstain_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_abstain_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_abstain_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify keywords needed for abstention to work are present and valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">abstain_kwargs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">,</span> <span class="s1">&#39;alphas&#39;</span><span class="p">,</span> <span class="s1">&#39;max_abs&#39;</span><span class="p">,</span> <span class="s1">&#39;min_acc&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;abs_gain&#39;</span><span class="p">,</span> <span class="s1">&#39;acc_gain&#39;</span><span class="p">,</span> <span class="s1">&#39;alpha_scale&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;tune_mode&#39;</span><span class="p">,</span> <span class="s1">&#39;stop_limit&#39;</span><span class="p">,</span> <span class="s1">&#39;stop_metric&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;ntask_flag&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_tasks&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_alpha&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;ntask_alpha_scale&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_max_abs&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_min_acc&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Class weighting is not presently implemented for the DAC.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">abstain_kwargs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">]):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">]))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">abstain_kwargs</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">((</span><span class="s2">&quot;model args abstain_kwargs does not have &quot;</span> <span class="o">+</span>
+                                        <span class="s2">&quot;the expected variables&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;alphas&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Alpha tasks are not a subset of the data tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;alphas&#39;</span><span class="p">])</span> <span class="o">&gt;</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of abstain alphas is greater than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;max_abs&#39;</span><span class="p">])</span> <span class="o">!=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of max abstain rates is different than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;min_acc&#39;</span><span class="p">])</span> <span class="o">!=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of min acc rates is different than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;alpha_scale&#39;</span><span class="p">])</span> <span class="o">!=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of alpha scales is different than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_flag&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Ntask cannot be enables without Abstention&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_flag&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_tasks&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Ntask tasks are not a subset of the data tasks.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValidateParams.check_keyword_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_keyword_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_keyword_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate keyword args.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;histology&#39;</span><span class="p">,</span> <span class="s1">&#39;laterality&#39;</span><span class="p">,</span> <span class="s1">&#39;site&#39;</span><span class="p">,</span> <span class="s1">&#39;subsite&#39;</span><span class="p">,</span> <span class="s1">&#39;behavior&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Keywords are only available for: &quot;</span> <span class="o">+</span>
+                                        <span class="s2">&quot;histology, laterality, site, subsite, behavior&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValidateParams.check_weights"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_weights">[docs]</a>    <span class="k">def</span> <span class="nf">check_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate class weights path exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Invalid path; please provide a valid path for &quot;</span> <span class="o">+</span>
+                                            <span class="s2">&quot;class weights&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValidateParams.check_data_files"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_data_files">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify the necessary data files exist.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_path (str): From argparser, optional path to dataset.</span>
+
+<span class="sd">        Note: Setting data_path will override the path set in model_args.yml.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;data_fold.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;word_embeds_fold.npy&#39;</span><span class="p">,</span> <span class="s1">&#39;id2labels_fold.json&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">data_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># reading from argparser</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">data_path</span><span class="p">)):</span>
+                <span class="n">_data_path</span> <span class="o">=</span> <span class="n">data_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;user defined data_path </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s1"> does not exist, exiting&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_data_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span>
+        <span class="n">fold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;fold_number&#39;</span><span class="p">]</span>
+
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_data_path</span><span class="p">,</span> <span class="s1">&#39;id2labels_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">),</span>
+                  <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">id2label</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">labels</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                                   <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">id2label</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">((</span><span class="s1">&#39; the tasks in model_args file must match the &#39;</span> <span class="o">+</span>
+                                         <span class="s1">&#39;tasks in the data.&#39;</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">f_in</span> <span class="ow">in</span> <span class="n">data_files</span><span class="p">:</span>
+            <span class="n">data_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_data_path</span><span class="p">,</span> <span class="n">f_in</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;fold&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;fold</span><span class="si">{</span><span class="n">fold</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">f_in</span> <span class="o">==</span> <span class="s1">&#39;word_embeds_fold.npy&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">data_file</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Word embeddings file does not exist; will default to random embeddings.&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">data_file</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39; the file </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s1"> does not exist.&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ValidateClcParams"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams">[docs]</a><span class="k">class</span> <span class="nc">ValidateClcParams</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to validate model-specific parameters for MOSSAIC models.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cli_args: Argparse list of command line args.</span>
+<span class="sd">        data_source (str): Indicates where the data will come from. Should be one of:</span>
+<span class="sd">            - pre-generated: data_args.yml will indicate the source.</span>
+
+<span class="sd">    Post-condition: model_args dict loaded and sanity checked.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cli_args</span><span class="p">,</span> <span class="n">data_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;pre-generated&#39;</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">model_args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">mod_args_file</span> <span class="o">=</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">args</span> <span class="o">+</span> <span class="s2">&quot;/clc_args.yml&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mod_args_file</span> <span class="o">=</span> <span class="s1">&#39;clc_args.yml&#39;</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">mod_args_file</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">mod_args_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f_in</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;within the Model_Suite the &quot;</span> <span class="o">+</span>
+                                        <span class="s2">&quot;clc_args.yml file is needed to set &quot;</span> <span class="o">+</span>
+                                        <span class="s2">&quot;the model arguments&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;model_</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;savedmodels&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;savepath </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">)</span><span class="si">}</span><span class="s1"> does not exist, creating it&#39;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_name</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;subset_proportion&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;subset_proportion&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;subset proportion must be float value between 0 and 1.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Batch size must be an int value.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2048</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Batch size must be an int value between 1 and 2048.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ValidateClcParams.clc_arg_check"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.clc_arg_check">[docs]</a>    <span class="k">def</span> <span class="nf">clc_arg_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check and modify HiSAN specific args.</span>
+
+<span class="sd">        Parameters: none</span>
+
+<span class="sd">        Pre-condition: self.model_args is not None</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            self.model_args[&#39;MTHiSAN_kwargs&#39;][&#39;max_lines&#39;] modified to be the ceiling of doc_max_len / max_words_per_line.</span>
+<span class="sd">            self.model_args[&#39;train_kwargs&#39;][&#39;doc_max_len&#39;] modified to be max_words_per_line * max_lines.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_dropout&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_dropout&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Attn dropout must be between 0 and 1&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_heads&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Attn heads mut be an int between 1 and 16&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_heads&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">16</span> <span class="ow">or</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_heads&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Attn heads mut be an int between 1 and 16&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_dim_per_head&#39;</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Attn dim per head mut be an int between 1 and 16&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_dim_per_head&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">100</span> <span class="ow">or</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;att_dim_per_head&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Attn dim per head mut be an int between 1 and 100&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValidateClcParams.check_data_train_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.check_data_train_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_train_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify arguments are appropriate for the chosen model options.</span>
+
+<span class="sd">        Parameters: none</span>
+
+<span class="sd">        Pre-condition: self.model_args is not None.</span>
+
+<span class="sd">        Post-condition: self.model_args[&#39;train_kwargs&#39;][&#39;doc_max_len&#39;] is updated from the data_kwargs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="n">schema</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">,</span> <span class="s1">&#39;exclude_single&#39;</span><span class="p">,</span> <span class="s1">&#39;shuffle_case_order&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;subset_proportion&#39;</span><span class="p">,</span> <span class="s1">&#39;model_path&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;random_seed&#39;</span><span class="p">,</span> <span class="s1">&#39;reproducible&#39;</span><span class="p">],</span>
+                  <span class="s1">&#39;model_kwargs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;att_dim_per_head&#39;</span><span class="p">,</span> <span class="s1">&#39;att_heads&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;att_dropout&#39;</span><span class="p">,</span> <span class="s1">&#39;forward_mask&#39;</span><span class="p">],</span>
+                  <span class="s1">&#39;train_kwargs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">,</span> <span class="s1">&#39;max_epochs&#39;</span><span class="p">,</span> <span class="s1">&#39;patience&#39;</span><span class="p">,</span> <span class="s1">&#39;mixed_precision&#39;</span><span class="p">,</span> <span class="s1">&#39;class_weights&#39;</span><span class="p">]}</span>
+
+        <span class="n">model_kwds</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;model_kwargs&#39;</span><span class="p">,</span> <span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">,</span> <span class="s1">&#39;data_kwargs&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;save_name&#39;</span><span class="p">,</span> <span class="s1">&#39;train_kwargs&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">model_kwds</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected: &quot;</span><span class="p">,</span> <span class="n">model_kwds</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;model_arg keys do not match the schema&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">kwrd</span><span class="p">,</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">kwrd</span> <span class="o">==</span> <span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># these are checked in a separate function</span>
+            <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="n">kwrd</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="n">kwrd</span><span class="p">]))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;model args </span><span class="si">{</span><span class="n">kwrd</span><span class="si">}</span><span class="s2"> does not have &quot;</span> <span class="o">+</span>
+                                            <span class="s2">&quot;the expected variables&quot;</span><span class="p">))</span>
+
+        <span class="c1"># copy data kwargs to train kwds</span>
+        <span class="n">copy_kwds</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;random_seed&#39;</span><span class="p">,</span> <span class="s1">&#39;reproducible&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">copy_kwds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="n">word</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="n">word</span><span class="p">])])</span></div>
+
+<div class="viewcode-block" id="ValidateClcParams.check_abstain_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.check_abstain_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_abstain_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify keywords needed for abstention to work are present and valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">abstain_kwargs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">,</span> <span class="s1">&#39;alphas&#39;</span><span class="p">,</span> <span class="s1">&#39;max_abs&#39;</span><span class="p">,</span> <span class="s1">&#39;min_acc&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;abs_gain&#39;</span><span class="p">,</span> <span class="s1">&#39;acc_gain&#39;</span><span class="p">,</span> <span class="s1">&#39;alpha_scale&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;tune_mode&#39;</span><span class="p">,</span> <span class="s1">&#39;stop_limit&#39;</span><span class="p">,</span> <span class="s1">&#39;stop_metric&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;ntask_flag&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_tasks&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_alpha&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;ntask_alpha_scale&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_max_abs&#39;</span><span class="p">,</span> <span class="s1">&#39;ntask_min_acc&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">abstain_kwargs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">]):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Received: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">]))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected: &quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">abstain_kwargs</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">((</span><span class="s2">&quot;model args abstain_kwargs does not have &quot;</span> <span class="o">+</span>
+                                        <span class="s2">&quot;the expected variables&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;alphas&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Alpha tasks are not a subset of the data tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;alphas&#39;</span><span class="p">])</span> <span class="o">&gt;</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of abstain alphas is greater than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;max_abs&#39;</span><span class="p">])</span> <span class="o">!=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of max abstain rates is different than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;min_acc&#39;</span><span class="p">])</span> <span class="o">!=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of min acc rates is different than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;alpha_scale&#39;</span><span class="p">])</span> <span class="o">!=</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of alpha scales is different than number of tasks.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_flag&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Ntask cannot be enables without Abstention&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_flag&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_tasks&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Ntask tasks are not a subset of the data tasks.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValidateClcParams.check_data_files"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.check_data_files">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify the necessary data files exist.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_path (str): From argparser, optional path to dataset.</span>
+
+<span class="sd">        Note: Setting data_path will override the path set in model_args.yml.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;data_fold.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;word_embeds_fold.npy&#39;</span><span class="p">,</span> <span class="s1">&#39;id2labels_fold.json&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">data_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># reading from argparser</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">data_path</span><span class="p">)):</span>
+                <span class="n">_data_path</span> <span class="o">=</span> <span class="n">data_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;user defined data_path </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s1"> does not exist, exiting&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_data_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span>
+        <span class="c1"># fold = self.model_args[&#39;data_kwargs&#39;][&#39;fold_number&#39;]</span>
+        <span class="n">fold</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_data_path</span><span class="p">,</span> <span class="s1">&#39;id2labels_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">),</span>
+                  <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">id2label</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">labels</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                                   <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">id2label</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">((</span><span class="s1">&#39; the tasks in model_args file must match the &#39;</span> <span class="o">+</span>
+                                         <span class="s1">&#39;tasks in the data.&#39;</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">f_in</span> <span class="ow">in</span> <span class="n">data_files</span><span class="p">:</span>
+            <span class="n">data_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_data_path</span><span class="p">,</span> <span class="n">f_in</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;fold&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;fold</span><span class="si">{</span><span class="n">fold</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">f_in</span> <span class="o">==</span> <span class="s1">&#39;word_embeds_fold.npy&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">data_file</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Word embeddings file does not exist; will default to random embeddings.&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">data_file</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39; the file </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s1"> does not exist.&#39;</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

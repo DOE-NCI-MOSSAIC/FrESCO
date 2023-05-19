@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.data_loaders.data_utils &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">fresco.data_loaders.data_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for fresco.data_loaders.data_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">Module for loading pre-generated data.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="kn">from</span> <span class="nn">fresco.validate</span> <span class="kn">import</span> <span class="n">exceptions</span>
+
+
+<div class="viewcode-block" id="LabelDict"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.LabelDict">[docs]</a><span class="k">class</span> <span class="nc">LabelDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create dict subclass for correct behaviour when mapping task unks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">missing</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">missing</span> <span class="o">=</span> <span class="n">missing</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__missing__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__missing__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assigns all missing keys to unknown in the label2id mapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">missing</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DataHandler"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler">[docs]</a><span class="k">class</span> <span class="nc">DataHandler</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for loading data.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        data_source (str): Defines how data was generated. Needs to be &#39;pre-generated&#39;, &#39;pipeline&#39;, or &#39;official&#39; (not implemented).</span>
+<span class="sd">        model_args (dict): Keywords necessary to load data, build, and train a model_args.</span>
+
+<span class="sd">    Note: The present implementation is only for 1 fold. We presently cannot generate more than one fold of data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">clc_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_source</span> <span class="o">=</span> <span class="n">data_source</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span> <span class="o">=</span> <span class="n">model_args</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading data from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;packages&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">clc_flag</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clc_flag</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grouped_cases</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="DataHandler.load_folds"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.load_folds">[docs]</a>    <span class="k">def</span> <span class="nf">load_folds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset_frac</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data for each fold in the dataset.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            fold (int): Integer number of the fold to load.</span>
+<span class="sd">            subset_frac (float): Float value for proportion to load.</span>
+
+<span class="sd">        Pre-condition: __init__ called and model_args is not None.</span>
+
+<span class="sd">        Post-condition: Class attributes populated.</span>
+
+<span class="sd">        Note: Case level context model will load fold 0 by default. See run_clc.py line 225.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">data_loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_from_saved</span>
+
+        <span class="k">if</span> <span class="n">fold</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;fold_number&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">subset_frac</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subset_frac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;subset_proportion&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">subset_frac</span> <span class="o">=</span> <span class="n">subset_frac</span>
+        <span class="n">loaded</span> <span class="o">=</span> <span class="n">data_loader</span><span class="p">(</span><span class="n">fold</span><span class="p">,</span> <span class="n">subset_frac</span><span class="p">)</span>
+
+        <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;packages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mod_args&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span>
+                              <span class="s2">&quot;py_packs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;torch&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="p">),</span>
+                                           <span class="s2">&quot;numpy&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">__version__</span><span class="p">),</span>
+                                           <span class="s2">&quot;pandas&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">__version__</span><span class="p">)},</span>
+                              <span class="s2">&quot;fold&quot;</span><span class="p">:</span> <span class="n">fold</span>
+                             <span class="p">}</span>  
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;Y&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;we&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_vocab</span><span class="p">()</span> 
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;we&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2word&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;id2word&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;packages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s1">&#39;packages&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">for</span>
+                            <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DataHandler.load_from_saved"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.load_from_saved">[docs]</a>    <span class="k">def</span> <span class="nf">load_from_saved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">subset_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load data files.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            fold (int): Fold number. Should always be 0 for now.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            Modifies self.splits in-place.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">loaded_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;metadata&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="n">data_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;id2labels_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">),</span>
+                  <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">labels</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                                   <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;data_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span><span class="p">),</span>
+                         <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="n">memory_map</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;split&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="s1">&#39;val&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;val&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">:</span>
+            <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;split&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">split</span><span class="p">][</span><span class="s1">&#39;X&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+                                                                                             <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
+            <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;Y&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;split&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">split</span><span class="p">][</span><span class="nb">sorted</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())]</span>
+            <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;split&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">split</span><span class="p">][[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+                                                             <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]]]</span>
+
+        <span class="k">if</span> <span class="n">subset_frac</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;random_seed&#39;</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">:</span>
+                <span class="n">data_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">][</span><span class="n">split</span><span class="p">])</span>
+                <span class="n">idxs</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">data_size</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">data_size</span><span class="o">*</span><span class="n">subset_frac</span><span class="p">),</span>
+                                  <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">idxs</span><span class="p">]]</span>
+                <span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;Y&quot;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;Y&quot;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">loaded_data</span><span class="p">[</span><span class="s2">&quot;Y&quot;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">idxs</span><span class="p">]]</span>
+                <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span> <span class="o">=</span> <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">idxs</span><span class="p">]]</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;word_embeds_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.npy&#39;</span><span class="p">)):</span>
+            <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;we&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;word_embeds_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.npy&#39;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;we&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;id2word_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;id2word_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">),</span>
+                      <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;id2word&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">loaded_data</span><span class="p">[</span><span class="s1">&#39;id2word&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">loaded_data</span></div>
+
+<div class="viewcode-block" id="DataHandler.get_vocab"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.get_vocab">[docs]</a>    <span class="k">def</span> <span class="nf">get_vocab</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the vocab from tokenized data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">embedding_dim</span> <span class="o">=</span> <span class="mi">300</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">][</span><span class="s1">&#39;train&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="s1">&#39;val&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">][</span><span class="s1">&#39;val&#39;</span><span class="p">]])</span>        
+        
+        <span class="c1"># find all unique tokens</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X</span><span class="p">:</span>
+            <span class="n">s1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+
+        <span class="n">vocab_len</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">s1</span><span class="p">))</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;random_seed&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">vocab_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span></div>
+
+<div class="viewcode-block" id="DataHandler.convert_y"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.convert_y">[docs]</a>    <span class="k">def</span> <span class="nf">convert_y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add task unknown labels to Y and map values to integers for inference.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            The data frame with the output, the ys, is modified in place by this function.</span>
+<span class="sd">            It maps the string values to ints for inference, i.e., C50 -&gt; 48 for the site task.</span>
+
+<span class="sd">        Note: If loading data separately from creating torch dataloaders,</span>
+<span class="sd">            this function should be called if you want ints and not strings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+        <span class="n">missing_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="s1">&#39;train&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span>
+                         <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;task_unks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+        <span class="k">if</span> <span class="n">missing_tasks</span> <span class="o">!=</span> <span class="p">[]:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;the tasks </span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_tasks</span><span class="p">)</span><span class="si">}</span><span class="s1"> are missing from&#39;</span> <span class="o">+</span>
+                                         <span class="s1">&#39;task_unks in the the model_args.yml file&#39;</span><span class="p">)</span>
+        <span class="n">known_labels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">label2id</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">known_labels</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;task_unks&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known_labels</span><span class="p">[</span><span class="n">task</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;for task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1"> the task_unks &#39;</span> <span class="o">+</span>
+                                            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s2">&quot;task_unks&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="si">}</span><span class="s1"> &#39;</span> <span class="o">+</span>
+                                            <span class="s1">&#39;is not in the mapped labels&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">label2id</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">label_dict</span> <span class="o">=</span> <span class="n">LabelDict</span><span class="p">(</span><span class="n">label2id</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;task_unks&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">][</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">label_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataHandler.load_weights"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.load_weights">[docs]</a>    <span class="k">def</span> <span class="nf">load_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads class weights from pickle file or dict in model_args file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fold (int): Data fold to be loaded </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Class weights cannot be used with dac or ntask&quot;</span><span class="p">)</span>
+
+        <span class="n">data_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;id2labels_fold&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">),</span>
+                  <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">id2label</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">labels</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                           <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+		
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f_in</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Class weights path does not exist.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Class weights must be dict, point to relevant .pickle file, or be None.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># check that all tasks have class weight</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">id2label</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Class weights for multi-task is not yet implemented.&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Class weights for task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1"> not specified &#39;</span> <span class="o">+</span>
+                                                <span class="sa">f</span><span class="s1">&#39;For unweighted classes specify as &quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">: &#39;</span> <span class="o">+</span>
+                                                <span class="sa">f</span><span class="s1">&#39;None&quot; in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s2">&quot;train_kwargs&quot;</span><span class="p">][</span><span class="s2">&quot;class_weights&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">:</span>
+                <span class="c1"># if there is only a single task, weights may be none</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s1">&#39;Weights for single task must be a list or None.&#39;</span><span class="p">)</span>
+
+                <span class="c1"># if there are multiple tasks, weights should be lists.</span>
+                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s1">&#39;Weights for multiple task must be lists.&#39;</span><span class="p">)</span>
+
+                <span class="c1"># check that all class weight lists provided are the right length</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">n_weights</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">n_weights</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">id2label</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Number of weights must be equal to the &quot;</span> <span class="o">+</span>
+                                                    <span class="s2">&quot;number of classes in each task. Task &quot;</span> <span class="o">+</span>
+                                                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> should have </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">id2label</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="si">}</span><span class="s2"> values&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataHandler.make_torch_dataloaders"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.make_torch_dataloaders">[docs]</a>    <span class="k">def</span> <span class="nf">make_torch_dataloaders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">switch_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                               <span class="n">reproducible</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                               <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create torch DataLoader classes for training module.</span>
+
+<span class="sd">        Returns a dictionary of PyTorch DataLoaders (train, val, test) for the training module.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            unk_tok (int): Token to convert unknown words to.</span>
+<span class="sd">            vocab_size (int): Number of words in the vocabulary.</span>
+<span class="sd">            switch_rate (float): Proportion of words in each document to randomly flip.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">reproducible</span><span class="p">:</span>
+            <span class="n">gen</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">()</span>
+            <span class="n">gen</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+            <span class="n">worker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed_worker</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">worker</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">gen</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">loaders</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">vocab_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">unk_tok</span> <span class="o">=</span> <span class="n">vocab_size</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="c1"># num multiprocessing workers for DataLoaders</span>
+        <span class="n">n_wkrs</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Num workers: </span><span class="si">{</span><span class="n">n_wkrs</span><span class="si">}</span><span class="s2">, reproducible: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;reproducible&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># maps labels to ints, eg, C50 -&gt; &lt;some int&gt;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convert_y</span><span class="p">()</span>
+
+        <span class="n">train_data</span> <span class="o">=</span> <span class="n">PathReports</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">][</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="s1">&#39;train&#39;</span><span class="p">],</span>
+                                 <span class="n">tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">],</span>
+                                 <span class="n">label_encoders</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">],</span>
+                                 <span class="n">max_len</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">],</span>
+                                 <span class="n">transform</span><span class="o">=</span><span class="n">AddNoise</span><span class="p">(</span><span class="n">unk_tok</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">],</span>
+                                                    <span class="n">vocab_size</span><span class="p">,</span>
+                                                    <span class="n">switch_rate</span><span class="p">,</span>
+                                                    <span class="n">seed</span>
+                                                    <span class="p">)</span>
+                                 <span class="p">)</span>
+        <span class="n">loaders</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span>
+                                      <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">],</span>
+                                      <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="n">n_wkrs</span><span class="p">,</span>
+                                      <span class="n">worker_init_fn</span><span class="o">=</span><span class="n">worker</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">gen</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;val&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">:</span>
+            <span class="n">val_data</span> <span class="o">=</span> <span class="n">PathReports</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">][</span><span class="s1">&#39;val&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="s1">&#39;val&#39;</span><span class="p">],</span>
+                                   <span class="n">tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">],</span>
+                                   <span class="n">label_encoders</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">],</span>
+                                   <span class="n">max_len</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">],</span>
+                                   <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+            <span class="n">loaders</span><span class="p">[</span><span class="s1">&#39;val&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">val_data</span><span class="p">,</span>
+                                        <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">],</span>
+                                        <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="n">n_wkrs</span><span class="p">,</span>
+                                        <span class="n">worker_init_fn</span><span class="o">=</span><span class="n">worker</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">gen</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">val_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_size</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="s1">&#39;test&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">:</span>
+            <span class="n">test_data</span> <span class="o">=</span> <span class="n">PathReports</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">][</span><span class="s1">&#39;test&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="s1">&#39;test&#39;</span><span class="p">],</span>
+                                    <span class="n">tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">],</span>
+                                    <span class="n">label_encoders</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">],</span>
+                                    <span class="n">max_len</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;doc_max_len&#39;</span><span class="p">],</span>
+                                    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+            <span class="n">loaders</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span>
+                                         <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">],</span>
+                                         <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="n">n_wkrs</span><span class="p">,</span>
+                                         <span class="n">worker_init_fn</span><span class="o">=</span><span class="n">worker</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">gen</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">train_size</span><span class="si">}</span><span class="s2"> validate on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">val_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loaders</span></div>
+
+<div class="viewcode-block" id="DataHandler.make_grouped_cases"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.make_grouped_cases">[docs]</a>    <span class="k">def</span> <span class="nf">make_grouped_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc_embeds</span><span class="p">,</span><span class="n">clc_args</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Created GroupedCases class for torch DataLoaders.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">{</span><span class="n">split</span><span class="p">:</span> <span class="n">GroupedCases</span><span class="p">(</span><span class="n">doc_embeds</span><span class="p">[</span><span class="n">split</span><span class="p">],</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">],</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">],</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">],</span>
+                                        <span class="n">device</span><span class="p">,</span>
+                                        <span class="n">exclude_single</span><span class="o">=</span><span class="n">clc_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;exclude_single&#39;</span><span class="p">],</span>
+                                        <span class="n">shuffle_data_order</span><span class="o">=</span><span class="n">clc_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;shuffle_case_order&#39;</span><span class="p">])</span>
+                                        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">grouped_cases</span> <span class="o">=</span> <span class="p">{</span><span class="n">split</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">datasets</span><span class="p">[</span><span class="n">split</span><span class="p">],</span>
+                                                <span class="n">clc_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">],</span>
+                                                <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">splits</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="DataHandler.seed_worker"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.seed_worker">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">seed_worker</span><span class="p">(</span><span class="n">worker_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set random seed for everything.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">worker_seed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">initial_seed</span><span class="p">()</span> <span class="o">%</span> <span class="mi">2</span><span class="o">**</span><span class="mi">32</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">worker_seed</span><span class="p">)</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">worker_seed</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="AddNoise"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.AddNoise">[docs]</a><span class="k">class</span> <span class="nc">AddNoise</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Optional transform object for the PathReports dataset.</span>
+
+<span class="sd">    This transform adds a random amount of padding at the front of the document using `unk_token` to reduce HiSAN overfitting. It also randomly replaces words with randomly selected other words to reduce overfitting.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        unk_token (int): Integer mapping for unknown tokens.</span>
+<span class="sd">        max_pad_len (int): Maximum amount of padding at the front of the document.</span>
+<span class="sd">        vocab_size (int): Size of the vocabulary matrix or the maximum integer value to use when randomly replacing word tokens.</span>
+<span class="sd">        switch_rate (float, default: 0.1): Percentage of words to randomly replace with random tokens.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unk_token</span><span class="p">,</span> <span class="n">max_pad_len</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">switch_rate</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unk_token</span> <span class="o">=</span> <span class="n">unk_token</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_pad_len</span> <span class="o">=</span> <span class="n">max_pad_len</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vocab_size</span> <span class="o">=</span> <span class="n">vocab_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">switch_rate</span> <span class="o">=</span> <span class="n">switch_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="n">pad_amt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_pad_len</span><span class="p">)</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unk_token</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pad_amt</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="n">r_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="p">)),</span> <span class="n">size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">switch_rate</span><span class="p">),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">r_voc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">r_idx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="n">doc</span><span class="p">[</span><span class="n">r_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">r_voc</span>
+        <span class="k">return</span> <span class="n">doc</span></div>
+
+
+<div class="viewcode-block" id="PathReports"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.PathReports">[docs]</a><span class="k">class</span> <span class="nc">PathReports</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">label_encoders</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">multilabel</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Torch DataLoader class for cancer path reports from generate_data.py.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X (pandas.DataFrame): DataFrame of tokenized path report data. Entries are numpy arrays generated from generate_data.py.</span>
+<span class="sd">            Y (pd.DataFrame): DataFrame of ground truth values.</span>
+<span class="sd">            tasks (list[str]): List of tasks to generate labels for.</span>
+<span class="sd">            label_encoders (dict): Dictionary of task-to-label encoders to convert raw labels into integers.</span>
+<span class="sd">            max_len (int, default: 3000): Maximum length for a document. Should match the value in data_args.json. Longer documents will be cut, and shorter documents will be zero-padded.</span>
+<span class="sd">            transform (object, default: None): Optional transform to apply to document tensors.</span>
+
+<span class="sd">        Outputs per batch:</span>
+<span class="sd">            dict[str, torch.Tensor]: A sample dictionary with the following keys and values:</span>
+<span class="sd">                - &#39;X&#39;: torch.Tensor (int) [max_len]: Document converted to integer word-mappings, zero-padded to max_len.</span>
+<span class="sd">                - &#39;y_%s % task&#39;: torch.Tensor (int) [] or torch.Tensor (int) [num_classes]: Integer label for a given task if label encoders are used. One-hot vectors for a given task if label binarizers are used.</span>
+<span class="sd">                - &#39;index&#39;: int: DataFrame index to match up with metadata stored in the original DataFrame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ys</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ys_onehot</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label_encoder</span> <span class="o">=</span> <span class="n">label_encoders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="n">tasks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_len</span> <span class="o">=</span> <span class="n">max_len</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span> <span class="o">=</span> <span class="n">multilabel</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+            <span class="n">le</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_encoder</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="c1"># ignore abstention class if it exists</span>
+            <span class="k">if</span> <span class="sa">f</span><span class="s1">&#39;abs_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">le</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">le</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;abs_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_classes</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">le</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                <span class="n">y_onehot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">le</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+                <span class="n">y_onehot</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)),</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ys_onehot</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_onehot</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">iat</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">:</span>
+            <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">max_len</span><span class="p">]</span>
+        <span class="n">array</span><span class="p">[:</span><span class="n">doc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">doc</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;X&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">),</span>
+                  <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">idx</span><span class="p">]}</span>  <span class="c1"># indexing allows us to keep track of the metadata associated with each X</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ys_onehot</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">sample</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ys</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">sample</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sample</span></div>
+
+<div class="viewcode-block" id="GroupedCases"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.GroupedCases">[docs]</a><span class="k">class</span> <span class="nc">GroupedCases</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class for grouping cases for clc.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">doc_embeds</span><span class="p">,</span>
+                 <span class="n">Y</span><span class="p">,</span>
+                 <span class="n">tasks</span><span class="p">,</span>
+                 <span class="n">metadata</span><span class="p">,</span>
+                 <span class="n">device</span><span class="p">,</span>
+                 <span class="n">exclude_single</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">shuffle_data_order</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create grouped cases for torch DataLoaders.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            doc_embeds (np.ndarray): Document embeddings from a trained model.</span>
+<span class="sd">            Y (dict): Dictionary of integer Y values, where keys are the splits.</span>
+<span class="sd">            tasks (list): List of tasks.</span>
+<span class="sd">            metadata (dict): Dictionary of model metadata.</span>
+<span class="sd">            device (torch.device): Device to use (either cuda or cpu).</span>
+<span class="sd">            exclude_single (bool, default: True): Whether to exclude single cases.</span>
+<span class="sd">            shuffle_case_order (bool, default: True): Whether to shuffle the order of cases.</span>
+<span class="sd">            split_by_tumor_id (bool, default: True): Whether to split the cases by tumorId.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.utils.data.DataLoader: A grouped DataLoader object.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embed_size</span> <span class="o">=</span> <span class="n">doc_embeds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="n">tasks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shuffle_data_order</span> <span class="o">=</span> <span class="n">shuffle_data_order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label_encoders</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># label_encoders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grouped_X</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grouped_y</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_idx</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;group&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_seq_len</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_array</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">max_seq_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_size</span><span class="p">),</span>
+                                    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_array</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">max_seq_len</span><span class="p">),</span>
+                                    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_array</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">max_seq_len</span><span class="p">),</span>
+                                      <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">exclude_single</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;group&#39;</span><span class="p">)</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">idxs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">doc_embeds</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+                <span class="n">idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">labels</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">grouped_X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">group</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">new_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idxs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">grouped_y</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grouped_X</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped_X</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">ys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grouped_y</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">idx</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shuffle_data_order</span><span class="p">:</span>
+            <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">shuffled</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">ys</span><span class="p">))</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">shuffled</span><span class="p">)</span>
+            <span class="n">seq</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">shuffled</span><span class="p">)</span>
+            <span class="n">seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+            <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_array</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_array</span><span class="p">[:]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_array</span><span class="p">[:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">_len</span> <span class="o">=</span> <span class="n">seq</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X_array</span><span class="p">[:</span><span class="n">_len</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">X_array</span><span class="p">}</span>  <span class="c1"># , &quot;index&quot;: self.X_array}</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">y_array</span><span class="p">[:</span><span class="n">_len</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">ys</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">sample</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_array</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_array</span><span class="p">[:</span><span class="n">_len</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_idx</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx_array</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">sample</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

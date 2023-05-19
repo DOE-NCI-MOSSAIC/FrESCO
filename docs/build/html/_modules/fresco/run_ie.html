@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.run_ie &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">fresco.run_ie</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for fresco.run_ie</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Top-level information extraction model building script using independent modules.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">fresco.validate</span> <span class="kn">import</span> <span class="n">exceptions</span>
+<span class="kn">from</span> <span class="nn">fresco.validate</span> <span class="kn">import</span> <span class="n">validate_params</span>
+<span class="kn">from</span> <span class="nn">fresco.data_loaders</span> <span class="kn">import</span> <span class="n">data_utils</span>
+<span class="kn">from</span> <span class="nn">fresco.abstention</span> <span class="kn">import</span> <span class="n">abstention</span>
+<span class="kn">from</span> <span class="nn">fresco.models</span> <span class="kn">import</span> <span class="n">mthisan</span><span class="p">,</span> <span class="n">mtcnn</span>
+<span class="kn">from</span> <span class="nn">fresco.training</span> <span class="kn">import</span> <span class="n">training</span>
+<span class="kn">from</span> <span class="nn">fresco.predict</span> <span class="kn">import</span> <span class="n">predictions</span>
+
+
+<div class="viewcode-block" id="create_model"><a class="viewcode-back" href="../../fresco.html#fresco.run_ie.create_model">[docs]</a><span class="k">def</span> <span class="nf">create_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">dw</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Define a model based on model_args.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        params (dict): Dictionary of model_args file.</span>
+<span class="sd">        dw (DataHandler): DataHandler class object.</span>
+<span class="sd">        device (torch.device): Torch device, either &#39;cpu&#39; or &#39;cuda&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mthisan&#39;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">mthisan</span><span class="o">.</span><span class="n">MTHiSAN</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">],</span>
+                                <span class="n">dw</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">])</span>
+
+    <span class="k">elif</span> <span class="n">params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mtcnn&#39;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">mtcnn</span><span class="o">.</span><span class="n">MTCNN</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">],</span>
+                            <span class="n">dw</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span>
+                            <span class="o">**</span><span class="n">params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTCNN_kwargs&#39;</span><span class="p">])</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">DataParallel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="load_model"><a class="viewcode-back" href="../../fresco.html#fresco.run_ie.load_model">[docs]</a><span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dw</span><span class="p">,</span> <span class="n">valid_params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a pretrained model from disk.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_path (str): Path to the saved model obtained from command line args.</span>
+<span class="sd">        device (torch.device): Torch device, either &#39;cuda&#39; or &#39;cpu&#39;, set in the calling function.</span>
+<span class="sd">        dw (DataHandler): DataHandler class instance for wrangling data and checking metadata.</span>
+<span class="sd">        valid_params (ValidateParams): ValidateParams class instance with model_args dict.</span>
+
+<span class="sd">    Post-condition:</span>
+<span class="sd">        The saved model is loaded and set to eval() mode.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data_path</span> <span class="o">=</span> <span class="n">dw</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_path</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading trained model from </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;the model at </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s1"> does not exist.&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;module.&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">):</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="n">mismatches</span> <span class="o">=</span> <span class="p">[</span><span class="n">mod</span> <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="p">[</span><span class="s1">&#39;metadata_package&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">dw</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">][</span><span class="n">mod</span><span class="p">]</span> <span class="o">!=</span> <span class="n">model_dict</span><span class="p">[</span><span class="s1">&#39;metadata_package&#39;</span><span class="p">][</span><span class="n">mod</span><span class="p">]]</span>
+
+    <span class="c1"># check to see if the stored package matches the expected one</span>
+    <span class="c1"># what is this?</span>
+    <span class="c1"># package[&#39;match&#39;] = len(mismatches)==0</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mismatches</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;metadata_package.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">jd</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">model_dict</span><span class="p">[</span><span class="s1">&#39;metadata_package&#39;</span><span class="p">],</span> <span class="n">jd</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;the package(s) </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mismatches</span><span class="p">)</span><span class="si">}</span><span class="s1"> does not match &#39;</span> <span class="o">+</span>
+                                        <span class="sa">f</span><span class="s1">&#39;the generated data in </span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s1">.&#39;</span> <span class="o">+</span>
+                                         <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">The needed recreation info is in metadata_package.json&#39;</span><span class="p">)</span>
+    <span class="c1"># Load Model</span>
+    <span class="k">if</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mthisan&#39;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">mthisan</span><span class="o">.</span><span class="n">MTHiSAN</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">],</span>
+                                <span class="n">dw</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">])</span>
+
+    <span class="k">elif</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mtcnn&#39;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">mtcnn</span><span class="o">.</span><span class="n">MTCNN</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">],</span>
+                            <span class="n">dw</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span>
+                            <span class="o">**</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTHiSAN_kwargs&#39;</span><span class="p">])</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">DataParallel</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">model_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">!=</span><span class="s1">&#39;metadata_package&#39;</span><span class="p">}</span>
+    <span class="c1"># model_dict = {k.replace(&#39;module.&#39;,&#39;&#39;):v for k,v in model_dict.items()}</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">model_dict</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;model_loaded&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="save_full_model"><a class="viewcode-back" href="../../fresco.html#fresco.run_ie.save_full_model">[docs]</a><span class="k">def</span> <span class="nf">save_full_model</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="n">save_path</span><span class="p">,</span> <span class="n">packages</span><span class="p">,</span> <span class="n">fold</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save trained model with package info metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># save_path = save_path + f&quot;_fold{fold}.h5&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;savedmodels/&#39;</span> <span class="o">+</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">)</span>
+    <span class="n">savename</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">_fold</span><span class="si">{</span><span class="n">fold</span><span class="si">}</span><span class="s2">.h5&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span>
+    <span class="n">model</span><span class="p">[</span><span class="s1">&#39;metadata_package&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">packages</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">savename</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Full model file has been saved at </span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="run_ie"><a class="viewcode-back" href="../../fresco.html#fresco.run_ie.run_ie">[docs]</a><span class="k">def</span> <span class="nf">run_ie</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="c1"># 1. validate model/data args</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Validating kwargs in model_args.yml file&quot;</span><span class="p">)</span>
+    <span class="n">data_source</span> <span class="o">=</span> <span class="s1">&#39;pre-generated&#39;</span>
+
+    <span class="n">valid_params</span> <span class="o">=</span> <span class="n">validate_params</span><span class="o">.</span><span class="n">ValidateParams</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_source</span><span class="o">=</span><span class="n">data_source</span><span class="p">)</span>
+
+    <span class="n">valid_params</span><span class="o">.</span><span class="n">check_data_train_args</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mthisan&#39;</span><span class="p">:</span>
+        <span class="n">valid_params</span><span class="o">.</span><span class="n">hisan_arg_check</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;mtcnn&#39;</span><span class="p">:</span>
+        <span class="n">valid_params</span><span class="o">.</span><span class="n">mtcnn_arg_check</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]:</span>
+        <span class="n">valid_params</span><span class="o">.</span><span class="n">check_abstain_args</span><span class="p">()</span>
+
+    <span class="n">valid_params</span><span class="o">.</span><span class="n">check_data_files</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;reproducible&#39;</span><span class="p">]:</span>
+        <span class="n">seed</span> <span class="o">=</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;random_seed&#39;</span><span class="p">]</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">manual_seed_all</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># 2. load data</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading data and creating DataLoaders&quot;</span><span class="p">)</span>
+    <span class="n">dw</span> <span class="o">=</span> <span class="n">data_utils</span><span class="o">.</span><span class="n">DataHandler</span><span class="p">(</span><span class="n">data_source</span><span class="p">,</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">)</span>
+    <span class="n">dw</span><span class="o">.</span><span class="n">load_folds</span><span class="p">()</span>
+
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]:</span>
+        <span class="n">dac</span> <span class="o">=</span> <span class="n">abstention</span><span class="o">.</span><span class="n">AbstainingClassifier</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="c1"># modifies n_classes and id2label dict for abstention/ntask</span>
+        <span class="n">dac</span><span class="o">.</span><span class="n">add_abstention_classes</span><span class="p">(</span><span class="n">dw</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Running with:&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;: &quot;</span><span class="p">,</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dac</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">data_loaders</span> <span class="o">=</span> <span class="n">dw</span><span class="o">.</span><span class="n">make_torch_dataloaders</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;add_noise&#39;</span><span class="p">],</span>
+                                             <span class="n">reproducible</span><span class="o">=</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;reproducible&#39;</span><span class="p">],</span>
+                                             <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># 3. create a model</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Defining a model&quot;</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">(</span><span class="n">valid_params</span><span class="p">,</span> <span class="n">dw</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="c1"># 4. train new model</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating model trainer&quot;</span><span class="p">)</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;batch_per_gpu&#39;</span><span class="p">]</span>
+
+    <span class="n">trainer</span> <span class="o">=</span> <span class="n">training</span><span class="o">.</span><span class="n">ModelTrainer</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span>
+                                    <span class="n">model</span><span class="p">,</span>
+                                    <span class="n">dw</span><span class="p">,</span>
+                                    <span class="n">class_weights</span><span class="o">=</span><span class="n">dw</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span>
+                                    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training a </span><span class="si">{</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> dac model with &quot;</span> <span class="o">+</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2"> device</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">trainer</span><span class="o">.</span><span class="n">fit_model</span><span class="p">(</span><span class="n">data_loaders</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">val_loader</span><span class="o">=</span><span class="n">data_loaders</span><span class="p">[</span><span class="s1">&#39;val&#39;</span><span class="p">],</span> <span class="n">dac</span><span class="o">=</span><span class="n">dac</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training a </span><span class="si">{</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;model_type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> model with &quot;</span> <span class="o">+</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2"> device</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">trainer</span><span class="o">.</span><span class="n">fit_model</span><span class="p">(</span><span class="n">data_loaders</span><span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">],</span> <span class="n">val_loader</span><span class="o">=</span><span class="n">data_loaders</span><span class="p">[</span><span class="s1">&#39;val&#39;</span><span class="p">])</span>
+
+    <span class="c1"># 5. score predictions from pretrained model or model just trained</span>
+    <span class="n">evaluator</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">ScoreModel</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span> <span class="n">data_loaders</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+
+    <span class="c1"># Only need one of 5a, 5b, or 5c, depending on requirements</span>
+    <span class="c1"># 5a. score a model</span>
+    <span class="n">evaluator</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="n">dac</span><span class="p">)</span>
+
+    <span class="c1"># 5b. make predictions</span>
+    <span class="n">evaluator</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">ScoreModel</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span> <span class="n">data_loaders</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="n">evaluator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">])</span>
+
+    <span class="c1"># 5c. score and predict</span>
+    <span class="n">evaluator</span> <span class="o">=</span> <span class="n">predictions</span><span class="o">.</span><span class="n">ScoreModel</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span> <span class="n">data_loaders</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_model</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">],</span> <span class="n">dac</span><span class="o">=</span><span class="n">dac</span><span class="p">,</span> <span class="n">save_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># this is the default args filename and path</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">trainer</span><span class="o">.</span><span class="n">savepath</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;model_args_</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_out</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span> <span class="n">f_out</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">save_full_model</span><span class="p">(</span><span class="n">valid_params</span><span class="o">.</span><span class="n">model_args</span><span class="p">,</span>
+                        <span class="n">trainer</span><span class="o">.</span><span class="n">savename</span><span class="p">,</span>
+                        <span class="n">dw</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;packages&#39;</span><span class="p">],</span>
+                        <span class="n">dw</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;fold_number&#39;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../fresco.html#fresco.run_ie.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\n</span><span class="s2">Not intended to be run as stand alone script.</span>
+<span class="s2">          Run create_model.py to train a new model.</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
