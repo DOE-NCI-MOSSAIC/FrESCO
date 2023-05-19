@@ -22,7 +22,9 @@ from fresco.validate import exceptions
 
 
 class LabelDict(dict):
-    """Create dict subclass for correct behaviour when mapping task unks."""
+    """
+    Create dict subclass for correct behaviour when mapping task unks.
+    """
     def __init__(self, data, missing):
         super().__init__(data)
         self.data = data
@@ -34,22 +36,23 @@ class LabelDict(dict):
         return self.data[key]
 
     def __missing__(self, key):
-        """Assigns all missing keys to unknown in the label2id mapping."""
+        """
+        Assigns all missing keys to unknown in the label2id mapping.
+        """
         return self.data[self.missing]
 
 
 class DataHandler():
-    """Class for loading data.
-
-        Attributes:
-            data_source - str: defines how data was generated, needs to be
-                'pre-generated', 'pipeline', or 'official' (not implemented)
-            model_args - dict: keywords necessary to load data, build, and train a model_args
-
-        Note: the present implementation is only for 1 fold. We presently cannot
-        generate more than one fold of data.
-
     """
+    Class for loading data.
+
+    Attributes:
+        data_source (str): Defines how data was generated. Needs to be 'pre-generated', 'pipeline', or 'official' (not implemented).
+        model_args (dict): Keywords necessary to load data, build, and train a model_args.
+
+    Note: The present implementation is only for 1 fold. We presently cannot generate more than one fold of data.
+    """
+
     def __init__(self, data_source: str, model_args: dict, clc_flag: bool = False):
         self.data_source = data_source
         self.model_args = model_args
@@ -75,18 +78,18 @@ class DataHandler():
             self.grouped_cases = {}
 
     def load_folds(self, fold=None, subset_frac=None):
-        """Load data for each fold in the dataset.
+        """
+        Load data for each fold in the dataset.
 
-           Parameters:
-               fold: integer number of the fold to load
-               subset_frac: float val for proporiton to load
+        Parameters:
+            fold (int): Integer number of the fold to load.
+            subset_frac (float): Float value for proportion to load.
 
-           Pre-condition: self.__init__called and model_args is not None
+        Pre-condition: __init__ called and model_args is not None.
 
-           Post-condition: class attributes populated
+        Post-condition: Class attributes populated.
 
-           Case level context model will load fold 0 by default, see run_clc.py line 225.
-
+        Note: Case level context model will load fold 0 by default. See run_clc.py line 225.
         """
 
         data_loader = self.load_from_saved
@@ -128,15 +131,16 @@ class DataHandler():
                             t in self.tasks]
 
     def load_from_saved(self, fold: int, subset_frac: float = None) -> dict:
-        """Load data files.
-
-            Arguments: fold - int: fold number, should always be 0 for now
-
-            Post-condition:
-                Modifies self.splits in-place
-
-
         """
+        Load data files.
+
+        Arguments:
+            fold (int): Fold number. Should always be 0 for now.
+
+        Post-condition:
+            Modifies self.splits in-place.
+        """
+
         loaded_data = {'metadata': {}, "X": {}, "Y": {}}
         data_path = self.model_args['data_kwargs']['data_path']
 
@@ -192,7 +196,9 @@ class DataHandler():
         return loaded_data
 
     def get_vocab(self):
-        """Get the vocab from tokenized data."""
+        """
+        Get the vocab from tokenized data.
+        """
         
         embedding_dim = 300
 
@@ -212,17 +218,17 @@ class DataHandler():
         self.inference_data['word_embedding'] = rng.standard_normal(size=(vocab_len + 1, embedding_dim), dtype=np.float32) * 0.1
 
     def convert_y(self):
-        """Add task unknown labels to Y and map values to integers for inference.
-
-            Post-condition:
-                The data frame with the output, the ys, is modified in place by this function.
-                It maps the string values to ints for inference, ie C50 -> 48 for the site task.
-
-            Note: If loading data separate from creating torch dataloaders,
-                this function should be called if you want ints and not strings.
-
-
         """
+        Add task unknown labels to Y and map values to integers for inference.
+
+        Post-condition:
+            The data frame with the output, the ys, is modified in place by this function.
+            It maps the string values to ints for inference, i.e., C50 -> 48 for the site task.
+
+        Note: If loading data separately from creating torch dataloaders,
+            this function should be called if you want ints and not strings.
+        """
+
 
         missing_tasks = [v for v in self.inference_data['y']['train'].columns if
                          v not in self.model_args['task_unks'].keys()]
@@ -247,13 +253,14 @@ class DataHandler():
                 self.inference_data['y'][split][task] = self.inference_data['y'][split][task].map(label_dict)
 
     def load_weights(self, fold):
-        """Load class weights.
+        """
+        Loads class weights from pickle file or dict in model_args file.
 
-            Args: fold, as int - which data fold are we loading?
-
-            Loads class weights from pickle file or dict in model_args file.
+        Args:
+            fold (int): Data fold to be loaded 
 
         """
+
         if (self.model_args['train_kwargs']['class_weights'] is not None) and self.model_args['abstain_kwargs']['abstain_flag']:
             raise exceptions.ParamError("Class weights cannot be used with dac or ntask")
 
@@ -312,15 +319,15 @@ class DataHandler():
     def make_torch_dataloaders(self, switch_rate: float,
                                reproducible: bool = False,
                                seed: int = None) -> dict:
-        """Create torch DataLoader classes for training module.
+        """
+        Create torch DataLoader classes for training module.
 
-            Returns dict of pytorch DataLoaders (train, val, test) for training module.
+        Returns a dictionary of PyTorch DataLoaders (train, val, test) for the training module.
 
-        Params:
-            unk_tok - int: token to convert unknown to
-            vocab_size - int: number of words in the vocab
-            switch_rate - float: proporiton of words in each doc to radomly flip
-
+        Args:
+            unk_tok (int): Token to convert unknown words to.
+            vocab_size (int): Number of words in the vocabulary.
+            switch_rate (float): Proportion of words in each document to randomly flip.
         """
         if reproducible:
             gen = torch.Generator()
@@ -392,7 +399,9 @@ class DataHandler():
         return loaders
 
     def make_grouped_cases(self, doc_embeds,clc_args, device):
-        """Created GroupedCases class for torch DataLoaders."""
+        """
+        Created GroupedCases class for torch DataLoaders.
+        """
 
         datasets = {split: GroupedCases(doc_embeds[split],
                                         self.inference_data['y'][split],
@@ -409,31 +418,26 @@ class DataHandler():
 
     @staticmethod
     def seed_worker(worker_id):
-        """Set random seed for everything."""
+        """
+        Set random seed for everything.
+        """
         worker_seed = torch.initial_seed() % 2**32
         np.random.seed(worker_seed)
         random.seed(worker_seed)
 
 
 class AddNoise():
-    '''
-    optional transform object for PathReports dataset
-      - adds random amount of padding at front of document using unk_tok to
-        reduce hisan overfitting
-      - randomly replaces words with randomly selected other words to reduce
-        overfitting
+    """
+    Optional transform object for the PathReports dataset.
 
-    parameters:
-      - unk_token: int
-        integer mapping for unknown tokens
-      - max_pad_len: int
-        maximum amount of padding at front of document
-      - vocab_size: int
-        size of vocabulary matrix or
-        maximum integer value to use when randomly replacing word tokens
-      - switch_rate: float (default: 0.1)
-        percentage of words to randomly replace with random tokens
-    '''
+    This transform adds a random amount of padding at the front of the document using `unk_token` to reduce HiSAN overfitting. It also randomly replaces words with randomly selected other words to reduce overfitting.
+
+    Args:
+        unk_token (int): Integer mapping for unknown tokens.
+        max_pad_len (int): Maximum amount of padding at the front of the document.
+        vocab_size (int): Size of the vocabulary matrix or the maximum integer value to use when randomly replacing word tokens.
+        switch_rate (float, default: 0.1): Percentage of words to randomly replace with random tokens.
+    """
 
     def __init__(self, unk_token, max_pad_len, vocab_size, switch_rate, seed=None):
         self.unk_token = unk_token
@@ -453,35 +457,23 @@ class AddNoise():
 
 
 class PathReports(Dataset):
-    '''
-    Torch dataloader class for cancer path reports from generate_data.py
+"""
+Torch DataLoader class for cancer path reports from generate_data.py.
 
-    parameters:
-      - X: pandas DataFrame of tokenized path report data, entries are
-            numpy array, generated from generate_data.py
-      - Y: pd.DataFrame
-            dataframe ground truth values
-      - tasks: list[string]
-        list of tasks to generate labels for
-      - label_encoders:
-        dict (task:label encoders) to convert raw labels into integers
-      - max_len: int (default: 3000)
-        maximum length for document, should match value in data_args.json
-        longer documents will be cut, shorter documents will be 0-padded
-      - transform: object (default: None)
-        optional transform to apply to document tensors
+    Parameters:
+        X (pandas.DataFrame): DataFrame of tokenized path report data. Entries are numpy arrays generated from generate_data.py.
+        Y (pd.DataFrame): DataFrame of ground truth values.
+        tasks (list[str]): List of tasks to generate labels for.
+        label_encoders (dict): Dictionary of task-to-label encoders to convert raw labels into integers.
+        max_len (int, default: 3000): Maximum length for a document. Should match the value in data_args.json. Longer documents will be cut, and shorter documents will be zero-padded.
+        transform (object, default: None): Optional transform to apply to document tensors.
 
-    outputs per batch:
-      - dict[str:torch.tensor]
-        sample dictionary with following keys/vals:
-          - 'X': torch.tensor (int) [max_len]
-            document converted to integer word-mappings, 0-padded to max_len
-          - 'y_%s % task': torch.tensor (int) [] or
-                           torch.tensor (int) [num_classes]
-            integer label for a given task if label encoders are used
-            one hot vectors for a given task if label binarizers are used
-            -'index': int of DataFrame index to match up with metadata stored in the original DataFrame
-    '''
+    Outputs per batch:
+        dict[str, torch.Tensor]: A sample dictionary with the following keys and values:
+            - 'X': torch.Tensor (int) [max_len]: Document converted to integer word-mappings, zero-padded to max_len.
+            - 'y_%s % task': torch.Tensor (int) [] or torch.Tensor (int) [num_classes]: Integer label for a given task if label encoders are used. One-hot vectors for a given task if label binarizers are used.
+            - 'index': int: DataFrame index to match up with metadata stored in the original DataFrame.
+    """
 
     def __init__(self, X, Y, tasks, label_encoders, max_len=3000, transform=None, multilabel=False):
 
@@ -531,20 +523,24 @@ class PathReports(Dataset):
         return sample
 
 class GroupedCases(Dataset):
-    """Create grouped cases for torch DataLoaders.
+    """
+    Create grouped cases for torch DataLoaders.
 
-        args:
-            doc_embeds - document embeddings from trained model as np.ndarray
-            Y - dict of integer Y values, keys are the splits
-            tasks - list of tasks
-            metadata - dict of model metadata
-            device - torch.device, either cuda or cpu
-            exclude_single - are we omitting sinlge cases, default is True
-            shuffle_case_order - shuffle cases, default is True
-            split_by_tumor_id - split the cases by tumorId, default is True
+    Args:
+        doc_embeds (np.ndarray): Document embeddings from a trained model.
+        Y (dict): Dictionary of integer Y values, where keys are the splits.
+        tasks (list): List of tasks.
+        metadata (dict): Dictionary of model metadata.
+        device (torch.device): Device to use (either cuda or cpu).
+        exclude_single (bool, default: True): Whether to exclude single cases.
+        shuffle_case_order (bool, default: True): Whether to shuffle the order of cases.
+        split_by_tumor_id (bool, default: True): Whether to split the cases by tumorId.
 
+    Returns:
+        torch.utils.data.DataLoader: A grouped DataLoader object.
 
     """
+
     def __init__(self,
                  doc_embeds,
                  Y,

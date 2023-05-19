@@ -20,14 +20,14 @@ from torch import nn
 
 class DacLoss(nn.Module):
     """
-        Custom loss class for the DAC.
+    Custom loss class for the DAC.
 
-        Args:
-            loss_fin: torch.nn.loss fun, either Cross Entropy or
-                Binary Cross Entropy (for multilabel)
-            multilabel: bool, multilabel problem?
-            alphas: torch tensor of alphas for the DAC
+    Args:
+        loss_fin (torch.nn.loss): Torch loss function, either Cross Entropy or Binary Cross Entropy (for multilabel).
+        multilabel (bool): Indicates if it is a multilabel problem.
+        alphas (torch.Tensor): Torch tensor of alphas for the DAC.
     """
+
     def __init__(self, loss_fun, multilabel, alphas):
         super().__init__()
         self.loss_fun = loss_fun
@@ -39,16 +39,16 @@ class DacLoss(nn.Module):
                 y_true: torch.tensor,
                 idx: int,
                 ntask_abs_prob: int = 1) -> torch.tensor:
-        """Compute DAC loss.
+        """
+        Compute DAC loss.
 
-        Params:
-            y_pred - torch.tensor: logits from model.forward()
-            y_true - torch.tensor: integer values of ground truth
-            idx: int index associated with a task
-            ntask_abs_prob: probability of ntask abstaining on the document
+        Args:
+            y_pred (torch.Tensor): Logits from model.forward().
+            y_true (torch.Tensor): Integer values of ground truth.
+            idx (int): Index associated with a task.
+            ntask_abs_prob (float): Probability of ntask abstaining on the document.
 
-        Pre-condition: loss function defined in class constructor
-
+        Pre-condition: Loss function defined in class constructor.
         """
 
         eps = 1e-4
@@ -74,7 +74,9 @@ class DacLoss(nn.Module):
 
     @staticmethod
     def _log_sigmoid(x):
-        """Compute numerically stable log sigmoid function."""
+        """
+        Compute numerically stable log sigmoid function.
+        """
         x_max = torch.amax(x, keep_dim=True)
         if not x_max.isfinite():
             x_max = 0.0
@@ -86,13 +88,15 @@ class DacLoss(nn.Module):
 
 
 class AbstainingClassifier():
-    """Class for deep abastaining classifier.
-
-        Params:
-            id2label - dict : dict mapping int values to label values for each task
-            kw_args - dict: dictionary with necessary keywords for abstention
-            device - str: 'cuda' or 'cpu', set from model_suite.py
     """
+    Class for deep abstaining classifier.
+
+    Args:
+        id2label (dict): Dictionary mapping int values to label values for each task.
+        kw_args (dict): Dictionary with necessary keywords for abstention.
+        device (str): 'cuda' or 'cpu', set from model_suite.py.
+    """
+
     def __init__(self, kw_args: dict, device: torch.device, class_weights=None, clc: bool = False):
 
         self.tasks = kw_args['data_kwargs']['tasks']
@@ -152,19 +156,21 @@ class AbstainingClassifier():
         self.dac_loss = DacLoss(self.base_loss, self.multilabel, self.alphas)
 
     def add_abstention_classes(self, dw):
-        """Add abstention class, and ntask if enabled, to data wrangler attributes.
-
-            Params:
-                dw: dataHandler class
-
-            Post-condition:
-                dw.num_classes updated
-                dw.dict_maps['id2label'] updated with abstention classes.
-                self.abstain_labels populated
-                self.n_classes populated.
-
-            Must be called before creating PathReports class for DataLoaders.
         """
+        Add abstention class, and ntask if enabled, to data wrangler attributes.
+
+        Args:
+            dw (dataHandler): DataHandler class.
+
+        Post-condition:
+            dw.num_classes updated.
+            dw.dict_maps['id2label'] updated with abstention classes.
+            self.abstain_labels populated.
+            self.n_classes populated.
+
+        Must be called before creating PathReports class for DataLoaders.
+        """
+
         self.abstain_labels = {task: len(dw.dict_maps['id2label'][task].keys())
                                for task in self.tasks}
         self.n_classes = [len(dw.dict_maps['id2label'][t].keys())+1 for t in self.tasks]
@@ -183,29 +189,34 @@ class AbstainingClassifier():
                         y_true: torch.tensor,
                         idx: int,
                         ntask_abs_prob: int = 1) -> torch.tensor:
-        """Compute DAC loss.
-
-        Params:
-            y_pred - torch.tensor: logits from model.forward()
-            y_true - torch.tensor: integer values of ground truth
-            idx: int index associated with a task
-            ntask_abs_prob: probability of ntask abstaining on the document
-
-        Pre-condition: loss function defined in class constructor
-
         """
+        Compute DAC loss.
+
+        Args:
+            y_pred (torch.tensor): Logits from model.forward().
+            y_true (torch.tensor): Integer values of ground truth.
+            idx (int): Index associated with a task.
+            ntask_abs_prob (float): Probability of ntask abstaining on the document.
+
+        Pre-condition: Loss function defined in class constructor.
+        """
+
 
         loss = self.dac_loss(y_pred, y_true, idx, ntask_abs_prob)
         return torch.mean(loss)
 
     def compute_accuracy(self, y_true, y_pred):
-        """Compute abstain 0-1 accuracy and abstention rate.
-
-            y_true and y_preds are dicts with keys as tasks and vals as lists of tensors.
-
-            The attribute accuracy is cleared and repopulated within this function.
-
         """
+        Compute abstain 0-1 accuracy and abstention rate.
+
+        Args:
+            y_true (dict): Dictionary with keys as tasks and values as lists of tensors.
+            y_pred (dict): Dictionary with keys as tasks and values as lists of tensors.
+
+        Post-condition:
+            The attribute accuracy is cleared and repopulated within this function.
+        """
+
         pred_idxs = {}
         self.abs_rates.clear()
         # clear accuracy scores from prior epoch
@@ -227,13 +238,19 @@ class AbstainingClassifier():
         return pred_idxs
 
     def get_ntask_filter(self, ntask_abs_prob):
-        """Compute the ntask_mask.
+        """
+        Compute the ntask_mask.
 
-            Note: self.ntask_filter is set to [] at the start of each epoch.
+        Args:
+            ntask_abs_prob: float
+                Probability of abstaining on the entire document.
 
-            called in training.compute_loss, must be called prior to calling compute_accuracy
+        Note:
+            self.ntask_filter is set to [] at the start of each epoch.
+            This method is called in training.compute_loss and must be called prior to calling compute_accuracy.
 
         """
+
         # ntask 0-1
         _filter = np.rint(ntask_abs_prob.detach().tolist())
         # docs ntask is not ok with, ie, ones to abstain on
@@ -242,9 +259,14 @@ class AbstainingClassifier():
     def compute_ntask_accuracy(self, y_true: list, y_pred: list):
         """Compute ntask abstain 0-1 accuracy and abstention rate.
 
-            y_true and y_preds are dicts with keys as tasks and vals as lists of tensors.
+        Args:
+            y_true: list
+                List of ground truth values for each task.
+            y_pred: list
+                List of predicted values for each task.
 
         """
+
         # need to get the len once for all tasks
         tmp = self.tasks[0]
         self.ntask_acc = np.ones(len(y_true[tmp]))[self.ntask_filter]
@@ -266,9 +288,19 @@ class AbstainingClassifier():
         return (self.ntask_acc, self.ntask_abs_rate)
 
     def compute_abs_scores(self, y_true, y_pred, idx):
-        """Compute accuracy scores for a dac model.
+        """
+        Compute accuracy scores for a DAC model.
 
-            Not presently used. 11/8
+        Args:
+            y_true: torch.tensor
+                Ground truth values.
+            y_pred: torch.tensor
+                Predicted values.
+            idx: int
+                Index associated with a task.
+
+        Note:
+            This method is not presently used as of 11/8.
 
         """
 
@@ -284,17 +316,21 @@ class AbstainingClassifier():
         return abs_scores
 
     def modify_alphas(self, scores, additive=True):
-        """Modify abstention alpha values.
+        """
+        Modify abstention alpha values.
 
-            Params:
-                scores: dict of dicts, keys are tasks, sub-dict key val pairs are
-                    micros - list: micro accruacy score
-                    abs_rate - list: abstention rate for each task
+        Args:
+            scores: dict
+                A dictionary of dictionaries containing scores.
+                The keys are tasks, and the sub-dictionary contains the following key-value pairs:
+                - 'micros': list of micro accuracy scores
+                - 'abs_rate': list of abstention rates for each task
 
-            Post-condition:
+        Post-condition:
             self.alphas are modified in-place.
 
         """
+
         scale_factors = {task: None for task in self.tasks}
         stop_metrics = []
 
@@ -349,14 +385,16 @@ class AbstainingClassifier():
 
         return scale_factors, stop_metrics
 
-    def modify_ntask_alpha(self, additive=True):
-        """Modify ntask alpha value.
+    def modify_ntask_alpha(self, additive):
+        """
+        Modify ntask alpha value.
 
-            Params:
-                additive: bool, which type of scaling are we using?
+        Args:
+            additive: bool
+                Indicates the type of scaling being used.
 
-            Post-condition:
-                self.ntask_alpha modified in-place.
+        Post-condition:
+            self.ntask_alpha is modified in-place.
 
         """
 
@@ -406,11 +444,15 @@ class AbstainingClassifier():
         return new_scale, stop_val
 
     def check_abs_stop_metric(self, stop_metrics):
-        """Check if abstention stooping criteria is satisifed.
+        """
+        Check if abstention stopping criteria is satisfied.
 
-            The type of norm to use in the stopping critera is set the model_args file.
+        Args:
+            stop_metrics: dict
+                Dictionary containing the metrics used for the stopping criteria.
 
         """
+
         if self.stop_metric == 'max':
             stop_val = np.linalg.norm(stop_metrics, np.inf)
         else:  # l2 norm
@@ -419,7 +461,9 @@ class AbstainingClassifier():
 
     @staticmethod
     def write_abs_header(tasks):
-        """Write header for abstention stats output file."""
+        """
+        Write header for abstention stats output file.
+        """
         path = 'predictions/abs_stats.txt'
 
         with open(path, "w+", encoding='utf-8') as abs_file:
@@ -432,7 +476,9 @@ class AbstainingClassifier():
             abs_file.write("\n")
 
     def write_abs_stats(self, stop_metrics):
-        """Save abstention stats to output file."""
+        """
+        Save abstention stats to output file.
+        """
         path = 'predictions/abs_stats.txt'
         with open(path, 'a', encoding='utf-8') as abs_file:
             # write a single line with alphas, accuracy and abstention
@@ -451,7 +497,9 @@ class AbstainingClassifier():
             abs_file.write("\n")
 
     def print_abs_tune_header(self):
-        """Change output header based on tuning mode."""
+        """
+        Change output header based on tuning mode.
+        """
         if self.tune_mode == 'abs_acc':
             print((f"{'task':12s}, {'macro':>10s}, {'micro':>10s}, {'min_acc':>10s},  ") +
                   (f"{'abs_frac':>10s}, {'max_abs':>10s}, {'alpha':>9s}, ") +
@@ -467,7 +515,9 @@ class AbstainingClassifier():
 
     def print_abs_tune_stats(self, task, macro, micro, min_acc, abs_frac,
                              max_abs, alpha, scale_frac, stop_metric):
-        """Print output based on tuning mode."""
+        """
+        Print output based on tuning mode.
+        """
         if self.tune_mode == 'abs_acc':
             print((f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {min_acc:10.4f}, ") +
                   (f"{abs_frac:10.4f}, {max_abs:10.4f}, {alpha:10.4f},") +
@@ -481,10 +531,14 @@ class AbstainingClassifier():
 
     @staticmethod
     def print_abs_header():
-        """Set format output header line."""
+        """
+        Set format output header line.
+        """
         print(f"{'task':12s}, {'macro':>10s}, {'micro':>10s}, {'abs_frac':>10s}")
 
     @staticmethod
     def print_abs_stats(task, micro, macro, abs_frac):
-        """Pring abstention statis diring training."""
+        """
+        Pring abstention statis diring training.
+        """
         print(f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {abs_frac:10.4f}")

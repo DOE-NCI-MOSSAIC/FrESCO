@@ -18,14 +18,15 @@ import torchmetrics
 
 
 class ScoreModel():
-    """Class to score and make predictions from a trained model.
+    """
+    Class to score and make predictions from a trained model.
 
-        Params:
-            model_args: dict with model_keyword args, checked by caller.
-            data_loaders: dict of PathReports class with split( train, test, val) as keys to
-                score and predict on
-            model: torch model fo predictiong and scoring
-            device: torch device, either cpu or gpu, set in caller
+    Args:
+        model_args (dict): Dictionary with model-specific keyword arguments, checked by the caller.
+        data_loaders (dict): Dictionary of PathReports class with split (train, test, val) as keys to
+            score and predict on.
+        model (torch model): Torch model for prediction and scoring.
+        device (torch.device): Torch device (either cpu or gpu) set in the caller.
 
     """
     def __init__(self, model_args, data_loaders, model, device, savepath=None, clc_flag=False):
@@ -87,17 +88,19 @@ class ScoreModel():
         self.metrics = {}
 
     def score(self, data_loaders=None, split=None, dac=None, training_phase=False):
-        """Score a dataset in a PathReport class.
+        """
+        Score a dataset in a PathReport class.
 
-            data_loaders: dict of PathReport class which provides X, y, and index of he entry in the
+        Args:
+            data_loaders (dict): Dictionary of PathReport class which provides X, y, and index of the entry in the
                 original dataframe, to tie back to the metadata.
-                The keys are 'train', 'test', and 'val' (if provided)
-            split: string, one of 'train', 'test', or 'val' if wanting to score only a
-                specific split
-            training_phase - bool: sets model to train or eval mode
-            dac - Abstention class: deep abstaining classifier class
+                The keys are 'train', 'test', and 'val' (if provided).
+            split (str): String, one of 'train', 'test', or 'val' if wanting to score only a specific split.
+            training_phase (bool): Sets model to train or eval mode.
+            dac (Abstention class): Deep abstaining classifier class.
 
         """
+
         if data_loaders is not None:
             print(("Error: score function requires a dict with keys 'train', 'test', or 'split'") +
                   (" and values PathReport classes."))
@@ -135,19 +138,21 @@ class ScoreModel():
         return None
 
     def _score(self, data_loader, split, training_phase=False, dac=None):
-        """Score data_loader for validation.
+        """
+        Score data_loader for validation.
 
-            Args:
-            data_loader - PathReports class
-            split: str of data split, eg, train, test, val
-            training_phase - bool: sets model to train or eval mode
-            dac - Abstention class: deep abstaining classifier class
+        Args:
+            data_loader (PathReports class): PathReports class.
+            split (str): String of data split, e.g., train, test, val.
+            training_phase (bool): Sets model to train or eval mode.
+            dac (Abstention class): Deep abstaining classifier class.
 
-            Post condition:
-                self.val_preds and self.val_trues updated.
-                model set to train or eval depending on training_phase variable
+        Post-condition:
+            self.val_preds and self.val_trues updated.
+            Model set to train or eval depending on training_phase variable.
 
         """
+
         losses = []
 
         if self.ntask:
@@ -179,7 +184,9 @@ class ScoreModel():
         self.scores[f'{split}_loss'] = np.mean(losses)
 
     def compute_scores(self, dac=None):  # , y_preds, y_trues, logits):
-        """Compute metrics to evaluate a model."""
+        """
+        Compute metrics to evaluate a model.
+        """
 
         metrics = {}
         # per task metrics
@@ -230,7 +237,9 @@ class ScoreModel():
         return metrics
 
     def save_scores(self):
-        """Write scores (metrics), per task, to disk."""
+        """
+        Write scores (metrics), per task, to disk.
+        """
         now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         with open(self.savepath + f"_metrics_{now}.csv", "w", encoding='utf-8') as f_out:
             for split, loss in self.scores.items():
@@ -250,21 +259,20 @@ class ScoreModel():
                 data_loaders=None,
                 save_probs=False,
                 training_phase=False):
-        """Make predictions from a trained model and save to disk.
+        """
+        Make predictions from a trained model and save to disk.
 
-            Params:
-                id2label: dict mapping between integers and labels, ie, C50
-                data_loaders: PathReports class, with inputs, outputs, and indices in
-                    original dataFrame
-                save_probs: bool, save the final softmax layer to disk
-                training_phase: bool sets modelto train or eval
-                dac - Abstention class: deep abstaining classifier class
+        Args:
+            id2label (dict): Mapping between integers and labels, e.g., C50.
+            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.
+            save_probs (bool): Save the final softmax layer to disk.
+            training_phase (bool): Sets model to train or eval mode.
+            dac (Abstention class): Deep abstaining classifier class.
 
-            Postcondition:
-                model set to eval or train
+        Post-condition:
+            Model set to eval or train.
 
-            If data_loaders is None, we will score each split, train, test, and val, otherwise it
-            will just score one data_loader split.
+        If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.
         """
 
         if not isinstance(data_loaders, dict) and data_loaders is not None:
@@ -304,18 +312,18 @@ class ScoreModel():
         return None
 
     def _predict(self, data_loader, save_probs=False, training_phase=False):
-        """Make predictions on data_loader.
-
-            Params:
-                data_laders: PathReports class, with inputs, outputs, and indices in
-                    original dataFrame
-                save_probs: bool, save the final softmax layer to disk
-                training_phase: bool sets modelto train or eval
-
-            Postcondition:
-                model set to eval or train
-
         """
+        Make predictions on data_loader.
+
+        Args:
+            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.
+            save_probs (bool): Save the final softmax layer to disk.
+            training_phase (bool): Sets model to train or eval mode.
+
+        Post-condition:
+            Model set to eval or train.
+        """
+
         if training_phase:
             self.model.train()
         else:
@@ -340,14 +348,16 @@ class ScoreModel():
         return preds
 
     def preds_to_dataframe(self, preds: dict, id2label: dict):
-        """Save test set predictions as DataFrame.
+        """
+        Save test set predictions as DataFrame.
 
-            Params:
-                probs: dict with softmax scores as values and split as keys
-                metadata: DataFrame with recordDocId,... from generated data
-                id2label: dict with int -> str mappings, ie, 43 -> C50
+        Args:
+            probs (dict): Dictionary with softmax scores as values and split as keys.
+            metadata (DataFrame): DataFrame with recordDocId,... from generated data.
+            id2label (dict): Dictionary with int -> str mappings, i.e., 43 -> C50.
 
-            Returns: pd.DataFrame with metadata, predicted and true classes.
+        Returns:
+            pd.DataFrame: DataFrame with metadata, predicted, and true classes.
         """
 
         cols = {}
@@ -372,13 +382,15 @@ class ScoreModel():
     def probs_to_dataframe(self,
                            preds: dict,
                            id2label: dict):
-        """Create dataframe with softmax scores and metadata from generated data.
+        """
+        Create dataframe with softmax scores and metadata from generated data.
 
-            Params:
-                preds: dict with indices matching to original data and ground truth labels
-                id2label: dict with int -> str mappings, ie, 43 -> C50
+        Args:
+            preds (dict): Dictionary with indices matching to original data and ground truth labels.
+            id2label (dict): Dictionary with int -> str mappings, i.e., 43 -> C50.
 
-            Returns: pd.DataFrame with metadata and softmax scores
+        Returns:
+            pd.DataFrame: DataFrame with metadata and softmax scores.
         """
 
         cols = {}
@@ -411,24 +423,22 @@ class ScoreModel():
                        save_probs=False,
                        dac=None,
                        training_phase=False):
-        """Score and predict from trained model
-
-           Params:
-
-                id2label: dict mapping between integers and labels, ie, C50
-                data_laders: PathReports class, with inputs, outputs, and indices in
-                    original dataFrame
-                save_probs: bool, save the final softmax layer to disk
-                dac - Abstention class: deep abstaining classifier class
-                training_phase: bool sets modelto train or eval
-
-            Postcondition:
-                model set to eval or train
-
-            If data_loaders is None, we will score eahc split, train, test, and val, otherwise it
-            will just score one data_loader split.
-
         """
+        Score and predict from trained model.
+
+        Args:
+            id2label (dict): Dictionary mapping between integers and labels, i.e., C50.
+            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.
+            save_probs (bool): Whether to save the final softmax layer to disk.
+            dac (Abstention class): Deep abstaining classifier class.
+            training_phase (bool): Sets the model to train or eval mode.
+
+        Postcondition:
+            Model set to eval or train.
+
+        If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.
+        """
+
         if not isinstance(data_loaders, dict) and data_loaders is not None:
             print(("Error: predict function requires a dict with keys 'train', 'test', or 'split'") +
                   (" and values PathReport classes."))
@@ -480,22 +490,21 @@ class ScoreModel():
             all_probs.to_csv(self.savepath + f"_probs_{now}.csv", float_format='%7.6f', index=False)
 
     def pred_and_score(self, data_loader, split, save_probs=False, dac=None, training_phase=False):
-        """Make predictions and score from a trained model.
-
-            Params:
-                data_laders: PathReports class, with inputs, outputs, and indices in
-                    original dataFrame
-                split: string representation of twhich split to pred and score, ie train,
-                    test, or val
-                save_probs: bool, save the final softmax layer to disk
-                dac - Abstention class: deep abstaining classifier class
-                training_phase: bool sets modelto train or eval
-
-            Postcondition:
-                model set to eval or train
-                self.logits, self.y_preds, and self.y_trues populated
-
         """
+        Make predictions and score from a trained model.
+
+        Args:
+            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.
+            split (str): String representation of which split to predict and score, i.e., train, test, or val.
+            save_probs (bool): Whether to save the final softmax layer to disk.
+            dac (Abstention class): Deep abstaining classifier class.
+            training_phase (bool): Sets the model to train or eval mode.
+
+        Postcondition:
+            Model set to eval or train.
+            self.logits, self.y_preds, and self.y_trues populated.
+        """
+
         if training_phase:
             self.model.train()
         else:
@@ -557,17 +566,18 @@ class ScoreModel():
         return preds
 
     def get_ys(self, logits, y, idxs=None):
-        """Get ground truth and y_prediction lists.
+        """
+        Get ground truth and y_prediction lists.
 
         Args:
-            logits: torch device tensor from model.forward
-            y: torch device tensor of ground truth values
-            idxs: torch tensor on indices for clc predictions, optional
+            logits (torch.Tensor): Torch device tensor from model.forward.
+            y (torch.Tensor): Torch device tensor of ground truth values.
+            idxs (torch.Tensor): Torch tensor of indices for clc predictions (optional).
 
-            Post-condition:
-                self.y_trues and self.y_preds populated.
-
+        Post-condition:
+            self.y_trues and self.y_preds populated.
         """
+
         for i, task in enumerate(self.tasks):
             if self.clc:
                 self.logits[i].extend(logits[i][idxs].detach().cpu().numpy())
@@ -582,11 +592,11 @@ class ScoreModel():
                     self.y_trues[task].extend(y[task])
 
     def clear_pred_lists(self):
-        """Delete entries in the lists to avoid re-initialization.
+        """
+        Delete entries in the lists to avoid re-initialization.
 
-            Post-condition:
-                Entries in self.y_trues and self.y_preds deleted.
-
+        Post-condition:
+            Entries in self.y_trues and self.y_preds deleted.
         """
         for i, task in enumerate(self.tasks):
             del self.y_trues[task][:]
@@ -594,20 +604,22 @@ class ScoreModel():
             del self.logits[i][:]
 
     def compute_loss(self, batch, dac=None):
-        """Compute forward pass and loss function.
-
-            Args:, requires_grad=True)
-                batch - torch iterate from DataLoader
-                dac: deep abstaining classifier class
-                ntask_abs: float, probability of abstaining on entire document
-
-            Returns:
-                loss - torch.tensor(float)
-
-            Post-condition:
-                y_preds and y_trues populated
-                loss updated
         """
+        Compute forward pass and loss function.
+
+        Args:
+            batch (torch.Tensor): Torch iterate from DataLoader.
+            dac: Deep abstaining classifier class.
+            ntask_abs (float): Probability of abstaining on the entire document.
+
+        Returns:
+            loss (torch.Tensor): Torch tensor representing the loss.
+
+        Post-condition:
+            y_preds and y_trues populated.
+            Loss updated.
+        """
+
         X = batch["X"].to(self.device)
         y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks}
         with torch.cuda.amp.autocast(enabled=self.mixed_precision):
@@ -636,20 +648,22 @@ class ScoreModel():
         return loss / len(self.tasks), logits
 
     def compute_clc_loss(self, batch, dac=None):
-        """Compute forward pass and case level loss function.
-
-            Args:, requires_grad=True)
-                batch - torch iterate from DataLoader
-                dac: deep abstaining classifier class
-                ntask_abs: float, probability of abstaining on entire document
-
-            Returns:
-                loss - torch.tensor(float)
-
-            Post-condition:
-                y_preds and y_trues populated
-                loss updated
         """
+        Compute forward pass and case level loss function.
+
+        Args:
+            batch (torch.Tensor): Torch iterate from DataLoader.
+            dac: Deep abstaining classifier class.
+            ntask_abs (float): Probability of abstaining on the entire document.
+
+        Returns:
+            loss (torch.Tensor): Torch tensor representing the loss.
+
+        Post-condition:
+            y_preds and y_trues populated.
+            Loss updated.
+        """
+
         X = batch["X"].to(self.device)
         y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks}
         batch_len = batch['len'].to(self.device)
@@ -684,19 +698,22 @@ class ScoreModel():
         return loss / len(self.tasks), logits
 
     def get_preds(self, batch, preds, save_probs=False):
-        """Compute forward pass and predictions.
-
-            Args:, requires_grad=True)
-                batch - torch iterate from DataLoader
-                preds - dict of lists of predictions and ground truth values
-                save_probs: bool, save the final softmax layer to disk
-
-            Returns:
-               None
-
-            Post-condition:
-                y_preds and y_trues populated
         """
+        Compute forward pass and predictions.
+
+        Args:
+            batch (torch.Tensor): Torch iterate from DataLoader.
+            preds (dict): Dictionary of lists of predictions and ground truth values.
+            save_probs (bool): Flag to save the final softmax layer to disk.
+
+        Returns:
+            None
+
+        Post-condition:
+            y_preds and y_trues populated.
+        """
+        X = batch["X"].to(self.device)
+
         X = batch["X"].to(self.device)
         logits = self.model(X)
 
@@ -718,17 +735,16 @@ class ScoreModel():
         return preds
 
     def get_clc_preds(self, batch, preds, save_probs=False):
-        """Compute forward pass and predict from case level context.
-
-            Args:, requires_grad=True)
-                batch - torch iterate from DataLoader
-
-            Returns:
-                None
-
-            Post-condition:
-                preds keys 'y_preds' and 'y_trues' populated
         """
+        Compute forward pass and predict from case level context.
+
+        Args:
+            batch (torch.Tensor): Torch iterate from DataLoader.
+
+        Post-condition:
+            preds keys 'y_preds' and 'y_trues' populated.
+        """
+
         X = batch["X"].to(self.device)
         y = {task: batch[f"y_{task}"] for task in self.tasks}
         batch_len = batch['len'].to(self.device)

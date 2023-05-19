@@ -21,17 +21,18 @@ from fresco.predict import predictions
 
 
 def create_model(params, dw, device):
-    """Define model based on model_args.
-
-        Args:
-            params: dict of model_args file
-            dw: DataHandler class
-            device: torch.device, either 'cpu' or 'cuda'
-
-        Returns:
-            a model
-
     """
+    Define a model based on model_args.
+
+    Args:
+        params (dict): Dictionary of model_args file.
+        dw (DataHandler): DataHandler class object.
+        device (torch.device): Torch device, either 'cpu' or 'cuda'.
+
+    Returns:
+        A model.
+    """
+
     if params.model_args['model_type'] == 'mthisan':
         model = mthisan.MTHiSAN(dw.inference_data['word_embedding'],
                                 dw.num_classes,
@@ -48,21 +49,22 @@ def create_model(params, dw, device):
 
 
 def load_model(model_path, device, dw, valid_params):
-    """Load pretrained model from disk.
-
-        Args:
-            model_path: str, from command line args, points to saved model
-            device: torch.device, either cuda or cpu, set in calling function
-            dw: DataHandler class, for wrangling data, and checking metadata
-            valid_params: ValidateParams class, with model_args dict
-
-        We check if the supplied path is valid and if the packages match needed
-            to run the pretrained model.
-
-        Post-condition:
-            saved model loaded and set to eval() model
-
     """
+    Load a pretrained model from disk.
+
+    Args:
+        model_path (str): Path to the saved model obtained from command line args.
+        device (torch.device): Torch device, either 'cuda' or 'cpu', set in the calling function.
+        dw (DataHandler): DataHandler class instance for wrangling data and checking metadata.
+        valid_params (ValidateParams): ValidateParams class instance with model_args dict.
+
+    Post-condition:
+        The saved model is loaded and set to eval() mode.
+
+    Returns:
+        None
+    """
+
     data_path = dw.model_args['data_kwargs']['data_path']
     if os.path.exists(model_path):
         print(f"Loading trained model from {model_path}")
@@ -114,7 +116,9 @@ def load_model(model_path, device, dw, valid_params):
 
 
 def save_full_model(kw_args, save_path, packages, fold):
-    """Save trained model with package info metadata."""
+    """
+    Save trained model with package info metadata.
+    """
     # save_path = save_path + f"_fold{fold}.h5"
     path = 'savedmodels/' + kw_args['save_name'] + "/"
     now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")

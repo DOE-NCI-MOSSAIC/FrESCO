@@ -27,38 +27,38 @@ def trace_handler(p):
 
 class ModelTrainer():
     """
-        Training class definition>
+    Training class definition.
 
-        Attr:
-            savepath - str: path for saving models and metrics
-            epochs - int: max number of epochs to train for
-            patince_stop - int: patience stopping criteria
-            keywords - bool: use keywords model
-            tasks - list: list of tasks, each task is a string
-            n_task - bool: are we using ntask?
+    Attributes:
+        savepath (str): Path for saving models and metrics.
+        epochs (int): Maximum number of epochs to train for.
+        patience_stop (int): Patience stopping criteria.
+        keywords (bool): Use keywords model.
+        tasks (list): List of tasks, each task is a string.
+        n_task (bool): Are we using ntask?
 
-            model - Model: model definition, declared and initialized in caller
-            dw - DataHandler class, initialized in caller
-            device - torch.device : cuda or cpu
-            best_loss - float: best validation loss scores
-            patience_ctr - int: patience counter
-            loss - torch.tensor: loss value on device
+        model (Model): Model definition, declared and initialized in the caller.
+        dw (DataHandler): DataHandler class, initialized in the caller.
+        device (torch.device): CUDA or CPU.
+        best_loss (float): Best validation loss scores.
+        patience_ctr (int): Patience counter.
+        loss (torch.tensor): Loss value on device.
 
-            y_preds - list: list of predictions, usually logits as torch.tensor
-            y_trues -  list: list of ints with ground truth values
+        y_preds (list): List of predictions, usually logits as torch.tensor.
+        y_trues (list): List of ints with ground truth values.
 
-            multilabel - bool: multilabel classification?
-            abstain - bool: use the deep abstaining classifier?
-            mixed_precision - bool: use pytorch automatic mixed precision?
+        multilabel (bool): Multilabel classification?
+        abstain (bool): Use the deep abstaining classifier?
+        mixed_precision (bool): Use PyTorch automatic mixed precision?
 
-            opt - torch.optimizer: optimizer for training
-            reduction - str: what type of reduction for the loss function
+        opt (torch.optimizer): Optimizer for training.
+        reduction (str): Type of reduction for the loss function.
 
-            loss_funs - dict: of torch loss function to training for each task
+        loss_funs (dict): Dictionary of torch loss functions for training each task.
 
-            class_weights - list: list of floats for class weighting schemes
-        """
-    def __init__(self, kw_args, model, dw, class_weights=None, device=None, fold=None, clc=False):
+        class_weights (list): List of floats for class weighting schemes.
+    """
+def __init__(self, kw_args, model, dw, class_weights=None, device=None, fold=None, clc=False):
 
         path = 'savedmodels/' + kw_args['save_name'] + "/"
         if not os.path.exists(path):
@@ -140,17 +140,18 @@ class ModelTrainer():
         self.opt = torch.optim.Adam(self.model.parameters(), 0.0001, (0.9, 0.99))
 
     def get_ys(self, logits, y, idx, val=False):
-        """Get ground truth and y_predictions.
-
-            Args:
-                logits: list
-                y: dict of numpy ndarrays, tasks are keys
-                idx: index in enumerated DataLoader
-
-            Post-condition:
-                self.y_trues and self.y_preds populated.
-
         """
+        Get ground truth and y_predictions.
+
+        Args:
+            logits (list): List of logits.
+            y (dict): Dictionary of numpy ndarrays, with tasks as keys.
+            idx (int): Index in the enumerated DataLoader.
+
+        Post-condition:
+            self.y_trues and self.y_preds are populated.
+        """
+
         if val:
             preds = self.val_preds
             trues = self.val_trues
@@ -173,12 +174,12 @@ class ModelTrainer():
                     trues[task][idx*self.bs:] = y[task].detach().cpu().numpy()
 
     def profile_fit_model(self, train_loader, dac=None):
-        """Main training loop.
+        """
+        Main training loop.
 
-            Args:
-                train_loader - torch.DataLoader: initialized and populated in calling function
-                dac - Abstention class: deep abstaining classifier class
-
+        Args:
+            train_loader (torch.DataLoader): Initialized and populated in the calling function.
+            dac (Abstention): Abstention class, deep abstaining classifier class.
         """
 
         for epoch in range(self.epochs):
@@ -229,16 +230,15 @@ class ModelTrainer():
             print(f"Training loss: {loss_np:.6f}")
 
     def fit_model(self, train_loader, val_loader=None, dac=None):
-        """Main training loop.
-
-            Args:
-                train_loader - torch.DataLoader: initialized and populated in calling function
-                val_loader - torch.DataLoader: initialized and populated in calling function
-                                               can be None, then training is used for
-                                               valiation scores
-                dac - Abstention class: deep abstaining classifier class
-
         """
+        Main training loop.
+
+        Args:
+            train_loader (torch.DataLoader): Initialized and populated in the calling function.
+            val_loader (torch.DataLoader): Initialized and populated in the calling function. Can be None, then training is used for validation scores.
+            dac (Abstention): Abstention class, deep abstaining classifier class.
+        """
+
         all_scores = {}
         best_loss = np.inf
         model_weights = None
@@ -321,10 +321,10 @@ class ModelTrainer():
                 pickle.dump(all_scores, f_out, pickle.HIGHEST_PROTOCOL)
 
     def train_metrics(self, dac=None):
-        """Compute per-epoch metrics during training.
-
-
         """
+        Compute per-epoch metrics during training.
+        """
+
         scores = {task: {} for task in self.tasks}
 
         if self.abstain:
@@ -372,15 +372,15 @@ class ModelTrainer():
         return scores
 
     def score(self, epoch, val_loader=None, dac=None):
-        """Score a model during training.
-
-            Args:
-                epoch: int, epoch number
-                val_loader: torch.dataLoader class with PathReports
-                dac: deep abstaining classifier class, are we using the dac?
-
-
         """
+        Score a model during training.
+
+        Args:
+            epoch (int): Epoch number.
+            val_loader (torch.dataLoader): DataLoader class with PathReports.
+            dac (Abstention): Deep abstaining classifier class. Are we using the dac?
+        """
+
         val_scores = {'val_loss': [], 'abs_stop_vals': [],
                       'val_micro': [], 'val_macro': []}
         if self.abstain:
@@ -459,18 +459,19 @@ class ModelTrainer():
         return stop, val_scores
 
     def _score(self, data_loader=None, dac=None):
-        """Score data_loader for validation.
+        """
+        Score data_loader for validation.
 
-            Args:
-            data_loader - torch.DataLoader: typically val split, if None, then use training set.
-            dac - Abstention class: deep abstaining classifier class
+        Args:
+            data_loader (torch.DataLoader): Typically the validation split. If None, then use the training set.
+            dac (Abstention): Abstention class, deep abstaining classifier class.
 
-            Post condition:
-                self.val_preds and self.val_trues updated.
+        Post condition:
+            self.val_preds and self.val_trues are updated.
 
-            Returns:
-                scores - dict: dict, keys are tasks, of dicts, keys are val_loss, macro, and micro
-                abs_scores - list: list of abstention scores
+        Returns:
+            scores (dict): Dictionary where keys are tasks, and values are dictionaries with keys val_loss, macro, and micro.
+            abs_scores (list): List of abstention scores.
         """
         scores = {}
         losses = np.empty(len(data_loader))
@@ -505,19 +506,17 @@ class ModelTrainer():
                        y_pred,
                        task,
                        dac=None):
-        """Compute macro/micro scores per task.
+        """
+        Compute macro/micro scores per task.
 
-            Args:
-                y_true - list: list of ground truth labels (as int).
-                    It is a list of lists for n_tasks > 1.
-                y_pred - list: list of predicted classes (as list of tensors).
-                    It is a list of lists for n_tasks > 1.
-                dac: deep abstaining classifier class
-                idx: int indexing self.tasks
+        Args:
+            y_true (list): List of ground truth labels (as int). It is a list of lists for n_tasks > 1.
+            y_pred (list): List of predicted classes (as list of tensors). It is a list of lists for n_tasks > 1.
+            dac (Abstention): Deep abstaining classifier class.
+            idx (int): Indexing self.tasks.
 
-           Returns:
-                scores:
-
+        Returns:
+            scores: 
         """
         scores = {}
         _y_pred = [y.item() for y in y_pred]
@@ -546,15 +545,16 @@ class ModelTrainer():
                       alpha_scale=None,
                       ntask_stop_val=None,
                       ntask_alpha_scale=None):
-        """Print stats to the terminal.
+        """
+        Print stats to the terminal.
 
         Args:
-            scores: dict of metrics, as values, and tasks as keys
-            dac: Abstaining Classifier class
-            stop_vals: list of stopping criteria
-            alpha_scale: dict of scaling values for the dac, tasks are keys
-            ntask_stop_val: stopping critera for ntask as float
-            ntask_alpha_scale: scaling factor for ntask alpha, as float
+            scores (dict): Dictionary of metrics, with tasks as keys and metrics as values.
+            dac (Abstaining): Abstaining Classifier class.
+            stop_vals (list): List of stopping criteria.
+            alpha_scale (dict): Dictionary of scaling values for the dac, with tasks as keys.
+            ntask_stop_val (float): Stopping criterion for ntask.
+            ntask_alpha_scale (float): Scaling factor for ntask alpha.
 
         """
         if self.abstain:
@@ -579,19 +579,20 @@ class ModelTrainer():
             self.print_stats(scores)
 
     def compute_loss(self, logits, y, dac=None):
-        """Compute forward pass and loss function.
+        """
+        Compute forward pass and loss function.
 
-            Args:, requires_grad=True)
-                batch - torch iterate from DataLoader
-                dac: deep abstaining classifier class
-                ntask_abs: float, probability of abstaining on entire document
+        Args:
+            logits (torch.tensor): Logits.
+            dac (Abstention): Deep abstaining classifier class.
+            ntask_abs (float): Probability of abstaining on the entire document.
 
-            Returns:
-                loss - torch.tensor(float)
+        Returns:
+            loss (torch.tensor): Float tensor.
 
-            Post-condition:
-                y_preds and y_trues populated
-                loss updated
+        Post-condition:
+            y_preds and y_trues are populated.
+            loss is updated.
         """
 
         loss = 0.0
@@ -615,19 +616,20 @@ class ModelTrainer():
         return loss / len(self.tasks)
 
     def compute_val_loss(self, batch, dac=None):
-        """Compute forward pass and loss function.
+        """
+        Compute forward pass and loss function.
 
-            Args:
-                batch - torch iterate from DataLoader
-                dac: deep abstaining classifier class
-                ntask_abs: float, probability of abstaining on entire document
+        Args:
+            batch (torch.tensor): Iterate from DataLoader.
+            dac (Abstention): Deep abstaining classifier class.
+            ntask_abs (float): Probability of abstaining on the entire document.
 
-            Returns:
-                loss - torch.tensor(float)
+        Returns:
+            loss (torch.tensor): Float tensor.
 
-            Post-condition:
-                y_preds and y_trues populated
-                loss updated
+        Post-condition:
+            y_preds and y_trues are populated.
+            loss is updated.
         """
         X = batch["X"].to(self.device, non_blocking=True)
         y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
@@ -661,19 +663,20 @@ class ModelTrainer():
         return loss / len(self.tasks)
 
     def compute_clc_loss(self, logits, y, idxs, dac=None, val=False):
-        """Compute forward pass and case level loss function.
+        """
+        Compute forward pass and case level loss function.
 
-            Args: requires_grad=True)
-                batch - torch iterate from DataLoader
-                dac: deep abstaining classifier class
-                ntask_abs: float, probability of abstaining on entire document
+        Args:
+            batch (torch.tensor): Iterate from DataLoader.
+            dac (Abstention): Deep abstaining classifier class.
+            ntask_abs (float): Probability of abstaining on the entire document.
 
-            Returns:
-                loss - torch.tensor(float)
+        Returns:
+            loss (torch.tensor): Float tensor.
 
-            Post-condition:
-                y_preds and y_trues populated
-                loss updated
+        Post-condition:
+            y_preds and y_trues are populated.
+            loss is updated.
         """
 
         loss = torch.tensor(0.0, dtype=torch.float32, device=self.device)
@@ -710,20 +713,22 @@ class ModelTrainer():
         return loss / len(self.tasks)
 
     def compute_clc_val_loss(self, batch, dac=None):
-        """Compute forward pass and loss function for case level context.
-
-            Args:
-                batch - torch iterate from DataLoader
-                dac: deep abstaining classifier class
-                ntask_abs: float, probability of abstaining on entire document
-
-            Returns:
-                loss - torch.tensor(float)
-
-            Post-condition:
-                y_preds and y_trues populated
-                loss updated
         """
+        Compute forward pass and loss function for case level context.
+
+        Args:
+            batch (torch.tensor): Iterate from DataLoader.
+            dac (Abstention): Deep abstaining classifier class.
+            ntask_abs (float): Probability of abstaining on the entire document.
+
+        Returns:
+            loss (torch.tensor): Float tensor.
+
+        Post-condition:
+            y_preds and y_trues are populated.
+            loss is updated.
+        """
+
         X = batch["X"].to(self.device, non_blocking=True)
         y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
         batch_len = batch['len'].to(self.device, non_blocking=True)
@@ -760,27 +765,28 @@ class ModelTrainer():
         return loss / len(self.tasks)
 
     def stop_metrics(self, loss, epoch, stop_metrics=None, dac=None):
-        """Compute stop metrics.
-
-           Compute stop metrics for normal (val loss + patience) or DAC (stop metric) training.
-
-           Args:
-             loss - torch.tensor(float): val loss value at current epoch
-             epoch - int: epoch counter
-             stop_metrics - dict: floats for abstention rates and accuracy
-
-           Returns:
-             if abstaining:
-                stop_val - float: dac stopping criteria
-                stop - bool: stop or go?
-             otherwise:
-                stop_val - float: best val loss
-                stop - bool: stop or go?
-
-            Post-condition:
-            if not abstaining, patience counter is updated.
-
         """
+        Compute stop metrics.
+
+        Compute stop metrics for normal (val loss + patience) or DAC (stop metric) training.
+
+        Args:
+            loss (torch.tensor): Float tensor, val loss value at the current epoch.
+            epoch (int): Epoch counter.
+            stop_metrics (dict): Dictionary of floats for abstention rates and accuracy.
+
+        Returns:
+            If abstaining:
+                stop_val (float): DAC stopping criterion.
+                stop (bool): Stop or go?
+            Otherwise:
+                stop_val (float): Best val loss.
+                stop (bool): Stop or go?
+
+        Post-condition:
+        If not abstaining, patience counter is updated.
+        """
+
         if self.abstain:
             stop_val = dac.check_abs_stop_metric(np.asarray(stop_metrics))
             if stop_val < dac.stop_limit:
@@ -805,6 +811,8 @@ class ModelTrainer():
         return stop, stop_val
 
     def print_stats(self, scores):
-        """Print macro/micro scores to stdout."""
+        """
+        Print macro/micro scores to stdout.
+        """
         for task in self.tasks:
             print(f"{task:>12s}: {scores[task]['micro']:>10.4f}, {scores[task]['macro']:>10.4f}")
