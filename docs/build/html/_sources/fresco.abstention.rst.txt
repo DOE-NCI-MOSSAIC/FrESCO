@@ -1,0 +1,21 @@
+fresco.abstention package
+=========================
+
+Submodules
+----------
+
+fresco.abstention.abstention module
+-----------------------------------
+
+.. automodule:: fresco.abstention.abstention
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: fresco.abstention
+   :members:
+   :undoc-members:
+   :show-inheritance:

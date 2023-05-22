@@ -1,0 +1,21 @@
+fresco.predict package
+======================
+
+Submodules
+----------
+
+fresco.predict.predictions module
+---------------------------------
+
+.. automodule:: fresco.predict.predictions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: fresco.predict
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.predict package &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">fresco.predict package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fresco.predict.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fresco-predict-package">
+<h1>fresco.predict package<a class="headerlink" href="#fresco-predict-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-fresco.predict.predictions">
+<span id="fresco-predict-predictions-module"></span><h2>fresco.predict.predictions module<a class="headerlink" href="#module-fresco.predict.predictions" title="Permalink to this heading"></a></h2>
+<p>Module predicting or scoring a trained model.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.predict.predictions.</span></span><span class="sig-name descname"><span class="pre">ScoreModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loaders</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clc_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to score and make predictions from a trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_args</strong> (<em>dict</em>) – Dictionary with model-specific keyword arguments, checked by the caller.</p></li>
+<li><p><strong>data_loaders</strong> (<em>dict</em>) – Dictionary of PathReports class with split (train, test, val) as keys to
+score and predict on.</p></li>
+<li><p><strong>model</strong> (<em>torch model</em>) – Torch model for prediction and scoring.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – Torch device (either cpu or gpu) set in the caller.</p></li>
+<li><p><strong>Attributes</strong> – <p>tasks (list): List of tasks, each task is a string.
+abstain (bool): Use the deep abstaining classifier?
+n_task (bool): Are we using ntask?
+mixed_precision (bool): Use PyTorch automatic mixed precision?
+clc (bool): Are we training a clc model?</p>
+<p>model (Model): Model definition, declared and initialized in the caller.
+device (torch.device): CUDA or CPU.
+data_loader (DataHandler): DataHandler class, initialized in the caller.</p>
+<p>loss_funs (dict): Dictionary of torch loss functions for training each task.
+multilabel (bool): Multilabel classification?</p>
+<p>y_preds (dict): Dict of predictions, usually logits as torch.tensor, tasks are key values
+y_trues (dict): Dict of ints with ground truth values, tasks are key values.
+logits (list): list of outputs from model.forward</p>
+<p>savepath (str): Path for saving models and metrics.
+class_weights (list): List of floats for class weighting schemes.
+scores (dict): Dict of scoring metrics, splits are key values.
+metrics (dict): Dict of accuracy metrics, splits are key values.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.clear_pred_lists">
+<span class="sig-name descname"><span class="pre">clear_pred_lists</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.clear_pred_lists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.clear_pred_lists" title="Permalink to this definition"></a></dt>
+<dd><p>Delete entries in the lists to avoid re-initialization.</p>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>Entries in self.y_trues and self.y_preds deleted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.compute_clc_loss">
+<span class="sig-name descname"><span class="pre">compute_clc_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.compute_clc_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.compute_clc_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and case level loss function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – Torch iterate from DataLoader.</p></li>
+<li><p><strong>dac</strong> – Deep abstaining classifier class.</p></li>
+<li><p><strong>ntask_abs</strong> (<em>float</em>) – Probability of abstaining on the entire document.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Torch tensor representing the loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>loss (torch.Tensor)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>y_preds and y_trues populated.
+Loss updated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.compute_loss">
+<span class="sig-name descname"><span class="pre">compute_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.compute_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.compute_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and loss function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – Torch iterate from DataLoader.</p></li>
+<li><p><strong>dac</strong> – Deep abstaining classifier class.</p></li>
+<li><p><strong>ntask_abs</strong> (<em>float</em>) – Probability of abstaining on the entire document.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Torch tensor representing the loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>loss (torch.Tensor)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>y_preds and y_trues populated.
+Loss updated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.compute_scores">
+<span class="sig-name descname"><span class="pre">compute_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.compute_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.compute_scores" title="Permalink to this definition"></a></dt>
+<dd><p>Compute metrics to evaluate a model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.evaluate_model">
+<span class="sig-name descname"><span class="pre">evaluate_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id2label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loaders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.evaluate_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.evaluate_model" title="Permalink to this definition"></a></dt>
+<dd><p>Score and predict from trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id2label</strong> (<em>dict</em>) – Dictionary mapping between integers and labels, i.e., C50.</p></li>
+<li><p><strong>data_loaders</strong> (<em>PathReports class</em>) – PathReports class with inputs, outputs, and indices in the original DataFrame.</p></li>
+<li><p><strong>save_probs</strong> (<em>bool</em>) – Whether to save the final softmax layer to disk.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention class</em>) – Deep abstaining classifier class.</p></li>
+<li><p><strong>training_phase</strong> (<em>bool</em>) – Sets the model to train or eval mode.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Postcondition:</dt><dd><p>Model set to eval or train.</p>
+</dd>
+</dl>
+<p>If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.get_clc_preds">
+<span class="sig-name descname"><span class="pre">get_clc_preds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.get_clc_preds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.get_clc_preds" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and predict from case level context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>batch</strong> (<em>torch.Tensor</em>) – Torch iterate from DataLoader.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>preds keys ‘y_preds’ and ‘y_trues’ populated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.get_preds">
+<span class="sig-name descname"><span class="pre">get_preds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.get_preds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.get_preds" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – Torch iterate from DataLoader.</p></li>
+<li><p><strong>preds</strong> (<em>dict</em>) – Dictionary of lists of predictions and ground truth values.</p></li>
+<li><p><strong>save_probs</strong> (<em>bool</em>) – Flag to save the final softmax layer to disk.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>y_preds and y_trues populated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.get_ys">
+<span class="sig-name descname"><span class="pre">get_ys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idxs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.get_ys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.get_ys" title="Permalink to this definition"></a></dt>
+<dd><p>Get ground truth and y_prediction lists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logits</strong> (<em>torch.Tensor</em>) – Torch device tensor from model.forward.</p></li>
+<li><p><strong>y</strong> (<em>torch.Tensor</em>) – Torch device tensor of ground truth values.</p></li>
+<li><p><strong>idxs</strong> (<em>torch.Tensor</em>) – Torch tensor of indices for clc predictions (optional).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>self.y_trues and self.y_preds populated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.pred_and_score">
+<span class="sig-name descname"><span class="pre">pred_and_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.pred_and_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.pred_and_score" title="Permalink to this definition"></a></dt>
+<dd><p>Make predictions and score from a trained model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_loaders</strong> (<em>PathReports class</em>) – PathReports class with inputs, outputs, and indices in the original DataFrame.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – String representation of which split to predict and score, i.e., train, test, or val.</p></li>
+<li><p><strong>save_probs</strong> (<em>bool</em>) – Whether to save the final softmax layer to disk.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention class</em>) – Deep abstaining classifier class.</p></li>
+<li><p><strong>training_phase</strong> (<em>bool</em>) – Sets the model to train or eval mode.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Postcondition:</dt><dd><p>Model set to eval or train.
+self.logits, self.y_preds, and self.y_trues populated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id2label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loaders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.predict" title="Permalink to this definition"></a></dt>
+<dd><p>Make predictions from a trained model and save to disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id2label</strong> (<em>dict</em>) – Mapping between integers and labels, e.g., C50.</p></li>
+<li><p><strong>data_loaders</strong> (<em>PathReports class</em>) – PathReports class with inputs, outputs, and indices in the original DataFrame.</p></li>
+<li><p><strong>save_probs</strong> (<em>bool</em>) – Save the final softmax layer to disk.</p></li>
+<li><p><strong>training_phase</strong> (<em>bool</em>) – Sets model to train or eval mode.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention class</em>) – Deep abstaining classifier class.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>Model set to eval or train.</p>
+</dd>
+</dl>
+<p>If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.preds_to_dataframe">
+<span class="sig-name descname"><span class="pre">preds_to_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id2label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.preds_to_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.preds_to_dataframe" title="Permalink to this definition"></a></dt>
+<dd><p>Save test set predictions as DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>probs</strong> (<em>dict</em>) – Dictionary with softmax scores as values and split as keys.</p></li>
+<li><p><strong>metadata</strong> (<em>DataFrame</em>) – DataFrame with recordDocId,… from generated data.</p></li>
+<li><p><strong>id2label</strong> (<em>dict</em>) – Dictionary with int -&gt; str mappings, i.e., 43 -&gt; C50.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with metadata, predicted, and true classes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.probs_to_dataframe">
+<span class="sig-name descname"><span class="pre">probs_to_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id2label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.probs_to_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.probs_to_dataframe" title="Permalink to this definition"></a></dt>
+<dd><p>Create dataframe with softmax scores and metadata from generated data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preds</strong> (<em>dict</em>) – Dictionary with indices matching to original data and ground truth labels.</p></li>
+<li><p><strong>id2label</strong> (<em>dict</em>) – Dictionary with int -&gt; str mappings, i.e., 43 -&gt; C50.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame with metadata and softmax scores.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.save_scores">
+<span class="sig-name descname"><span class="pre">save_scores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.save_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.save_scores" title="Permalink to this definition"></a></dt>
+<dd><p>Write scores (metrics), per task, to disk.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.predict.predictions.ScoreModel.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_loaders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/predict/predictions.html#ScoreModel.score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.predict.predictions.ScoreModel.score" title="Permalink to this definition"></a></dt>
+<dd><p>Score a dataset in a PathReport class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_loaders</strong> (<em>dict</em>) – Dictionary of PathReport class which provides X, y, and index of the entry in the
+original dataframe, to tie back to the metadata.
+The keys are ‘train’, ‘test’, and ‘val’ (if provided).</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – String, one of ‘train’, ‘test’, or ‘val’ if wanting to score only a specific split.</p></li>
+<li><p><strong>training_phase</strong> (<em>bool</em>) – Sets model to train or eval mode.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention class</em>) – Deep abstaining classifier class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fresco.predict">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fresco.predict" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

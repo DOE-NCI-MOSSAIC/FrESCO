@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.predict.predictions &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">fresco.predict.predictions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for fresco.predict.predictions</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Module predicting or scoring a trained model.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># import sys</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scipy.special</span>
+<span class="kn">import</span> <span class="nn">sklearn.metrics</span>
+<span class="kn">import</span> <span class="nn">torchmetrics</span>
+
+
+<div class="viewcode-block" id="ScoreModel"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel">[docs]</a><span class="k">class</span> <span class="nc">ScoreModel</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to score and make predictions from a trained model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_args (dict): Dictionary with model-specific keyword arguments, checked by the caller.</span>
+<span class="sd">        data_loaders (dict): Dictionary of PathReports class with split (train, test, val) as keys to</span>
+<span class="sd">            score and predict on.</span>
+<span class="sd">        model (torch model): Torch model for prediction and scoring.</span>
+<span class="sd">        device (torch.device): Torch device (either cpu or gpu) set in the caller.</span>
+
+<span class="sd">        Attributes:</span>
+<span class="sd">            tasks (list): List of tasks, each task is a string.</span>
+<span class="sd">            abstain (bool): Use the deep abstaining classifier?</span>
+<span class="sd">            n_task (bool): Are we using ntask?</span>
+<span class="sd">            mixed_precision (bool): Use PyTorch automatic mixed precision?</span>
+<span class="sd">            clc (bool): Are we training a clc model?</span>
+<span class="sd">            </span>
+<span class="sd">            model (Model): Model definition, declared and initialized in the caller.</span>
+<span class="sd">            device (torch.device): CUDA or CPU.</span>
+<span class="sd">            data_loader (DataHandler): DataHandler class, initialized in the caller.</span>
+<span class="sd">            </span>
+<span class="sd">            loss_funs (dict): Dictionary of torch loss functions for training each task.</span>
+<span class="sd">            multilabel (bool): Multilabel classification?</span>
+<span class="sd">            </span>
+<span class="sd">            y_preds (dict): Dict of predictions, usually logits as torch.tensor, tasks are key values</span>
+<span class="sd">            y_trues (dict): Dict of ints with ground truth values, tasks are key values.</span>
+<span class="sd">            logits (list): list of outputs from model.forward</span>
+
+<span class="sd">            savepath (str): Path for saving models and metrics.</span>
+<span class="sd">            class_weights (list): List of floats for class weighting schemes.</span>
+<span class="sd">            scores (dict): Dict of scoring metrics, splits are key values.</span>
+<span class="sd">            metrics (dict): Dict of accuracy metrics, splits are key values.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_args</span><span class="p">,</span> <span class="n">data_loaders</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">savepath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">clc_flag</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abstain</span> <span class="o">=</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span> <span class="o">=</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_flag&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mixed_precision</span> <span class="o">=</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;mixed_precision&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clc</span> <span class="o">=</span> <span class="n">clc_flag</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_loaders</span> <span class="o">=</span> <span class="n">data_loaders</span>
+
+        <span class="c1"># setup loss function</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstain</span><span class="p">:</span>
+            <span class="n">reduction</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reduction</span> <span class="o">=</span> <span class="s1">&#39;mean&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_fun</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span> <span class="o">=</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;multilabel&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">],</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">weights</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">loss_funs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">weights_task</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">task</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">loss_funs</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">(</span><span class="n">weights_task</span><span class="p">,</span>
+                                <span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">loss_funs</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(</span><span class="n">weights_task</span><span class="p">,</span>
+                                <span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">loss_funs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">loss_funs</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">loss_funs</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_preds</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logits</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">))]</span>  <span class="c1"># model output</span>
+
+        <span class="k">if</span> <span class="n">savepath</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">savepath</span> <span class="o">=</span> <span class="s2">&quot;predictions/&quot;</span> <span class="o">+</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp_path</span> <span class="o">=</span> <span class="n">savepath</span> <span class="o">+</span> <span class="s2">&quot;predictions/&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">savepath</span> <span class="o">=</span> <span class="n">savepath</span> <span class="o">+</span> <span class="s2">&quot;predictions/&quot;</span> <span class="o">+</span> <span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;save_name&#39;</span><span class="p">]</span>
+
+        <span class="c1"># define dicts for all scores</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="ScoreModel.score"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.score">[docs]</a>    <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_loaders</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">training_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Score a dataset in a PathReport class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_loaders (dict): Dictionary of PathReport class which provides X, y, and index of the entry in the</span>
+<span class="sd">                original dataframe, to tie back to the metadata.</span>
+<span class="sd">                The keys are &#39;train&#39;, &#39;test&#39;, and &#39;val&#39; (if provided).</span>
+<span class="sd">            split (str): String, one of &#39;train&#39;, &#39;test&#39;, or &#39;val&#39; if wanting to score only a specific split.</span>
+<span class="sd">            training_phase (bool): Sets model to train or eval mode.</span>
+<span class="sd">            dac (Abstention class): Deep abstaining classifier class.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">data_loaders</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;Error: score function requires a dict with keys &#39;train&#39;, &#39;test&#39;, or &#39;split&#39;&quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="s2">&quot; and values PathReport classes.&quot;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">split</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">split</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="s1">&#39;val&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;Error: score function requires a dict with keys &#39;train&#39;, &#39;test&#39;, or &#39;split&#39;&quot;</span><span class="p">)</span> <span class="o">+</span>
+                      <span class="p">(</span><span class="s2">&quot; and values PathReport classes.&quot;</span><span class="p">))</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">data_loaders</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data_loaders</span>
+        <span class="k">elif</span> <span class="n">split</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loaders</span><span class="p">[</span><span class="n">split</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">data_loaders</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loaders</span>
+
+        <span class="k">if</span> <span class="n">split</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_split</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Scoring </span><span class="si">{</span><span class="n">_split</span><span class="si">}</span><span class="s2"> set&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clear_pred_lists</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">_split</span><span class="p">],</span> <span class="n">_split</span><span class="p">,</span> <span class="n">training_phase</span><span class="o">=</span><span class="n">training_phase</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="n">dac</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_split</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">_split</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_scores</span><span class="p">(</span><span class="n">dac</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Scoring </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2"> set&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_score</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">split</span><span class="p">,</span> <span class="n">training_phase</span><span class="o">=</span><span class="n">training_phase</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="n">dac</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_scores</span><span class="p">(</span><span class="n">dac</span><span class="p">)</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">split</span><span class="p">,</span> <span class="n">training_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Score data_loader for validation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_loader (PathReports class): PathReports class.</span>
+<span class="sd">            split (str): String of data split, e.g., train, test, val.</span>
+<span class="sd">            training_phase (bool): Sets model to train or eval mode.</span>
+<span class="sd">            dac (Abstention class): Deep abstaining classifier class.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            self.val_preds and self.val_trues updated.</span>
+<span class="sd">            Model set to train or eval depending on training_phase variable.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">dac</span><span class="o">.</span><span class="n">ntask_filter</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">training_phase</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+                    <span class="n">loss</span><span class="p">,</span> <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_clc_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+                    <span class="n">max_seq_len</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">batch_len</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">end</span><span class="o">=</span><span class="n">max_seq_len</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&lt;</span> <span class="n">batch_len</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+                    <span class="n">idxs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_ys</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">idxs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">loss</span><span class="p">,</span> <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_ys</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+                <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">_loss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ScoreModel.compute_scores"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.compute_scores">[docs]</a>    <span class="k">def</span> <span class="nf">compute_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># , y_preds, y_trues, logits):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute metrics to evaluate a model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">metrics</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># per task metrics</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">_trues</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+            <span class="n">_preds</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_preds</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+
+            <span class="n">_trues</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">_trues</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">_preds</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">num_classes</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="c1"># macro hack</span>
+            <span class="n">_cat_trues_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">_trues</span><span class="p">,</span> <span class="n">_preds</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">scale_classes</span> <span class="o">=</span> <span class="n">num_classes</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">_cat_trues_preds</span><span class="p">))</span>
+
+            <span class="n">f1_micro</span> <span class="o">=</span> <span class="n">torchmetrics</span><span class="o">.</span><span class="n">F1Score</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="s1">&#39;multiclass&#39;</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;micro&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_micro&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f1_micro</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">_trues</span><span class="p">)</span>
+            <span class="n">f1_macro</span> <span class="o">=</span> <span class="n">torchmetrics</span><span class="o">.</span><span class="n">F1Score</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="s1">&#39;multiclass&#39;</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;macro&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_macro&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f1_macro</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">_trues</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale_classes</span>
+
+            <span class="n">accuracy</span> <span class="o">=</span> <span class="n">torchmetrics</span><span class="o">.</span><span class="n">Accuracy</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="s1">&#39;multiclass&#39;</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_accuracy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">accuracy</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">_trues</span><span class="p">)</span>
+
+            <span class="n">precision_micro</span> <span class="o">=</span> <span class="n">torchmetrics</span><span class="o">.</span><span class="n">Precision</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="s1">&#39;multiclass&#39;</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;micro&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_precision_micro&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">precision_micro</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">_trues</span><span class="p">)</span>
+            <span class="n">precision_macro</span> <span class="o">=</span> <span class="n">torchmetrics</span><span class="o">.</span><span class="n">Precision</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="s1">&#39;multiclass&#39;</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;macro&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_precision_macro&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">precision_macro</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">_trues</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale_classes</span>
+
+            <span class="n">recall_micro</span> <span class="o">=</span> <span class="n">torchmetrics</span><span class="o">.</span><span class="n">Recall</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="s1">&#39;multiclass&#39;</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;micro&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_recall_micro&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">recall_micro</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">_trues</span><span class="p">)</span>
+            <span class="n">recall_macro</span> <span class="o">=</span> <span class="n">torchmetrics</span><span class="o">.</span><span class="n">Recall</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="s1">&#39;multiclass&#39;</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="s1">&#39;macro&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_recall_macro&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">recall_macro</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">_trues</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale_classes</span>
+
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstain</span><span class="p">:</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">dac</span><span class="o">.</span><span class="n">compute_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_preds</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_abs_acc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dac</span><span class="o">.</span><span class="n">accuracy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dac</span><span class="o">.</span><span class="n">abs_rates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+                <span class="n">ntask_scores</span> <span class="o">=</span> <span class="n">dac</span><span class="o">.</span><span class="n">compute_ntask_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_preds</span><span class="p">)</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;ntask_acc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ntask_scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;ntask_abs_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ntask_scores</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">metrics</span></div>
+
+<div class="viewcode-block" id="ScoreModel.save_scores"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.save_scores">[docs]</a>    <span class="k">def</span> <span class="nf">save_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write scores (metrics), per task, to disk.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">savepath</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_metrics_</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_out</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">f_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">split</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">loss</span><span class="si">:</span><span class="s2">7.6f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">split_dict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">f_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">split_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+                    <span class="n">f_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">:</span><span class="s2">26s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">split_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">:</span><span class="s2">7.6f</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+                        <span class="n">f_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">f_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScoreModel.predict"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">id2label</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+                <span class="n">data_loaders</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">save_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">training_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make predictions from a trained model and save to disk.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            id2label (dict): Mapping between integers and labels, e.g., C50.</span>
+<span class="sd">            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.</span>
+<span class="sd">            save_probs (bool): Save the final softmax layer to disk.</span>
+<span class="sd">            training_phase (bool): Sets model to train or eval mode.</span>
+<span class="sd">            dac (Abstention class): Deep abstaining classifier class.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            Model set to eval or train.</span>
+
+<span class="sd">        If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_loaders</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data_loaders</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;Error: predict function requires a dict with keys &#39;train&#39;, &#39;test&#39;, or &#39;split&#39;&quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="s2">&quot; and values PathReport classes.&quot;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">data_loaders</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loaders</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data_loaders</span>
+
+        <span class="n">preds_df</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+            <span class="n">probs_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Predicting </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2"> set&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">split</span><span class="p">],</span> <span class="n">save_probs</span><span class="p">,</span>
+                                  <span class="n">training_phase</span><span class="o">=</span><span class="n">training_phase</span><span class="p">)</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s2">&quot;split&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">split</span>
+            <span class="n">preds_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preds_to_dataframe</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">id2label</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">preds</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_probs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span>
+                    <span class="n">probs_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probs_to_dataframe</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">id2label</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving predictions to csv&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">preds_df</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># if you want the index, set index=True</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">savepath</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_preds_</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">,</span> <span class="n">float_format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%7.6f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving softmax scores to csv&quot;</span><span class="p">)</span>
+            <span class="n">probs_final</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">probs_dfs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">probs_final</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">savepath</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_probs_</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">,</span> <span class="n">float_format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%7.6f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">save_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">training_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make predictions on data_loader.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.</span>
+<span class="sd">            save_probs (bool): Save the final softmax layer to disk.</span>
+<span class="sd">            training_phase (bool): Sets model to train or eval mode.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            Model set to eval or train.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">training_phase</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="n">preds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;idxs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;ntask_probs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
+                <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;idxs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+                    <span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_clc_preds</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">preds</span><span class="p">,</span> <span class="n">save_probs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_preds</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">preds</span><span class="p">,</span> <span class="n">save_probs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">preds</span>
+
+<div class="viewcode-block" id="ScoreModel.preds_to_dataframe"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.preds_to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">preds_to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">id2label</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save test set predictions as DataFrame.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            probs (dict): Dictionary with softmax scores as values and split as keys.</span>
+<span class="sd">            metadata (DataFrame): DataFrame with recordDocId,... from generated data.</span>
+<span class="sd">            id2label (dict): Dictionary with int -&gt; str mappings, i.e., 43 -&gt; C50.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: DataFrame with metadata, predicted, and true classes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">df_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_true&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]]</span>
+            <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]]</span>
+            <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_probs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]]</span>
+            <span class="n">col_ids</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_true&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">col_ids</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">col_ids</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">preds</span><span class="p">[</span><span class="s1">&#39;idxs&#39;</span><span class="p">])</span>
+            <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_true&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">id2label</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+            <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">id2label</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+            <span class="n">df_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="n">final_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">final_df</span></div>
+
+<div class="viewcode-block" id="ScoreModel.probs_to_dataframe"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.probs_to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">probs_to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                           <span class="n">preds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+                           <span class="n">id2label</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create dataframe with softmax scores and metadata from generated data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            preds (dict): Dictionary with indices matching to original data and ground truth labels.</span>
+<span class="sd">            id2label (dict): Dictionary with int -&gt; str mappings, i.e., 43 -&gt; C50.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: DataFrame with metadata and softmax scores.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">df_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_true&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]]</span>
+            <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]]</span>
+            <span class="n">cols</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_probs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]]</span>
+
+            <span class="n">col_ids</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_true&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_pred&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_probs&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">col_ids</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">col_ids</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">preds</span><span class="p">[</span><span class="s1">&#39;idxs&#39;</span><span class="p">])</span>
+            <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_true&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">id2label</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+            <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">id2label</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+
+            <span class="n">df_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+            <span class="n">col_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">col_ids</span><span class="p">)</span>
+
+        <span class="n">final_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">final_df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">final_df</span></div>
+
+<div class="viewcode-block" id="ScoreModel.evaluate_model"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.evaluate_model">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                       <span class="n">id2label</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+                       <span class="n">data_loaders</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">save_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">dac</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">training_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Score and predict from trained model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            id2label (dict): Dictionary mapping between integers and labels, i.e., C50.</span>
+<span class="sd">            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.</span>
+<span class="sd">            save_probs (bool): Whether to save the final softmax layer to disk.</span>
+<span class="sd">            dac (Abstention class): Deep abstaining classifier class.</span>
+<span class="sd">            training_phase (bool): Sets the model to train or eval mode.</span>
+
+<span class="sd">        Postcondition:</span>
+<span class="sd">            Model set to eval or train.</span>
+
+<span class="sd">        If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_loaders</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data_loaders</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;Error: predict function requires a dict with keys &#39;train&#39;, &#39;test&#39;, or &#39;split&#39;&quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="s2">&quot; and values PathReport classes.&quot;</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">data_loaders</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loaders</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data_loaders</span>
+
+        <span class="n">preds_df</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+            <span class="n">probs_df</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Evaluating </span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s2"> set&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clear_pred_lists</span><span class="p">()</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_and_score</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">split</span><span class="p">],</span>
+                                        <span class="n">split</span><span class="p">,</span>
+                                        <span class="n">save_probs</span><span class="o">=</span><span class="n">save_probs</span><span class="p">,</span>
+                                        <span class="n">dac</span><span class="o">=</span><span class="n">dac</span><span class="p">,</span>
+                                        <span class="n">training_phase</span><span class="o">=</span><span class="n">training_phase</span><span class="p">)</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s2">&quot;split&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">split</span>
+            <span class="n">preds_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preds_to_dataframe</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">id2label</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">preds</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_probs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span>
+                    <span class="n">probs_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">probs_to_dataframe</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">id2label</span><span class="p">))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_scores</span><span class="p">(</span><span class="n">dac</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_scores</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving predictions to csv&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">all_preds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">preds_df</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">all_preds</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># if you want the index, set index=True</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S&quot;</span><span class="p">)</span>
+        <span class="n">all_preds</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">savepath</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_preds</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">,</span> <span class="n">float_format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%7.6f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving softmax scores to csv&quot;</span><span class="p">)</span>
+            <span class="n">all_probs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">probs_df</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">all_probs</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># if you want the index, set index=True</span>
+            <span class="n">all_probs</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">savepath</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;_probs_</span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">,</span> <span class="n">float_format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%7.6f</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScoreModel.pred_and_score"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.pred_and_score">[docs]</a>    <span class="k">def</span> <span class="nf">pred_and_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">split</span><span class="p">,</span> <span class="n">save_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">training_phase</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make predictions and score from a trained model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.</span>
+<span class="sd">            split (str): String representation of which split to predict and score, i.e., train, test, or val.</span>
+<span class="sd">            save_probs (bool): Whether to save the final softmax layer to disk.</span>
+<span class="sd">            dac (Abstention class): Deep abstaining classifier class.</span>
+<span class="sd">            training_phase (bool): Sets the model to train or eval mode.</span>
+
+<span class="sd">        Postcondition:</span>
+<span class="sd">            Model set to eval or train.</span>
+<span class="sd">            self.logits, self.y_preds, and self.y_trues populated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">training_phase</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="n">losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="n">preds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;idxs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;ntask_probs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">dac</span><span class="o">.</span><span class="n">ntask_filter</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+                <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;idxs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+                    <span class="n">max_seq_len</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">batch_len</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">end</span><span class="o">=</span><span class="n">max_seq_len</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&lt;</span> <span class="n">batch_len</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+                    <span class="n">idxs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                    <span class="n">loss</span><span class="p">,</span> <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_clc_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_ys</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">idxs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">loss</span><span class="p">,</span> <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">dac</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_ys</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+                    <span class="n">ntask_abs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;ntask_probs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ntask_abs</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+                    <span class="c1"># for scoring the model</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+                        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="n">idxs</span><span class="p">])</span>
+                        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">idxs</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+                            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">idxs</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">])</span>
+                        <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                                <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">logit</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+                <span class="n">losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scores</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">split</span><span class="si">}</span><span class="s1">_loss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">preds</span></div>
+
+<div class="viewcode-block" id="ScoreModel.get_ys"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.get_ys">[docs]</a>    <span class="k">def</span> <span class="nf">get_ys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logits</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">idxs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get ground truth and y_prediction lists.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            logits (torch.Tensor): Torch device tensor from model.forward.</span>
+<span class="sd">            y (torch.Tensor): Torch device tensor of ground truth values.</span>
+<span class="sd">            idxs (torch.Tensor): Torch tensor of indices for clc predictions (optional).</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            self.y_trues and self.y_preds populated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clc</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idxs</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y_preds</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idxs</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">idxs</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y_preds</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ScoreModel.clear_pred_lists"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.clear_pred_lists">[docs]</a>    <span class="k">def</span> <span class="nf">clear_pred_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete entries in the lists to avoid re-initialization.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            Entries in self.y_trues and self.y_preds deleted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_trues</span><span class="p">[</span><span class="n">task</span><span class="p">][:]</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_preds</span><span class="p">[</span><span class="n">task</span><span class="p">][:]</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">][:]</span></div>
+
+<div class="viewcode-block" id="ScoreModel.compute_loss"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.compute_loss">[docs]</a>    <span class="k">def</span> <span class="nf">compute_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute forward pass and loss function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch (torch.Tensor): Torch iterate from DataLoader.</span>
+<span class="sd">            dac: Deep abstaining classifier class.</span>
+<span class="sd">            ntask_abs (float): Probability of abstaining on the entire document.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            loss (torch.Tensor): Torch tensor representing the loss.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            y_preds and y_trues populated.</span>
+<span class="sd">            Loss updated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">amp</span><span class="o">.</span><span class="n">autocast</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mixed_precision</span><span class="p">):</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+                <span class="n">ntask_abs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">dac</span><span class="o">.</span><span class="n">get_ntask_filter</span><span class="p">(</span><span class="n">ntask_abs</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">dac</span><span class="o">.</span><span class="n">ntask_tasks</span><span class="p">:</span>
+                        <span class="n">loss</span> <span class="o">+=</span> <span class="n">dac</span><span class="o">.</span><span class="n">abstention_loss</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">ntask_abs_prob</span><span class="o">=</span><span class="n">ntask_abs</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">loss</span> <span class="o">+=</span> <span class="n">dac</span><span class="o">.</span><span class="n">abstention_loss</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstain</span><span class="p">:</span>  <span class="c1"># just the dac</span>
+                    <span class="n">loss</span> <span class="o">+=</span> <span class="n">dac</span><span class="o">.</span><span class="n">abstention_loss</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># nothing fancy</span>
+                    <span class="n">loss</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_funs</span><span class="p">[</span><span class="n">task</span><span class="p">](</span><span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dac</span><span class="o">.</span><span class="n">ntask_alpha</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ntask_abs</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">))</span>
+        <span class="c1"># average over all tasks</span>
+        <span class="k">return</span> <span class="n">loss</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">),</span> <span class="n">logits</span></div>
+
+<div class="viewcode-block" id="ScoreModel.compute_clc_loss"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.compute_clc_loss">[docs]</a>    <span class="k">def</span> <span class="nf">compute_clc_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dac</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute forward pass and case level loss function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch (torch.Tensor): Torch iterate from DataLoader.</span>
+<span class="sd">            dac: Deep abstaining classifier class.</span>
+<span class="sd">            ntask_abs (float): Probability of abstaining on the entire document.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            loss (torch.Tensor): Torch tensor representing the loss.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            y_preds and y_trues populated.</span>
+<span class="sd">            Loss updated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">batch_len</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">max_seq_len</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">batch_len</span><span class="p">)</span>
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">end</span><span class="o">=</span><span class="n">max_seq_len</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&lt;</span> <span class="n">batch_len</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">idxs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">ntask_abs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">idxs</span><span class="p">])[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">dac</span><span class="o">.</span><span class="n">get_ntask_filter</span><span class="p">(</span><span class="n">ntask_abs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="n">y_true</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">idxs</span><span class="p">]</span>
+            <span class="n">y_pred</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idxs</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">dac</span><span class="o">.</span><span class="n">ntask_tasks</span><span class="p">:</span>
+                    <span class="n">loss</span> <span class="o">+=</span> <span class="n">dac</span><span class="o">.</span><span class="n">abstention_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">ntask_abs_prob</span><span class="o">=</span><span class="n">ntask_abs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">loss</span> <span class="o">+=</span> <span class="n">dac</span><span class="o">.</span><span class="n">abstention_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstain</span><span class="p">:</span>  <span class="c1"># just the dac</span>
+                <span class="n">loss</span> <span class="o">+=</span> <span class="n">dac</span><span class="o">.</span><span class="n">abstention_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># nothing fancy</span>
+                <span class="n">loss</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fun</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dac</span><span class="o">.</span><span class="n">ntask_alpha</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ntask_abs</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">))</span>
+        <span class="c1"># average over all tasks</span>
+        <span class="k">return</span> <span class="n">loss</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">),</span> <span class="n">logits</span></div>
+
+<div class="viewcode-block" id="ScoreModel.get_preds"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.get_preds">[docs]</a>    <span class="k">def</span> <span class="nf">get_preds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">preds</span><span class="p">,</span> <span class="n">save_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute forward pass and predictions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch (torch.Tensor): Torch iterate from DataLoader.</span>
+<span class="sd">            preds (dict): Dictionary of lists of predictions and ground truth values.</span>
+<span class="sd">            save_probs (bool): Flag to save the final softmax layer to disk.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            y_preds and y_trues populated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">ntask_prob</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;ntask_probs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ntask_prob</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                    <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">expit</span><span class="p">(</span><span class="n">outputs</span><span class="p">))</span>  <span class="c1"># logistic sigmoid</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">preds</span></div>
+
+<div class="viewcode-block" id="ScoreModel.get_clc_preds"><a class="viewcode-back" href="../../../fresco.predict.html#fresco.predict.predictions.ScoreModel.get_clc_preds">[docs]</a>    <span class="k">def</span> <span class="nf">get_clc_preds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">preds</span><span class="p">,</span> <span class="n">save_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute forward pass and predict from case level context.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch (torch.Tensor): Torch iterate from DataLoader.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            preds keys &#39;y_preds&#39; and &#39;y_trues&#39; populated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;X&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;y_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">batch_len</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;len&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">max_seq_len</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">batch_len</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">end</span><span class="o">=</span><span class="n">max_seq_len</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&lt;</span> <span class="n">batch_len</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">idxs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">ntask_prob</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">idxs</span><span class="p">])[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;ntask_probs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ntask_prob</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="n">_preds</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idxs</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;pred_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;true_ys&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">idxs</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">save_probs</span><span class="p">:</span>
+                <span class="n">preds</span><span class="p">[</span><span class="s1">&#39;probs&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">_preds</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">preds</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
