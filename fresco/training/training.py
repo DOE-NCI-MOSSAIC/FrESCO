@@ -33,7 +33,6 @@ class ModelTrainer():
         savepath (str): Path for saving models and metrics.
         epochs (int): Maximum number of epochs to train for.
         patience_stop (int): Patience stopping criteria.
-        keywords (bool): Use keywords model.
         tasks (list): List of tasks, each task is a string.
         n_task (bool): Are we using ntask?
 
@@ -44,8 +43,8 @@ class ModelTrainer():
         patience_ctr (int): Patience counter.
         loss (torch.tensor): Loss value on device.
 
-        y_preds (list): List of predictions, usually logits as torch.tensor.
-        y_trues (list): List of ints with ground truth values.
+        y_preds (dict): Dict of predictions, usually logits as torch.tensor, tasks are key values
+        y_trues (dict): Dict of ints with ground truth values, tasks are key values.
 
         multilabel (bool): Multilabel classification?
         abstain (bool): Use the deep abstaining classifier?

@@ -28,6 +28,29 @@ class ScoreModel():
         model (torch model): Torch model for prediction and scoring.
         device (torch.device): Torch device (either cpu or gpu) set in the caller.
 
+        Attributes:
+            tasks (list): List of tasks, each task is a string.
+            abstain (bool): Use the deep abstaining classifier?
+            n_task (bool): Are we using ntask?
+            mixed_precision (bool): Use PyTorch automatic mixed precision?
+            clc (bool): Are we training a clc model?
+            
+            model (Model): Model definition, declared and initialized in the caller.
+            device (torch.device): CUDA or CPU.
+            data_loader (DataHandler): DataHandler class, initialized in the caller.
+            
+            loss_funs (dict): Dictionary of torch loss functions for training each task.
+            multilabel (bool): Multilabel classification?
+            
+            y_preds (dict): Dict of predictions, usually logits as torch.tensor, tasks are key values
+            y_trues (dict): Dict of ints with ground truth values, tasks are key values.
+            logits (list): list of outputs from model.forward
+
+            savepath (str): Path for saving models and metrics.
+            class_weights (list): List of floats for class weighting schemes.
+            scores (dict): Dict of scoring metrics, splits are key values.
+            metrics (dict): Dict of accuracy metrics, splits are key values.
+
     """
     def __init__(self, model_args, data_loaders, model, device, savepath=None, clc_flag=False):
 
