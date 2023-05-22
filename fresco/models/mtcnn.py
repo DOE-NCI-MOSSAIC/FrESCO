@@ -7,28 +7,23 @@ import torch.nn.functional as F
 
 class MTCNN(nn.Module):
     '''
-        Multitask simple text cnn for classifying cancer pathology reports
+    Multitask simple text CNN for classifying cancer pathology reports.
 
-        Parameters
-        ----------
-        embedding_matrix: numpy array
-            numpy array of word embeddings
-            each row should represent a word embedding
-            NOTE: the word index 0 is masked, so the first row is ignored
-        num_classes: list[int]
-            number of possible output classes for each task
-        window_sizes: list[int] (default: [3,4,5])
-            window size (consecutive tokens examined) in parallel convolution layers
-            must match length of num_filters
-        num_filters: list[int] (default: [300,300,300])
-            number of filters used in parallel convolution layers
-            must match length of window_sizes
-        dropout: float (default: 0.5)
-            dropout rate applied to final document embedding after maxpooling
-        bag_of_embeddings: bool (default: False)
-            adds a parallel bag of embeddings layer, concats to final doc embedding
-        embeddings_scale: float (default: 2.5)
-            scaling of word embeddings matrix columns
+    Args:
+        embedding_matrix (numpy.array): Numpy array of word embeddings.
+            Each row should represent a word embedding.
+            NOTE: The word index 0 is masked, so the first row is ignored.
+        num_classes (list[int]): Number of possible output classes for each task.
+        window_sizes (list[int], default: [3, 4, 5]): Window size (consecutive tokens examined) in parallel convolution layers.
+            Must match the length of num_filters.
+        num_filters (list[int], default: [300, 300, 300]): Number of filters used in parallel convolution layers.
+            Must match the length of window_sizes.
+        dropout (float, default: 0.5): Dropout rate applied to the final document embedding after maxpooling.
+        bag_of_embeddings (bool, default: False): Adds a parallel bag of embeddings layer and concatenates it to the final document embedding.
+        embeddings_scale (float, default: 2.5): Scaling of word embeddings matrix columns.
+
+    Returns:
+        None
     '''
 
     def __init__(self,
@@ -86,19 +81,16 @@ class MTCNN(nn.Module):
 
     def forward(self, docs: torch.tensor, return_embeds: bool=False) -> list:
         '''
-            mtcnn forward pass
+        MT-CNN forward pass.
 
-            Parameters
-            ----------
-            docs: torch.tensor (int) [batch_size x words]
-                batch of documents to classify
-                each document should be a 0-padded row of mapped word indices
+        Args:
+            docs (torch.tensor): Batch of documents to classify.
+                Each document should be a 0-padded row of mapped word indices.
 
-            Returns
-            -------
-            list[torch.tensor (float) [batch_size x num_classes]]
-                list of predicted logits for each task
+        Returns:
+            list[torch.tensor]: List of predicted logits for each task.
         '''
+
 
         # generate masks for word padding
         # remove extra padding that exists across all documents in batch

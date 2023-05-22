@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.training package &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fresco.validate package" href="fresco.validate.html" />
+    <link rel="prev" title="fresco.models package" href="fresco.models.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">fresco</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fresco.html">fresco package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fresco.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="fresco.data_loaders.html">fresco.data_loaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.models.html">fresco.models package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">fresco.training package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.validate.html">fresco.validate package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.data_setup">fresco.data_setup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_clc">fresco.run_clc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_ie">fresco.run_ie module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">fresco</a></li>
+          <li class="breadcrumb-item"><a href="fresco.html">fresco package</a></li>
+      <li class="breadcrumb-item active">fresco.training package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fresco.training.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fresco-training-package">
+<h1>fresco.training package<a class="headerlink" href="#fresco-training-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-fresco.training.training">
+<span id="fresco-training-training-module"></span><h2>fresco.training.training module<a class="headerlink" href="#module-fresco.training.training" title="Permalink to this heading"></a></h2>
+<p>Module for training a deep learning model&gt;</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.training.training.</span></span><span class="sig-name descname"><span class="pre">ModelTrainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kw_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Training class definition.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.savepath">
+<span class="sig-name descname"><span class="pre">savepath</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.savepath" title="Permalink to this definition"></a></dt>
+<dd><p>Path for saving models and metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.epochs">
+<span class="sig-name descname"><span class="pre">epochs</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.epochs" title="Permalink to this definition"></a></dt>
+<dd><p>Maximum number of epochs to train for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.patience_stop">
+<span class="sig-name descname"><span class="pre">patience_stop</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.patience_stop" title="Permalink to this definition"></a></dt>
+<dd><p>Patience stopping criteria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.keywords">
+<span class="sig-name descname"><span class="pre">keywords</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.keywords" title="Permalink to this definition"></a></dt>
+<dd><p>Use keywords model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.tasks">
+<span class="sig-name descname"><span class="pre">tasks</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.tasks" title="Permalink to this definition"></a></dt>
+<dd><p>List of tasks, each task is a string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.n_task">
+<span class="sig-name descname"><span class="pre">n_task</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.n_task" title="Permalink to this definition"></a></dt>
+<dd><p>Are we using ntask?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.model" title="Permalink to this definition"></a></dt>
+<dd><p>Model definition, declared and initialized in the caller.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.dw">
+<span class="sig-name descname"><span class="pre">dw</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.dw" title="Permalink to this definition"></a></dt>
+<dd><p>DataHandler class, initialized in the caller.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler" title="fresco.data_loaders.data_utils.DataHandler">DataHandler</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.device" title="Permalink to this definition"></a></dt>
+<dd><p>CUDA or CPU.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.device</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.best_loss">
+<span class="sig-name descname"><span class="pre">best_loss</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.best_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Best validation loss scores.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.patience_ctr">
+<span class="sig-name descname"><span class="pre">patience_ctr</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.patience_ctr" title="Permalink to this definition"></a></dt>
+<dd><p>Patience counter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.loss">
+<span class="sig-name descname"><span class="pre">loss</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.loss" title="Permalink to this definition"></a></dt>
+<dd><p>Loss value on device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.y_preds">
+<span class="sig-name descname"><span class="pre">y_preds</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.y_preds" title="Permalink to this definition"></a></dt>
+<dd><p>List of predictions, usually logits as torch.tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.y_trues">
+<span class="sig-name descname"><span class="pre">y_trues</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.y_trues" title="Permalink to this definition"></a></dt>
+<dd><p>List of ints with ground truth values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.multilabel">
+<span class="sig-name descname"><span class="pre">multilabel</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.multilabel" title="Permalink to this definition"></a></dt>
+<dd><p>Multilabel classification?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.abstain">
+<span class="sig-name descname"><span class="pre">abstain</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.abstain" title="Permalink to this definition"></a></dt>
+<dd><p>Use the deep abstaining classifier?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.mixed_precision">
+<span class="sig-name descname"><span class="pre">mixed_precision</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.mixed_precision" title="Permalink to this definition"></a></dt>
+<dd><p>Use PyTorch automatic mixed precision?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.opt">
+<span class="sig-name descname"><span class="pre">opt</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.opt" title="Permalink to this definition"></a></dt>
+<dd><p>Optimizer for training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.optimizer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.reduction">
+<span class="sig-name descname"><span class="pre">reduction</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.reduction" title="Permalink to this definition"></a></dt>
+<dd><p>Type of reduction for the loss function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.loss_funs">
+<span class="sig-name descname"><span class="pre">loss_funs</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.loss_funs" title="Permalink to this definition"></a></dt>
+<dd><p>Dictionary of torch loss functions for training each task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.class_weights">
+<span class="sig-name descname"><span class="pre">class_weights</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.class_weights" title="Permalink to this definition"></a></dt>
+<dd><p>List of floats for class weighting schemes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.compute_clc_loss">
+<span class="sig-name descname"><span class="pre">compute_clc_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.compute_clc_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.compute_clc_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and case level loss function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.tensor</em>) – Iterate from DataLoader.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Deep abstaining classifier class.</p></li>
+<li><p><strong>ntask_abs</strong> (<em>float</em>) – Probability of abstaining on the entire document.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Float tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>loss (torch.tensor)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>y_preds and y_trues are populated.
+loss is updated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.compute_clc_val_loss">
+<span class="sig-name descname"><span class="pre">compute_clc_val_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.compute_clc_val_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.compute_clc_val_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and loss function for case level context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.tensor</em>) – Iterate from DataLoader.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Deep abstaining classifier class.</p></li>
+<li><p><strong>ntask_abs</strong> (<em>float</em>) – Probability of abstaining on the entire document.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Float tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>loss (torch.tensor)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>y_preds and y_trues are populated.
+loss is updated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.compute_loss">
+<span class="sig-name descname"><span class="pre">compute_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.compute_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.compute_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and loss function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logits</strong> (<em>torch.tensor</em>) – Logits.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Deep abstaining classifier class.</p></li>
+<li><p><strong>ntask_abs</strong> (<em>float</em>) – Probability of abstaining on the entire document.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Float tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>loss (torch.tensor)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>y_preds and y_trues are populated.
+loss is updated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.compute_scores">
+<span class="sig-name descname"><span class="pre">compute_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.compute_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.compute_scores" title="Permalink to this definition"></a></dt>
+<dd><p>Compute macro/micro scores per task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>list</em>) – List of ground truth labels (as int). It is a list of lists for n_tasks &gt; 1.</p></li>
+<li><p><strong>y_pred</strong> (<em>list</em>) – List of predicted classes (as list of tensors). It is a list of lists for n_tasks &gt; 1.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Deep abstaining classifier class.</p></li>
+<li><p><strong>idx</strong> (<em>int</em>) – Indexing self.tasks.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>scores</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.compute_val_loss">
+<span class="sig-name descname"><span class="pre">compute_val_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.compute_val_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.compute_val_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute forward pass and loss function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.tensor</em>) – Iterate from DataLoader.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Deep abstaining classifier class.</p></li>
+<li><p><strong>ntask_abs</strong> (<em>float</em>) – Probability of abstaining on the entire document.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Float tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>loss (torch.tensor)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>y_preds and y_trues are populated.
+loss is updated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.fit_model">
+<span class="sig-name descname"><span class="pre">fit_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_loader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.fit_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.fit_model" title="Permalink to this definition"></a></dt>
+<dd><p>Main training loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_loader</strong> (<em>torch.DataLoader</em>) – Initialized and populated in the calling function.</p></li>
+<li><p><strong>val_loader</strong> (<em>torch.DataLoader</em>) – Initialized and populated in the calling function. Can be None, then training is used for validation scores.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Abstention class, deep abstaining classifier class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.get_ys">
+<span class="sig-name descname"><span class="pre">get_ys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.get_ys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.get_ys" title="Permalink to this definition"></a></dt>
+<dd><p>Get ground truth and y_predictions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logits</strong> (<em>list</em>) – List of logits.</p></li>
+<li><p><strong>y</strong> (<em>dict</em>) – Dictionary of numpy ndarrays, with tasks as keys.</p></li>
+<li><p><strong>idx</strong> (<em>int</em>) – Index in the enumerated DataLoader.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>self.y_trues and self.y_preds are populated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.output_scores">
+<span class="sig-name descname"><span class="pre">output_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_vals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntask_stop_val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntask_alpha_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.output_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.output_scores" title="Permalink to this definition"></a></dt>
+<dd><p>Print stats to the terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> (<em>dict</em>) – Dictionary of metrics, with tasks as keys and metrics as values.</p></li>
+<li><p><strong>dac</strong> (<em>Abstaining</em>) – Abstaining Classifier class.</p></li>
+<li><p><strong>stop_vals</strong> (<em>list</em>) – List of stopping criteria.</p></li>
+<li><p><strong>alpha_scale</strong> (<em>dict</em>) – Dictionary of scaling values for the dac, with tasks as keys.</p></li>
+<li><p><strong>ntask_stop_val</strong> (<em>float</em>) – Stopping criterion for ntask.</p></li>
+<li><p><strong>ntask_alpha_scale</strong> (<em>float</em>) – Scaling factor for ntask alpha.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.print_stats">
+<span class="sig-name descname"><span class="pre">print_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.print_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.print_stats" title="Permalink to this definition"></a></dt>
+<dd><p>Print macro/micro scores to stdout.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.profile_fit_model">
+<span class="sig-name descname"><span class="pre">profile_fit_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.profile_fit_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.profile_fit_model" title="Permalink to this definition"></a></dt>
+<dd><p>Main training loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_loader</strong> (<em>torch.DataLoader</em>) – Initialized and populated in the calling function.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Abstention class, deep abstaining classifier class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.score">
+<span class="sig-name descname"><span class="pre">score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_loader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.score" title="Permalink to this definition"></a></dt>
+<dd><p>Score a model during training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epoch</strong> (<em>int</em>) – Epoch number.</p></li>
+<li><p><strong>val_loader</strong> (<em>torch.dataLoader</em>) – DataLoader class with PathReports.</p></li>
+<li><p><strong>dac</strong> (<em>Abstention</em>) – Deep abstaining classifier class. Are we using the dac?</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.stop_metrics">
+<span class="sig-name descname"><span class="pre">stop_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.stop_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.stop_metrics" title="Permalink to this definition"></a></dt>
+<dd><p>Compute stop metrics.</p>
+<p>Compute stop metrics for normal (val loss + patience) or DAC (stop metric) training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loss</strong> (<em>torch.tensor</em>) – Float tensor, val loss value at the current epoch.</p></li>
+<li><p><strong>epoch</strong> (<em>int</em>) – Epoch counter.</p></li>
+<li><p><strong>stop_metrics</strong> (<em>dict</em>) – Dictionary of floats for abstention rates and accuracy.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>stop_val (float): DAC stopping criterion.</dt><dd><p>stop (bool): Stop or go?</p>
+</dd>
+<dt>Otherwise:</dt><dd><p>stop_val (float): Best val loss.
+stop (bool): Stop or go?</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If abstaining</p>
+</dd>
+</dl>
+<p>Post-condition:
+If not abstaining, patience counter is updated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.train_metrics">
+<span class="sig-name descname"><span class="pre">train_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#ModelTrainer.train_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.ModelTrainer.train_metrics" title="Permalink to this definition"></a></dt>
+<dd><p>Compute per-epoch metrics during training.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fresco.training.training.trace_handler">
+<span class="sig-prename descclassname"><span class="pre">fresco.training.training.</span></span><span class="sig-name descname"><span class="pre">trace_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/training/training.html#trace_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.training.training.trace_handler" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-fresco.training">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fresco.training" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fresco.models.html" class="btn btn-neutral float-left" title="fresco.models package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fresco.validate.html" class="btn btn-neutral float-right" title="fresco.validate package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

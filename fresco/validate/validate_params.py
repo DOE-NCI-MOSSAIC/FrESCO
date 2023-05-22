@@ -15,15 +15,15 @@ from fresco.validate import exceptions
 
 
 class ValidateParams():
-    """Class to validate model-specific paramaters for MOSSAIC models.
+    """
+    Class to validate model-specific parameters for MOSSAIC models.
 
-        Args:
-            cli_args: argparse list of command line args
-            data_source (str): indicates where the data will come from,
-            should be one of
-                - pre-generated: data_args.yml will indicate the source.
+    Args:
+        cli_args: argparse list of command line args.
+        data_source (str): Indicates where the data will come from. Should be one of:
+            - pre-generated: data_args.yml will indicate the source.
 
-        Post-condition: model_args dict loaded and sanity checked.
+    Post-condition: model_args dict loaded and sanity checked.
     """
 
     def __init__(self, cli_args,
@@ -90,18 +90,15 @@ class ValidateParams():
 
     def hisan_arg_check(self):
         """
-            Check and modify hisan specific args.
+        Check and modify HiSAN specific args.
 
-            Parameters: none
+        Parameters: none
 
-            Pre-condtition: self.model_args is not None
+        Pre-condition: self.model_args is not None
 
-            Post-condition:
-                self.model_args['MTHiSAN_kwargs']['max_lines'] modified to be
-                the ceiling of the  doc_max_len / max_words_per_line.
-
-                self.model_args['train_kwargs']['doc_max_len'] modified to be
-                max_words_per_line * max_lines
+        Post-condition:
+            self.model_args['MTHiSAN_kwargs']['max_lines'] modified to be the ceiling of the doc_max_len / max_words_per_line.
+            self.model_args['train_kwargs']['doc_max_len'] modified to be max_words_per_line * max_lines.
         """
 
         self.model_args['MTHiSAN_kwargs']['max_lines'] = \
@@ -116,7 +113,9 @@ class ValidateParams():
             self.check_weights()
 
     def mtcnn_arg_check(self):
-        """Check the number of filters matchesthe number of windows."""
+        """
+        Check the number of filters matchesthe number of windows.
+        """
         if len(self.model_args['MTCNN_kwargs']['num_filters']) != \
                 len(self.model_args['MTCNN_kwargs']['window_sizes']):
             raise exceptions.ParamError("Number of filters must match the number of window_sizes.")
@@ -126,16 +125,16 @@ class ValidateParams():
 
     def check_data_train_args(self, from_pretrained=False):
         """
-            Verify arguements are appropriate for the chosen model options.
+        Verify arguments are appropriate for the chosen model options.
 
-            Parameters: from_pretrained as bool, chekcing model args from a pretrained model,
-                pretrained model args are different, some are copied from data_kwargs to train_kwargs
+        Parameters:
+            from_pretrained (bool): Checking model args from a pretrained model. Pretrained model args are different,
+            some are copied from data_kwargs to train_kwargs.
 
-            Pre-condtition: self.model_args is not None
-            Post- condition: self.model_args['train_kwargs']['doc_max_len'] is
-                updated from the data_kwargs and
-                'max_lines' is added to the hisan kw_args
+        Pre-condition: self.model_args is not None.
 
+        Post-condition: self.model_args['train_kwargs']['doc_max_len'] is updated from the data_kwargs,
+        'max_lines' is added to the hisan kw_args.
         """
         schema = {'data_kwargs': ['doc_max_len', 'tasks', 'fold_number', 'data_path',
                                   'mutual_info_filter', 'mutual_info_threshold',
@@ -182,7 +181,9 @@ class ValidateParams():
             self.model_args['train_kwargs'].update([(word, self.model_args['data_kwargs'][word])])
 
     def check_abstain_args(self):
-        """Verify keywords needed for abstention to work are present and valid."""
+        """
+        Verify keywords needed for abstention to work are present and valid.
+        """
         abstain_kwargs = ['abstain_flag', 'alphas', 'max_abs', 'min_acc',
                           'abs_gain', 'acc_gain', 'alpha_scale',
                           'tune_mode', 'stop_limit', 'stop_metric',
@@ -226,14 +227,18 @@ class ValidateParams():
                 raise exceptions.ParamError("Ntask tasks are not a subset of the data tasks.")
 
     def check_keyword_args(self):
-        """Validate keyword args."""
+        """
+        Validate keyword args.
+        """
         tasks = ['histology', 'laterality', 'site', 'subsite', 'behavior']
         if not set(self.model_args['data_kwargs']['tasks']).issubset(tasks):
             raise exceptions.ParamError("Keywords are only available for: " +
                                         "histology, laterality, site, subsite, behavior")
 
     def check_weights(self):
-        """Validate class weights path exists."""
+        """
+        Validate class weights path exists.
+        """
         if isinstance(self.model_args['train_kwargs']['class_weights'], str):
             path = self.model_args['train_kwargs']['class_weights']
             if not os.path.exists(path):
@@ -241,13 +246,13 @@ class ValidateParams():
                                             "class weights")
 
     def check_data_files(self, data_path=None):
-        """Verify the necessary data files exist.
+        """
+        Verify the necessary data files exist.
 
-            Args:
-                data_path: str, from argparser, optional path to dataset
+        Args:
+            data_path (str): From argparser, optional path to dataset.
 
-            Note: setting data_path will override the path set in model_args.yml
-
+        Note: Setting data_path will override the path set in model_args.yml.
         """
         data_files = ['data_fold.csv', 'word_embeds_fold.npy', 'id2labels_fold.json']
 
@@ -280,15 +285,15 @@ class ValidateParams():
 
 
 class ValidateClcParams():
-    """Class to validate model-specific paramaters for MOSSAIC models.
+    """
+    Class to validate model-specific parameters for MOSSAIC models.
 
-        Args:
-            cli_args: argparse list of command line args
-            data_source (str): indicates where the data will come from,
-            should be one of
-                - pre-generated: data_args.yml will indicate the source.
+    Args:
+        cli_args: Argparse list of command line args.
+        data_source (str): Indicates where the data will come from. Should be one of:
+            - pre-generated: data_args.yml will indicate the source.
 
-        Post-condition: model_args dict loaded and sanity checked.
+    Post-condition: model_args dict loaded and sanity checked.
     """
 
     def __init__(self, cli_args, data_source: str = 'pre-generated'):
@@ -329,18 +334,15 @@ class ValidateClcParams():
 
     def clc_arg_check(self):
         """
-            Check and modify hisan specific args.
+        Check and modify HiSAN specific args.
 
-            Parameters: none
+        Parameters: none
 
-            Pre-condtition: self.model_args is not None
+        Pre-condition: self.model_args is not None
 
-            Post-condition:
-                self.model_args['MTHiSAN_kwargs']['max_lines'] modified to be
-                the ceiling of the  doc_max_len / max_words_per_line.
-
-                self.model_args['train_kwargs']['doc_max_len'] modified to be
-                max_words_per_line * max_lines
+        Post-condition:
+            self.model_args['MTHiSAN_kwargs']['max_lines'] modified to be the ceiling of doc_max_len / max_words_per_line.
+            self.model_args['train_kwargs']['doc_max_len'] modified to be max_words_per_line * max_lines.
         """
 
         if self.model_args['model_kwargs']['att_dropout'] > 1 or \
@@ -363,14 +365,15 @@ class ValidateClcParams():
 
     def check_data_train_args(self):
         """
-            Verify arguements are appropriate for the chosen model options.
+        Verify arguments are appropriate for the chosen model options.
 
-            Parameters: none
+        Parameters: none
 
-            Pre-condtition: self.model_args is not None
-            Post- condition: self.model_args['train_kwargs']['doc_max_len'] is
-                updated from the data_kwargs
+        Pre-condition: self.model_args is not None.
+
+        Post-condition: self.model_args['train_kwargs']['doc_max_len'] is updated from the data_kwargs.
         """
+    
         schema = {'data_kwargs': ['tasks', 'exclude_single', 'shuffle_case_order',
                                   'subset_proportion', 'model_path',
                                   'random_seed', 'reproducible'],
@@ -401,7 +404,9 @@ class ValidateClcParams():
             self.model_args['train_kwargs'].update([(word, self.model_args['data_kwargs'][word])])
 
     def check_abstain_args(self):
-        """Verify keywords needed for abstention to work are present and valid."""
+        """
+        Verify keywords needed for abstention to work are present and valid.
+        """
         abstain_kwargs = ['abstain_flag', 'alphas', 'max_abs', 'min_acc',
                           'abs_gain', 'acc_gain', 'alpha_scale',
                           'tune_mode', 'stop_limit', 'stop_metric',
@@ -442,13 +447,13 @@ class ValidateClcParams():
                 raise exceptions.ParamError("Ntask tasks are not a subset of the data tasks.")
 
     def check_data_files(self, data_path):
-        """Verify the necessary data files exist.
+        """
+        Verify the necessary data files exist.
 
-            Args:
-                data_path: str, from argparser, optional path to dataset
+        Args:
+            data_path (str): From argparser, optional path to dataset.
 
-            Note: setting data_path will override the path set in model_args.yml
-
+        Note: Setting data_path will override the path set in model_args.yml.
         """
         data_files = ['data_fold.csv', 'word_embeds_fold.npy', 'id2labels_fold.json']
 

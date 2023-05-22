@@ -20,17 +20,18 @@ from fresco.training import training
 from fresco.predict import predictions
 
 def create_model(params, dw, device):
-    """Define model based on model_args.
-
-        Args:
-            params: dict of model_args file
-            dw: DataHandler class
-            device: torch.device, either 'cpu' or 'cuda'
-
-        Returns:
-            a model
-
     """
+    Define a model based on model_args.
+
+    Args:
+        params (dict): Dictionary of model_args file.
+        dw (DataHandler): DataHandler class object.
+        device (torch.device): Torch device, either 'cpu' or 'cuda'.
+
+    Returns:
+        A model.
+    """
+
     model = clc.CaseLevelContext(dw.num_classes, device=device, **params.model_args['model_kwargs'])
 
     model.to(device, non_blocking=True)
@@ -59,17 +60,18 @@ def create_doc_embeddings(model, model_type, data_loader, device):
 
 
 def load_model_dict(model_path, data_path=""):
-    """Load pretrained model from disk.
-
-        Args:
-            model_path: str, from command line args, points to saved model
-            valid_params: ValidateParams class, with model_args dict
-            data_path: str or None, using data from the trained model, or different one
-
-        We check if the supplied path is valid and if the packages match needed
-            to run the pretrained model.
-
     """
+    Load pretrained model from disk.
+
+    Args:
+        model_path (str): Path to the saved model from command line args.
+        valid_params (ValidateParams): ValidateParams class object with model_args dict.
+        data_path (str or None): Path to data from the trained model, or None.
+
+    We check if the supplied path is valid and if the packages match needed
+    to run the pretrained model.
+    """
+
     if os.path.exists(model_path):
         model_dict = torch.load(model_path)
     else:

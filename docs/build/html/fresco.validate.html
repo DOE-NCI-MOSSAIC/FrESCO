@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.validate package &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="fresco.training package" href="fresco.training.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">fresco</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fresco.html">fresco package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fresco.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="fresco.data_loaders.html">fresco.data_loaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.models.html">fresco.models package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.training.html">fresco.training package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">fresco.validate package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.data_setup">fresco.data_setup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_clc">fresco.run_clc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_ie">fresco.run_ie module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">fresco</a></li>
+          <li class="breadcrumb-item"><a href="fresco.html">fresco package</a></li>
+      <li class="breadcrumb-item active">fresco.validate package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fresco.validate.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fresco-validate-package">
+<h1>fresco.validate package<a class="headerlink" href="#fresco-validate-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-fresco.validate.exceptions">
+<span id="fresco-validate-exceptions-module"></span><h2>fresco.validate.exceptions module<a class="headerlink" href="#module-fresco.validate.exceptions" title="Permalink to this heading"></a></h2>
+<p>Simple module to catch exception errors and print helpful messages.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="fresco.validate.exceptions.ParamError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.validate.exceptions.</span></span><span class="sig-name descname"><span class="pre">ParamError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/exceptions.html#ParamError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.exceptions.ParamError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Simple class to catch exception errors and print helpful debugging messages.</p>
+</dd></dl>
+
+</section>
+<section id="module-fresco.validate.validate_params">
+<span id="fresco-validate-validate-params-module"></span><h2>fresco.validate.validate_params module<a class="headerlink" href="#module-fresco.validate.validate_params" title="Permalink to this heading"></a></h2>
+<p>Module for sanity checking parameters for data and model building.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateClcParams">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.validate.validate_params.</span></span><span class="sig-name descname"><span class="pre">ValidateClcParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cli_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pre-generated'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateClcParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateClcParams" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to validate model-specific parameters for MOSSAIC models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cli_args</strong> – Argparse list of command line args.</p></li>
+<li><p><strong>data_source</strong> (<em>str</em>) – Indicates where the data will come from. Should be one of:
+- pre-generated: data_args.yml will indicate the source.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Post-condition: model_args dict loaded and sanity checked.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateClcParams.check_abstain_args">
+<span class="sig-name descname"><span class="pre">check_abstain_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateClcParams.check_abstain_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateClcParams.check_abstain_args" title="Permalink to this definition"></a></dt>
+<dd><p>Verify keywords needed for abstention to work are present and valid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateClcParams.check_data_files">
+<span class="sig-name descname"><span class="pre">check_data_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateClcParams.check_data_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateClcParams.check_data_files" title="Permalink to this definition"></a></dt>
+<dd><p>Verify the necessary data files exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_path</strong> (<em>str</em>) – From argparser, optional path to dataset.</p>
+</dd>
+</dl>
+<p>Note: Setting data_path will override the path set in model_args.yml.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateClcParams.check_data_train_args">
+<span class="sig-name descname"><span class="pre">check_data_train_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateClcParams.check_data_train_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateClcParams.check_data_train_args" title="Permalink to this definition"></a></dt>
+<dd><p>Verify arguments are appropriate for the chosen model options.</p>
+<p>Parameters: none</p>
+<p>Pre-condition: self.model_args is not None.</p>
+<p>Post-condition: self.model_args[‘train_kwargs’][‘doc_max_len’] is updated from the data_kwargs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateClcParams.clc_arg_check">
+<span class="sig-name descname"><span class="pre">clc_arg_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateClcParams.clc_arg_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateClcParams.clc_arg_check" title="Permalink to this definition"></a></dt>
+<dd><p>Check and modify HiSAN specific args.</p>
+<p>Parameters: none</p>
+<p>Pre-condition: self.model_args is not None</p>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>self.model_args[‘MTHiSAN_kwargs’][‘max_lines’] modified to be the ceiling of doc_max_len / max_words_per_line.
+self.model_args[‘train_kwargs’][‘doc_max_len’] modified to be max_words_per_line * max_lines.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.validate.validate_params.</span></span><span class="sig-name descname"><span class="pre">ValidateParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cli_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'pre-generated'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to validate model-specific parameters for MOSSAIC models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cli_args</strong> – argparse list of command line args.</p></li>
+<li><p><strong>data_source</strong> (<em>str</em>) – Indicates where the data will come from. Should be one of:
+- pre-generated: data_args.yml will indicate the source.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Post-condition: model_args dict loaded and sanity checked.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams.check_abstain_args">
+<span class="sig-name descname"><span class="pre">check_abstain_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams.check_abstain_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams.check_abstain_args" title="Permalink to this definition"></a></dt>
+<dd><p>Verify keywords needed for abstention to work are present and valid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams.check_data_files">
+<span class="sig-name descname"><span class="pre">check_data_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams.check_data_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams.check_data_files" title="Permalink to this definition"></a></dt>
+<dd><p>Verify the necessary data files exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_path</strong> (<em>str</em>) – From argparser, optional path to dataset.</p>
+</dd>
+</dl>
+<p>Note: Setting data_path will override the path set in model_args.yml.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams.check_data_train_args">
+<span class="sig-name descname"><span class="pre">check_data_train_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams.check_data_train_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams.check_data_train_args" title="Permalink to this definition"></a></dt>
+<dd><p>Verify arguments are appropriate for the chosen model options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>from_pretrained</strong> (<em>bool</em>) – Checking model args from a pretrained model. Pretrained model args are different,</p></li>
+<li><p><strong>train_kwargs.</strong> (<em>some are copied from data_kwargs to</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<p>Pre-condition: self.model_args is not None.</p>
+<p>Post-condition: self.model_args[‘train_kwargs’][‘doc_max_len’] is updated from the data_kwargs,
+‘max_lines’ is added to the hisan kw_args.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams.check_keyword_args">
+<span class="sig-name descname"><span class="pre">check_keyword_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams.check_keyword_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams.check_keyword_args" title="Permalink to this definition"></a></dt>
+<dd><p>Validate keyword args.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams.check_weights">
+<span class="sig-name descname"><span class="pre">check_weights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams.check_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams.check_weights" title="Permalink to this definition"></a></dt>
+<dd><p>Validate class weights path exists.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams.hisan_arg_check">
+<span class="sig-name descname"><span class="pre">hisan_arg_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams.hisan_arg_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams.hisan_arg_check" title="Permalink to this definition"></a></dt>
+<dd><p>Check and modify HiSAN specific args.</p>
+<p>Parameters: none</p>
+<p>Pre-condition: self.model_args is not None</p>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>self.model_args[‘MTHiSAN_kwargs’][‘max_lines’] modified to be the ceiling of the doc_max_len / max_words_per_line.
+self.model_args[‘train_kwargs’][‘doc_max_len’] modified to be max_words_per_line * max_lines.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.validate.validate_params.ValidateParams.mtcnn_arg_check">
+<span class="sig-name descname"><span class="pre">mtcnn_arg_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/validate/validate_params.html#ValidateParams.mtcnn_arg_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.validate.validate_params.ValidateParams.mtcnn_arg_check" title="Permalink to this definition"></a></dt>
+<dd><p>Check the number of filters matchesthe number of windows.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fresco.validate">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fresco.validate" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fresco.training.html" class="btn btn-neutral float-left" title="fresco.training package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

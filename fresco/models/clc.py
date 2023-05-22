@@ -129,16 +129,18 @@ class CaseLevelContext(nn.Module):
 
     def forward(self, doc_embeds, num_docs):
         '''
-        case level context forward pass
+        Case level context forward pass.
 
-        parameters:
-          - doc_embeds: torch.tensor (float) [batch_size x max_seq_length x doc_embed_size]
-          - num_docs: torch.tensor (int) [batch_size]
-            number of reports per case
+        Args:
+            doc_embeds (torch.tensor): Float tensor of shape [batch_size x max_seq_length x doc_embed_size].
+                Document embeddings.
+            num_docs (torch.tensor): Integer tensor of shape [batch_size].
+                Number of reports per case.
 
-        outputs:
-
+        Returns:
+            None
         '''
+
         # create mask
         batch_size = num_docs.shape[0]
         max_seq_len = doc_embeds.shape[1]
