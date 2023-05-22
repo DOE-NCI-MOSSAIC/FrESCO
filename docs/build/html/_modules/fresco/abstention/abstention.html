@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.abstention.abstention &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">fresco.abstention.abstention</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for fresco.abstention.abstention</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Module implementing deep-abstaining classifier.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#    pylint: disable=C0121</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1"># import numpy.ma as ma</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
+
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+
+
+<div class="viewcode-block" id="DacLoss"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.DacLoss">[docs]</a><span class="k">class</span> <span class="nc">DacLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Custom loss class for the DAC.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        loss_fin (torch.nn.loss): Torch loss function, either Cross Entropy or Binary Cross Entropy (for multilabel).</span>
+<span class="sd">        multilabel (bool): Indicates if it is a multilabel problem.</span>
+<span class="sd">        alphas (torch.Tensor): Torch tensor of alphas for the DAC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss_fun</span><span class="p">,</span> <span class="n">multilabel</span><span class="p">,</span> <span class="n">alphas</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_fun</span> <span class="o">=</span> <span class="n">loss_fun</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span> <span class="o">=</span> <span class="n">multilabel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span> <span class="o">=</span> <span class="n">alphas</span>
+
+<div class="viewcode-block" id="DacLoss.forward"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.DacLoss.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">y_pred</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">,</span>
+                <span class="n">y_true</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">,</span>
+                <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                <span class="n">ntask_abs_prob</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute DAC loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            y_pred (torch.Tensor): Logits from model.forward().</span>
+<span class="sd">            y_true (torch.Tensor): Integer values of ground truth.</span>
+<span class="sd">            idx (int): Index associated with a task.</span>
+<span class="sd">            ntask_abs_prob (float): Probability of ntask abstaining on the document.</span>
+
+<span class="sd">        Pre-condition: Loss function defined in class constructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-4</span>
+
+        <span class="c1"># updated loss</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+            <span class="n">log_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_sigmoid</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># need the log_softmax to account of correct operations for the multilabel case</span>
+            <span class="n">log_probs</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">p_k</span> <span class="o">=</span> <span class="n">log_probs</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">p_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_probs</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">om_px</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">p_x</span> <span class="o">+</span> <span class="n">eps</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+            <span class="n">tmp_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_fun</span><span class="p">(</span><span class="n">p_k</span><span class="p">,</span> <span class="n">y_true</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">om_px</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tmp_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fun</span><span class="p">(</span><span class="n">p_k</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">om_px</span><span class="p">)</span>
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="p">(</span><span class="n">om_px</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">ntask_abs_prob</span><span class="p">)</span> <span class="o">*</span> <span class="n">tmp_loss</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">om_px</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_log_sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute numerically stable log sigmoid function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x_max</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">keep_dim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">x_max</span><span class="o">.</span><span class="n">isfinite</span><span class="p">():</span>
+            <span class="n">x_max</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">x_max</span>
+        <span class="n">exp_tmp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">exp_tmp</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tmp</span> <span class="o">-</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="AbstainingClassifier"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier">[docs]</a><span class="k">class</span> <span class="nc">AbstainingClassifier</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for deep abstaining classifier.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        id2label (dict): Dictionary mapping int values to label values for each task.</span>
+<span class="sd">        kw_args (dict): Dictionary with necessary keywords for abstention.</span>
+<span class="sd">        device (str): &#39;cuda&#39; or &#39;cpu&#39;, set from model_suite.py.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kw_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">class_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">clc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_flag&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_tasks</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_tasks&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_alpha</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_alpha&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_max_abs</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_max_abs&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_min_acc</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_min_acc&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_alpha_scale</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;ntask_alpha_scale&#39;</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_min_scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_alpha_scale</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_max_scale</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_min_scale</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_abs_rate</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+
+        <span class="c1"># populated in self.add_abstention_classes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_classes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abstain_labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abs_rates</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># these need to be ordered according to self.tasks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s2">&quot;alphas&quot;</span><span class="p">][</span><span class="n">task</span><span class="p">])</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_abs</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;max_abs&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_acc</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;min_acc&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_scale</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;alpha_scale&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_min_scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_max_scale</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_min_scale</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;tune_mode&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abs_gain</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;abs_gain&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_gain</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;acc_gain&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_limit</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;stop_limit&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_metric</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;abstain_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;stop_metric&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">clc</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">NLLLoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">class_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">class_weights_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">class_weights_tensor</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span> <span class="o">=</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;multilabel&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_weights_tensor</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># self.base_loss = torch.nn.CrossEntropyLoss(self.class_weights_tensor, reduction=&#39;none&#39;)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">NLLLoss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_weights_tensor</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dac_loss</span> <span class="o">=</span> <span class="n">DacLoss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_loss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">multilabel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AbstainingClassifier.add_abstention_classes"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.add_abstention_classes">[docs]</a>    <span class="k">def</span> <span class="nf">add_abstention_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dw</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add abstention class, and ntask if enabled, to data wrangler attributes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dw (dataHandler): DataHandler class.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            dw.num_classes updated.</span>
+<span class="sd">            dw.dict_maps[&#39;id2label&#39;] updated with abstention classes.</span>
+<span class="sd">            self.abstain_labels populated.</span>
+<span class="sd">            self.n_classes populated.</span>
+
+<span class="sd">        Must be called before creating PathReports class for DataLoaders.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">abstain_labels</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                               <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_classes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">+</span><span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">]</span>
+        <span class="n">dw</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_classes</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dw</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">dw</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">idx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="sa">f</span><span class="s2">&quot;abs_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span>
+                <span class="n">dw</span><span class="o">.</span><span class="n">dict_maps</span><span class="p">[</span><span class="s1">&#39;id2label&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;abs_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span><span class="p">:</span>
+            <span class="n">dw</span><span class="o">.</span><span class="n">num_classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.abstention_loss"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.abstention_loss">[docs]</a>    <span class="k">def</span> <span class="nf">abstention_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">y_pred</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">,</span>
+                        <span class="n">y_true</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">,</span>
+                        <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                        <span class="n">ntask_abs_prob</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute DAC loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            y_pred (torch.tensor): Logits from model.forward().</span>
+<span class="sd">            y_true (torch.tensor): Integer values of ground truth.</span>
+<span class="sd">            idx (int): Index associated with a task.</span>
+<span class="sd">            ntask_abs_prob (float): Probability of ntask abstaining on the document.</span>
+
+<span class="sd">        Pre-condition: Loss function defined in class constructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dac_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ntask_abs_prob</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.compute_accuracy"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.compute_accuracy">[docs]</a>    <span class="k">def</span> <span class="nf">compute_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute abstain 0-1 accuracy and abstention rate.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            y_true (dict): Dictionary with keys as tasks and values as lists of tensors.</span>
+<span class="sd">            y_pred (dict): Dictionary with keys as tasks and values as lists of tensors.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            The attribute accuracy is cleared and repopulated within this function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">pred_idxs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abs_rates</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="c1"># clear accuracy scores from prior epoch</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">[:]</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">_preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">y</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">task</span><span class="p">]])</span>
+            <span class="c1"># indices of abstained docs</span>
+            <span class="n">pred_idxs</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">_preds</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstain_labels</span><span class="p">[</span><span class="n">task</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">abs_rates</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_abs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">_preds</span><span class="p">[</span><span class="n">pred_idxs</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">_trues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">y</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">y_true</span><span class="p">[</span><span class="n">task</span><span class="p">]])[</span><span class="n">pred_idxs</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">_trues</span><span class="p">,</span> <span class="n">_preds</span><span class="p">[</span><span class="n">pred_idxs</span><span class="p">[</span><span class="n">task</span><span class="p">]]))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask</span> <span class="ow">and</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_tasks</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">_preds</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstain_labels</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pred_idxs</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.get_ntask_filter"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.get_ntask_filter">[docs]</a>    <span class="k">def</span> <span class="nf">get_ntask_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ntask_abs_prob</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the ntask_mask.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ntask_abs_prob: float</span>
+<span class="sd">                Probability of abstaining on the entire document.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            self.ntask_filter is set to [] at the start of each epoch.</span>
+<span class="sd">            This method is called in training.compute_loss and must be called prior to calling compute_accuracy.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># ntask 0-1</span>
+        <span class="n">_filter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">ntask_abs_prob</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="c1"># docs ntask is not ok with, ie, ones to abstain on</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">_filter</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.compute_ntask_accuracy"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.compute_ntask_accuracy">[docs]</a>    <span class="k">def</span> <span class="nf">compute_ntask_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute ntask abstain 0-1 accuracy and abstention rate.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            y_true: list</span>
+<span class="sd">                List of ground truth values for each task.</span>
+<span class="sd">            y_pred: list</span>
+<span class="sd">                List of predicted values for each task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># need to get the len once for all tasks</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">[</span><span class="n">tmp</span><span class="p">]))[</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_tasks</span><span class="p">:</span>
+            <span class="n">_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">y</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">y_true</span><span class="p">[</span><span class="n">task</span><span class="p">]])[</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span><span class="p">]</span>
+            <span class="n">_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">y</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">task</span><span class="p">]])[</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span><span class="p">]</span>
+
+            <span class="c1"># tmp_mask = np.where(_true == _pred)[0]</span>
+            <span class="n">tmp_mask</span> <span class="o">=</span> <span class="n">_true</span> <span class="o">==</span> <span class="n">_pred</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span><span class="p">,</span> <span class="n">tmp_mask</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">==</span> <span class="kc">True</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ntask_abs_rate</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span> <span class="o">==</span> <span class="kc">True</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_filter</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_abs_rate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.compute_abs_scores"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.compute_abs_scores">[docs]</a>    <span class="k">def</span> <span class="nf">compute_abs_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute accuracy scores for a DAC model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            y_true: torch.tensor</span>
+<span class="sd">                Ground truth values.</span>
+<span class="sd">            y_pred: torch.tensor</span>
+<span class="sd">                Predicted values.</span>
+<span class="sd">            idx: int</span>
+<span class="sd">                Index associated with a task.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            This method is not presently used as of 11/8.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">abs_scores</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">np_preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">n_preds</span> <span class="o">=</span> <span class="n">np_preds</span><span class="p">[</span><span class="n">np_preds</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstain_labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
+        <span class="n">abs_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">n_preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+
+        <span class="n">abs_scores</span><span class="p">[</span><span class="s1">&#39;abs_rates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">abs_rate</span>
+        <span class="n">abs_scores</span><span class="p">[</span><span class="s1">&#39;abs_acc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">abs_scores</span><span class="p">[</span><span class="s1">&#39;alphas&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span>
+
+        <span class="k">return</span> <span class="n">abs_scores</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.modify_alphas"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.modify_alphas">[docs]</a>    <span class="k">def</span> <span class="nf">modify_alphas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">additive</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Modify abstention alpha values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            scores: dict</span>
+<span class="sd">                A dictionary of dictionaries containing scores.</span>
+<span class="sd">                The keys are tasks, and the sub-dictionary contains the following key-value pairs:</span>
+<span class="sd">                - &#39;micros&#39;: list of micro accuracy scores</span>
+<span class="sd">                - &#39;abs_rate&#39;: list of abstention rates for each task</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            self.alphas are modified in-place.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">scale_factors</span> <span class="o">=</span> <span class="p">{</span><span class="n">task</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="n">stop_metrics</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+
+            <span class="c1"># these are common to all tuning methods</span>
+            <span class="n">acc_error</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s1">&#39;micro&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_acc</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">abs_error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_rates</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_abs&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_abs</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">acc_ratio</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s1">&#39;micro&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_acc</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">abs_ratio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_rates</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s1">_abs&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_abs</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs_acc&#39;</span><span class="p">:</span>
+                <span class="c1"># modify the scaling factor according to error in target abstention and accuracy</span>
+
+                <span class="c1"># clip if accuracy is above min_acc</span>
+                <span class="n">acc_error</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">acc_error</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+
+                <span class="c1"># clip if abstention is below max_abs</span>
+                <span class="n">abs_error</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">abs_error</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+
+                <span class="c1"># multiplicative scaling</span>
+                <span class="c1"># clip if accuracy is above min_acc</span>
+                <span class="n">acc_ratio</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">acc_ratio</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+                <span class="c1"># clip if abstention is below max_abs</span>
+                <span class="n">abs_ratio</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">abs_ratio</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+                <span class="c1"># choose multiplicative or additive scaling</span>
+                <span class="k">if</span> <span class="n">additive</span><span class="p">:</span>
+                    <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_gain</span> <span class="o">*</span> <span class="n">acc_error</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_gain</span> <span class="o">*</span> <span class="n">abs_error</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">acc_ratio</span> <span class="o">*</span> <span class="n">abs_ratio</span><span class="p">)</span>
+
+                <span class="c1"># use harmonic mean to rescale the stopping criterion</span>
+                <span class="n">stop_i</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_scale</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_gain</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_gain</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.5</span>
+
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;acc&#39;</span><span class="p">:</span>
+                <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_gain</span> <span class="o">*</span> <span class="n">acc_error</span><span class="p">)</span>
+                <span class="n">stop_i</span> <span class="o">=</span> <span class="n">acc_error</span>
+
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs&#39;</span><span class="p">:</span>
+                <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_gain</span> <span class="o">*</span> <span class="n">abs_error</span><span class="p">)</span>
+                <span class="n">stop_i</span> <span class="o">=</span> <span class="n">abs_error</span>
+
+            <span class="c1"># threshold the scaling to be safe</span>
+            <span class="n">new_scale</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">new_scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_max_scale</span><span class="p">[</span><span class="n">task</span><span class="p">]])</span>
+            <span class="n">new_scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">new_scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_min_scale</span><span class="p">[</span><span class="n">task</span><span class="p">]])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">new_scale</span>
+
+            <span class="n">scale_factors</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_scale</span>
+            <span class="n">stop_metrics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stop_i</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">scale_factors</span><span class="p">,</span> <span class="n">stop_metrics</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.modify_ntask_alpha"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.modify_ntask_alpha">[docs]</a>    <span class="k">def</span> <span class="nf">modify_ntask_alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">additive</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Modify ntask alpha value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            additive: bool</span>
+<span class="sd">                Indicates the type of scaling being used.</span>
+
+<span class="sd">        Post-condition:</span>
+<span class="sd">            self.ntask_alpha is modified in-place.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">acc_error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_min_acc</span>
+        <span class="n">abs_error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_abs_rate</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_max_abs</span>
+        <span class="n">acc_ratio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_acc</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_min_acc</span>
+        <span class="n">abs_ratio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_abs_rate</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_max_abs</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs_acc&#39;</span><span class="p">:</span>
+            <span class="c1"># modify the scaling factor according to error in target abstention and accuracy</span>
+
+            <span class="c1"># clip if accuracy is above min_acc</span>
+            <span class="n">acc_error</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">acc_error</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+
+            <span class="c1"># clip if abstention is below max_abs</span>
+            <span class="n">abs_error</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">abs_error</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+
+            <span class="c1"># multiplicative scaling</span>
+            <span class="c1"># clip if accuracy is above min_acc</span>
+            <span class="n">acc_ratio</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">acc_ratio</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+            <span class="c1"># clip if abstention is below max_abs</span>
+            <span class="n">abs_ratio</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">abs_ratio</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+
+            <span class="c1"># choose multiplicative or additive scaling</span>
+            <span class="k">if</span> <span class="n">additive</span><span class="p">:</span>
+                <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_gain</span> <span class="o">*</span> <span class="n">acc_error</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_gain</span> <span class="o">*</span> <span class="n">abs_error</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">acc_ratio</span> <span class="o">*</span> <span class="n">abs_ratio</span><span class="p">)</span>
+
+            <span class="c1"># use harmonic mean to rescale the stopping criterion</span>
+            <span class="n">stop_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_scale</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_gain</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_gain</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.5</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;acc&#39;</span><span class="p">:</span>
+            <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_gain</span> <span class="o">*</span> <span class="n">acc_error</span><span class="p">)</span>
+            <span class="n">stop_val</span> <span class="o">=</span> <span class="n">acc_error</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs&#39;</span><span class="p">:</span>
+            <span class="n">new_scale</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_gain</span> <span class="o">*</span> <span class="n">abs_error</span><span class="p">)</span>
+            <span class="n">stop_val</span> <span class="o">=</span> <span class="n">abs_error</span>
+
+        <span class="c1"># threshold the scaling to be safe</span>
+        <span class="n">new_scale</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">new_scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_max_scale</span><span class="p">])</span>
+        <span class="n">new_scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">new_scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_min_scale</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ntask_alpha</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ntask_alpha</span> <span class="o">*</span> <span class="n">new_scale</span>
+
+        <span class="k">return</span> <span class="n">new_scale</span><span class="p">,</span> <span class="n">stop_val</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.check_abs_stop_metric"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.check_abs_stop_metric">[docs]</a>    <span class="k">def</span> <span class="nf">check_abs_stop_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_metrics</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if abstention stopping criteria is satisfied.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            stop_metrics: dict</span>
+<span class="sd">                Dictionary containing the metrics used for the stopping criteria.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_metric</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
+            <span class="n">stop_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">stop_metrics</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># l2 norm</span>
+            <span class="n">stop_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">stop_metrics</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stop_val</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.write_abs_header"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.write_abs_header">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">write_abs_header</span><span class="p">(</span><span class="n">tasks</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write header for abstention stats output file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;predictions/abs_stats.txt&#39;</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">abs_file</span><span class="p">:</span>
+            <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Alphas, accuracies, abstention, stop_metric</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># we just want 4 copies on the header line</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+
+            <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.write_abs_stats"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.write_abs_stats">[docs]</a>    <span class="k">def</span> <span class="nf">write_abs_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_metrics</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save abstention stats to output file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;predictions/abs_stats.txt&#39;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">abs_file</span><span class="p">:</span>
+            <span class="c1"># write a single line with alphas, accuracy and abstention</span>
+            <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Alphas:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+                <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alphas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">10.5f</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+            <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">DAC accuracy:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+                <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">accuracy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">10.5f</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+            <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Abstention rates:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_rates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">10.5f</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+            <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Stopping values:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+                <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">stop_metrics</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">10.5f</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+            <span class="n">abs_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.print_abs_tune_header"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_header">[docs]</a>    <span class="k">def</span> <span class="nf">print_abs_tune_header</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change output header based on tuning mode.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs_acc&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;task&#39;</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;macro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;micro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;min_acc&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">,  &quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;abs_frac&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;max_abs&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;alpha&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2">, &quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;scale_frac&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;stop_metric&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;task&#39;</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;macro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;micro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, &quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;abs_frac&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;max_abs&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;alpha&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2">, &quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;scale_frac&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;stop_metric&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;acc&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;task&#39;</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;macro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;micro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">,  &quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;abs_frac&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;target_abs&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;alpha&#39;</span><span class="si">:</span><span class="s2">&gt;9s</span><span class="si">}</span><span class="s2">, &quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;scale_frac&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;stop_metric&#39;</span><span class="si">:</span><span class="s2">&gt;12s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.print_abs_tune_stats"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_stats">[docs]</a>    <span class="k">def</span> <span class="nf">print_abs_tune_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">macro</span><span class="p">,</span> <span class="n">micro</span><span class="p">,</span> <span class="n">min_acc</span><span class="p">,</span> <span class="n">abs_frac</span><span class="p">,</span>
+                             <span class="n">max_abs</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">scale_frac</span><span class="p">,</span> <span class="n">stop_metric</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print output based on tuning mode.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs_acc&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">macro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">micro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">min_acc</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, &quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">abs_frac</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">max_abs</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">alpha</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">,&quot;</span><span class="p">)</span> <span class="o">+</span>
+                  <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale_frac</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">stop_metric</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;abs&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">macro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">micro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">abs_frac</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, &quot;</span> <span class="o">+</span>
+                   <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">max_abs</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">alpha</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">scale_frac</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">stop_metric</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tune_mode</span> <span class="o">==</span> <span class="s1">&#39;acc&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">macro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">micro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">abs_frac</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, &quot;</span> <span class="o">+</span>
+                   <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">min_acc</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">alpha</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">scale_frac</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">stop_metric</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.print_abs_header"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_header">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">print_abs_header</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set format output header line.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;task&#39;</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;macro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;micro&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="s1">&#39;abs_frac&#39;</span><span class="si">:</span><span class="s2">&gt;10s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstainingClassifier.print_abs_stats"><a class="viewcode-back" href="../../../fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_stats">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">print_abs_stats</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">micro</span><span class="p">,</span> <span class="n">macro</span><span class="p">,</span> <span class="n">abs_frac</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pring abstention statis diring training.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">macro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">micro</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">abs_frac</span><span class="si">:</span><span class="s2">10.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

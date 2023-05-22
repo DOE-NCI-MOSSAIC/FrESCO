@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.abstention package &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">fresco.abstention package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fresco.abstention.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fresco-abstention-package">
+<h1>fresco.abstention package<a class="headerlink" href="#fresco-abstention-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-fresco.abstention.abstention">
+<span id="fresco-abstention-abstention-module"></span><h2>fresco.abstention.abstention module<a class="headerlink" href="#module-fresco.abstention.abstention" title="Permalink to this heading"></a></h2>
+<p>Module implementing deep-abstaining classifier.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.abstention.abstention.</span></span><span class="sig-name descname"><span class="pre">AbstainingClassifier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kw_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for deep abstaining classifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id2label</strong> (<em>dict</em>) – Dictionary mapping int values to label values for each task.</p></li>
+<li><p><strong>kw_args</strong> (<em>dict</em>) – Dictionary with necessary keywords for abstention.</p></li>
+<li><p><strong>device</strong> (<em>str</em>) – ‘cuda’ or ‘cpu’, set from model_suite.py.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.abstention_loss">
+<span class="sig-name descname"><span class="pre">abstention_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_true</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntask_abs_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensor</span></span></span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.abstention_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.abstention_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Compute DAC loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>torch.tensor</em>) – Logits from model.forward().</p></li>
+<li><p><strong>y_true</strong> (<em>torch.tensor</em>) – Integer values of ground truth.</p></li>
+<li><p><strong>idx</strong> (<em>int</em>) – Index associated with a task.</p></li>
+<li><p><strong>ntask_abs_prob</strong> (<em>float</em>) – Probability of ntask abstaining on the document.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Pre-condition: Loss function defined in class constructor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.add_abstention_classes">
+<span class="sig-name descname"><span class="pre">add_abstention_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dw</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.add_abstention_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.add_abstention_classes" title="Permalink to this definition"></a></dt>
+<dd><p>Add abstention class, and ntask if enabled, to data wrangler attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dw</strong> (<em>dataHandler</em>) – DataHandler class.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>dw.num_classes updated.
+dw.dict_maps[‘id2label’] updated with abstention classes.
+self.abstain_labels populated.
+self.n_classes populated.</p>
+</dd>
+</dl>
+<p>Must be called before creating PathReports class for DataLoaders.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.check_abs_stop_metric">
+<span class="sig-name descname"><span class="pre">check_abs_stop_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stop_metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.check_abs_stop_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.check_abs_stop_metric" title="Permalink to this definition"></a></dt>
+<dd><p>Check if abstention stopping criteria is satisfied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>stop_metrics</strong> – dict
+Dictionary containing the metrics used for the stopping criteria.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.compute_abs_scores">
+<span class="sig-name descname"><span class="pre">compute_abs_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.compute_abs_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.compute_abs_scores" title="Permalink to this definition"></a></dt>
+<dd><p>Compute accuracy scores for a DAC model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> – torch.tensor
+Ground truth values.</p></li>
+<li><p><strong>y_pred</strong> – torch.tensor
+Predicted values.</p></li>
+<li><p><strong>idx</strong> – int
+Index associated with a task.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method is not presently used as of 11/8.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.compute_accuracy">
+<span class="sig-name descname"><span class="pre">compute_accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.compute_accuracy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.compute_accuracy" title="Permalink to this definition"></a></dt>
+<dd><p>Compute abstain 0-1 accuracy and abstention rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> (<em>dict</em>) – Dictionary with keys as tasks and values as lists of tensors.</p></li>
+<li><p><strong>y_pred</strong> (<em>dict</em>) – Dictionary with keys as tasks and values as lists of tensors.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>The attribute accuracy is cleared and repopulated within this function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.compute_ntask_accuracy">
+<span class="sig-name descname"><span class="pre">compute_ntask_accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.compute_ntask_accuracy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.compute_ntask_accuracy" title="Permalink to this definition"></a></dt>
+<dd><p>Compute ntask abstain 0-1 accuracy and abstention rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_true</strong> – list
+List of ground truth values for each task.</p></li>
+<li><p><strong>y_pred</strong> – list
+List of predicted values for each task.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.get_ntask_filter">
+<span class="sig-name descname"><span class="pre">get_ntask_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ntask_abs_prob</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.get_ntask_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.get_ntask_filter" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the ntask_mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ntask_abs_prob</strong> – float
+Probability of abstaining on the entire document.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>self.ntask_filter is set to [] at the start of each epoch.
+This method is called in training.compute_loss and must be called prior to calling compute_accuracy.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.modify_alphas">
+<span class="sig-name descname"><span class="pre">modify_alphas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.modify_alphas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.modify_alphas" title="Permalink to this definition"></a></dt>
+<dd><p>Modify abstention alpha values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scores</strong> – dict
+A dictionary of dictionaries containing scores.
+The keys are tasks, and the sub-dictionary contains the following key-value pairs:
+- ‘micros’: list of micro accuracy scores
+- ‘abs_rate’: list of abstention rates for each task</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>self.alphas are modified in-place.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.modify_ntask_alpha">
+<span class="sig-name descname"><span class="pre">modify_ntask_alpha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additive</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.modify_ntask_alpha"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.modify_ntask_alpha" title="Permalink to this definition"></a></dt>
+<dd><p>Modify ntask alpha value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>additive</strong> – bool
+Indicates the type of scaling being used.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>self.ntask_alpha is modified in-place.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.print_abs_header">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">print_abs_header</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.print_abs_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.print_abs_header" title="Permalink to this definition"></a></dt>
+<dd><p>Set format output header line.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.print_abs_stats">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">print_abs_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">micro</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">macro</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_frac</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.print_abs_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.print_abs_stats" title="Permalink to this definition"></a></dt>
+<dd><p>Pring abstention statis diring training.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_header">
+<span class="sig-name descname"><span class="pre">print_abs_tune_header</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.print_abs_tune_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_header" title="Permalink to this definition"></a></dt>
+<dd><p>Change output header based on tuning mode.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_stats">
+<span class="sig-name descname"><span class="pre">print_abs_tune_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">macro</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">micro</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_acc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abs_frac</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_abs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_frac</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_metric</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.print_abs_tune_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_stats" title="Permalink to this definition"></a></dt>
+<dd><p>Print output based on tuning mode.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.write_abs_header">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_abs_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.write_abs_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.write_abs_header" title="Permalink to this definition"></a></dt>
+<dd><p>Write header for abstention stats output file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.AbstainingClassifier.write_abs_stats">
+<span class="sig-name descname"><span class="pre">write_abs_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stop_metrics</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#AbstainingClassifier.write_abs_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.AbstainingClassifier.write_abs_stats" title="Permalink to this definition"></a></dt>
+<dd><p>Save abstention stats to output file.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.DacLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.abstention.abstention.</span></span><span class="sig-name descname"><span class="pre">DacLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multilabel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alphas</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#DacLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.DacLoss" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Custom loss class for the DAC.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loss_fin</strong> (<em>torch.nn.loss</em>) – Torch loss function, either Cross Entropy or Binary Cross Entropy (for multilabel).</p></li>
+<li><p><strong>multilabel</strong> (<em>bool</em>) – Indicates if it is a multilabel problem.</p></li>
+<li><p><strong>alphas</strong> (<em>torch.Tensor</em>) – Torch tensor of alphas for the DAC.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.abstention.abstention.DacLoss.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_true</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntask_abs_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tensor</span></span></span><a class="reference internal" href="_modules/fresco/abstention/abstention.html#DacLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.abstention.abstention.DacLoss.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Compute DAC loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>torch.Tensor</em>) – Logits from model.forward().</p></li>
+<li><p><strong>y_true</strong> (<em>torch.Tensor</em>) – Integer values of ground truth.</p></li>
+<li><p><strong>idx</strong> (<em>int</em>) – Index associated with a task.</p></li>
+<li><p><strong>ntask_abs_prob</strong> (<em>float</em>) – Probability of ntask abstaining on the document.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Pre-condition: Loss function defined in class constructor.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fresco.abstention">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fresco.abstention" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -95,8 +95,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.abstain">abstain (fresco.training.training.ModelTrainer attribute)</a>
 </li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier">AbstainingClassifier (class in fresco.abstention.abstention)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.abstention_loss">abstention_loss() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.add_abstention_classes">add_abstention_classes() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
       <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.AddNoise">AddNoise (class in fresco.data_loaders.data_utils)</a>
 </li>
   </ul></td>
@@ -114,6 +120,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fresco.models.html#fresco.models.clc.CaseLevelContext">CaseLevelContext (class in fresco.models.clc)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.check_abs_stop_metric">check_abs_stop_metric() (fresco.abstention.abstention.AbstainingClassifier method)</a>
 </li>
       <li><a href="fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.check_abstain_args">check_abstain_args() (fresco.validate.validate_params.ValidateClcParams method)</a>
 
@@ -139,18 +147,38 @@
 </li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.class_weights">class_weights (fresco.training.training.ModelTrainer attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.clc_arg_check">clc_arg_check() (fresco.validate.validate_params.ValidateClcParams method)</a>
 </li>
-      <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_clc_loss">compute_clc_loss() (fresco.training.training.ModelTrainer method)</a>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.clear_pred_lists">clear_pred_lists() (fresco.predict.predictions.ScoreModel method)</a>
 </li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.compute_abs_scores">compute_abs_scores() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.compute_accuracy">compute_accuracy() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.compute_clc_loss">compute_clc_loss() (fresco.predict.predictions.ScoreModel method)</a>
+
+      <ul>
+        <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_clc_loss">(fresco.training.training.ModelTrainer method)</a>
+</li>
+      </ul></li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_clc_val_loss">compute_clc_val_loss() (fresco.training.training.ModelTrainer method)</a>
 </li>
-      <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_loss">compute_loss() (fresco.training.training.ModelTrainer method)</a>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.compute_loss">compute_loss() (fresco.predict.predictions.ScoreModel method)</a>
+
+      <ul>
+        <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_loss">(fresco.training.training.ModelTrainer method)</a>
 </li>
-      <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_scores">compute_scores() (fresco.training.training.ModelTrainer method)</a>
+      </ul></li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.compute_ntask_accuracy">compute_ntask_accuracy() (fresco.abstention.abstention.AbstainingClassifier method)</a>
 </li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.compute_scores">compute_scores() (fresco.predict.predictions.ScoreModel method)</a>
+
+      <ul>
+        <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_scores">(fresco.training.training.ModelTrainer method)</a>
+</li>
+      </ul></li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.compute_val_loss">compute_val_loss() (fresco.training.training.ModelTrainer method)</a>
 </li>
       <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.convert_y">convert_y() (fresco.data_loaders.data_utils.DataHandler method)</a>
@@ -169,12 +197,14 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.data_source">data_source (fresco.data_loaders.data_utils.DataHandler attribute)</a>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.DacLoss">DacLoss (class in fresco.abstention.abstention)</a>
 </li>
-      <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler">DataHandler (class in fresco.data_loaders.data_utils)</a>
+      <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.data_source">data_source (fresco.data_loaders.data_utils.DataHandler attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler">DataHandler (class in fresco.data_loaders.data_utils)</a>
+</li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.device">device (fresco.training.training.ModelTrainer attribute)</a>
 </li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.dw">dw (fresco.training.training.ModelTrainer attribute)</a>
@@ -188,6 +218,10 @@
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.epochs">epochs (fresco.training.training.ModelTrainer attribute)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.evaluate_model">evaluate_model() (fresco.predict.predictions.ScoreModel method)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
@@ -195,9 +229,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.fit_model">fit_model() (fresco.training.training.ModelTrainer method)</a>
 </li>
-      <li><a href="fresco.models.html#fresco.models.clc.CaseLevelContext.forward">forward() (fresco.models.clc.CaseLevelContext method)</a>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.DacLoss.forward">forward() (fresco.abstention.abstention.DacLoss method)</a>
 
       <ul>
+        <li><a href="fresco.models.html#fresco.models.clc.CaseLevelContext.forward">(fresco.models.clc.CaseLevelContext method)</a>
+</li>
         <li><a href="fresco.models.html#fresco.models.mtcnn.MTCNN.forward">(fresco.models.mtcnn.MTCNN method)</a>
 </li>
         <li><a href="fresco.models.html#fresco.models.mthisan.MTHiSAN.forward">(fresco.models.mthisan.MTHiSAN method)</a>
@@ -208,6 +244,20 @@
 
       <ul>
         <li><a href="fresco.html#module-fresco">module</a>
+</li>
+      </ul></li>
+      <li>
+    fresco.abstention
+
+      <ul>
+        <li><a href="fresco.abstention.html#module-fresco.abstention">module</a>
+</li>
+      </ul></li>
+      <li>
+    fresco.abstention.abstention
+
+      <ul>
+        <li><a href="fresco.abstention.html#module-fresco.abstention.abstention">module</a>
 </li>
       </ul></li>
       <li>
@@ -245,6 +295,8 @@
         <li><a href="fresco.models.html#module-fresco.models.clc">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     fresco.models.mtcnn
 
@@ -252,13 +304,25 @@
         <li><a href="fresco.models.html#module-fresco.models.mtcnn">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     fresco.models.mthisan
 
       <ul>
         <li><a href="fresco.models.html#module-fresco.models.mthisan">module</a>
+</li>
+      </ul></li>
+      <li>
+    fresco.predict
+
+      <ul>
+        <li><a href="fresco.predict.html#module-fresco.predict">module</a>
+</li>
+      </ul></li>
+      <li>
+    fresco.predict.predictions
+
+      <ul>
+        <li><a href="fresco.predict.html#module-fresco.predict.predictions">module</a>
 </li>
       </ul></li>
       <li>
@@ -316,12 +380,22 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.get_vocab">get_vocab() (fresco.data_loaders.data_utils.DataHandler method)</a>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.get_clc_preds">get_clc_preds() (fresco.predict.predictions.ScoreModel method)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.get_ntask_filter">get_ntask_filter() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.get_preds">get_preds() (fresco.predict.predictions.ScoreModel method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.get_ys">get_ys() (fresco.training.training.ModelTrainer method)</a>
+      <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.get_vocab">get_vocab() (fresco.data_loaders.data_utils.DataHandler method)</a>
 </li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.get_ys">get_ys() (fresco.predict.predictions.ScoreModel method)</a>
+
+      <ul>
+        <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.get_ys">(fresco.training.training.ModelTrainer method)</a>
+</li>
+      </ul></li>
       <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.GroupedCases">GroupedCases (class in fresco.data_loaders.data_utils)</a>
 </li>
   </ul></td>
@@ -386,11 +460,19 @@
 </li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer">ModelTrainer (class in fresco.training.training)</a>
 </li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.modify_alphas">modify_alphas() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.modify_ntask_alpha">modify_ntask_alpha() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
       <li>
     module
 
       <ul>
         <li><a href="fresco.html#module-fresco">fresco</a>
+</li>
+        <li><a href="fresco.abstention.html#module-fresco.abstention">fresco.abstention</a>
+</li>
+        <li><a href="fresco.abstention.html#module-fresco.abstention.abstention">fresco.abstention.abstention</a>
 </li>
         <li><a href="fresco.data_loaders.html#module-fresco.data_loaders">fresco.data_loaders</a>
 </li>
@@ -405,6 +487,10 @@
         <li><a href="fresco.models.html#module-fresco.models.mtcnn">fresco.models.mtcnn</a>
 </li>
         <li><a href="fresco.models.html#module-fresco.models.mthisan">fresco.models.mthisan</a>
+</li>
+        <li><a href="fresco.predict.html#module-fresco.predict">fresco.predict</a>
+</li>
+        <li><a href="fresco.predict.html#module-fresco.predict.predictions">fresco.predict.predictions</a>
 </li>
         <li><a href="fresco.html#module-fresco.run_clc">fresco.run_clc</a>
 </li>
@@ -463,11 +549,27 @@
 </li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.patience_ctr">patience_ctr (fresco.training.training.ModelTrainer attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.patience_stop">patience_stop (fresco.training.training.ModelTrainer attribute)</a>
 </li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.pred_and_score">pred_and_score() (fresco.predict.predictions.ScoreModel method)</a>
+</li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.predict">predict() (fresco.predict.predictions.ScoreModel method)</a>
+</li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.preds_to_dataframe">preds_to_dataframe() (fresco.predict.predictions.ScoreModel method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_header">print_abs_header() (fresco.abstention.abstention.AbstainingClassifier static method)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_stats">print_abs_stats() (fresco.abstention.abstention.AbstainingClassifier static method)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_header">print_abs_tune_header() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.print_abs_tune_stats">print_abs_tune_stats() (fresco.abstention.abstention.AbstainingClassifier method)</a>
+</li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.print_stats">print_stats() (fresco.training.training.ModelTrainer method)</a>
+</li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.probs_to_dataframe">probs_to_dataframe() (fresco.predict.predictions.ScoreModel method)</a>
 </li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.profile_fit_model">profile_fit_model() (fresco.training.training.ModelTrainer method)</a>
 </li>
@@ -497,11 +599,19 @@
         <li><a href="fresco.html#fresco.run_ie.save_full_model">(in module fresco.run_ie)</a>
 </li>
       </ul></li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.save_scores">save_scores() (fresco.predict.predictions.ScoreModel method)</a>
+</li>
       <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.savepath">savepath (fresco.training.training.ModelTrainer attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.score">score() (fresco.training.training.ModelTrainer method)</a>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel.score">score() (fresco.predict.predictions.ScoreModel method)</a>
+
+      <ul>
+        <li><a href="fresco.training.html#fresco.training.training.ModelTrainer.score">(fresco.training.training.ModelTrainer method)</a>
+</li>
+      </ul></li>
+      <li><a href="fresco.predict.html#fresco.predict.predictions.ScoreModel">ScoreModel (class in fresco.predict.predictions)</a>
 </li>
       <li><a href="fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.seed_worker">seed_worker() (fresco.data_loaders.data_utils.DataHandler static method)</a>
 </li>
@@ -540,6 +650,12 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="fresco.html#fresco.data_setup.word2int">word2int() (in module fresco.data_setup)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.write_abs_header">write_abs_header() (fresco.abstention.abstention.AbstainingClassifier static method)</a>
+</li>
+      <li><a href="fresco.abstention.html#fresco.abstention.abstention.AbstainingClassifier.write_abs_stats">write_abs_stats() (fresco.abstention.abstention.AbstainingClassifier method)</a>
 </li>
   </ul></td>
 </tr></table>
