@@ -42,7 +42,10 @@ Add the path to the desired dataset in the the `data_path` argument in the `conf
     - `task_n`: output for task `n`, a `string` type (these are the y-values)
     - `split`: one of `train`, `test`, or `val`
     - `id2labels_fold0.json`: index to label dictionary mapping for each of the string representations of the outputs to an integer value, dict keys must match the y-values label
-    - `word_embeds_fold0.npy`: word embedding matrix for the vocabulary, dimensions are `words x embedding_dim`. If no word embedding exists, the model will use randomly generated embeddings.
+    - `word_embeds_fold0.npy`: word embedding matrix for the vocabulary, dimensions are `words x embedding_dim`. If no word embedding exists, the model will use randomly generated embeddings. 
+    
+   For the `P3B3` and `clc` datasets we have provided the required files. To create these files for the `imdb` dataset, you
+   may run the `data_setup.py` script within the `scripts` folder to create these necessary files for model training.
 
 You will also need to set the `tasks`, these must correspond to the task columns names in the `data_fold0.csv` file and keys in the `id2labels_fold0.json` dictionary.
 For example, in the P3B3 data, the task columns are `task_n, n = 1,2,3,4`. Whereas the imdb data has the `sentiment` task.
