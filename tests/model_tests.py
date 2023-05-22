@@ -9,14 +9,13 @@ import torch
 import pandas as pd
 import numpy as np
 
-sys.path.append("../")
-from validate import exceptions
-from validate import validate_params
-from data_loaders import data_utils
-from abstention import abstention
-from models import mthisan, mtcnn
-from training import training
-from predict import predictions
+from fresco.validate import exceptions
+from fresco.validate import validate_params
+from fresco.data_loaders import data_utils
+from fresco.abstention import abstention
+from fresco.models import mthisan, mtcnn
+from fresco.training import training
+from fresco.predict import predictions
 
 
 def get_params():

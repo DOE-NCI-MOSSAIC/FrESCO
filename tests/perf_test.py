@@ -10,12 +10,11 @@ import sys
 import torch
 import numpy as np
 
-sys.path.append("../")
-from validate import exceptions
-from validate import validate_params
-from data_loaders import data_utils
-from abstention import abstention
-from models import mthisan, mtcnn
+from fresco.validate import exceptions
+from fresco.validate import validate_params
+from fresco.data_loaders import data_utils
+from fresco.abstention import abstention
+from fresco.models import mthisan, mtcnn
 
 from torch.profiler import profile, record_function, ProfilerActivity
 
