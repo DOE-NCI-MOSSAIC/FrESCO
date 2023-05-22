@@ -12,10 +12,8 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -137,17 +135,6 @@
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.keywords">
-<span class="sig-name descname"><span class="pre">keywords</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.keywords" title="Permalink to this definition"></a></dt>
-<dd><p>Use keywords model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.tasks">
 <span class="sig-name descname"><span class="pre">tasks</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.tasks" title="Permalink to this definition"></a></dt>
 <dd><p>List of tasks, each task is a string.</p>
@@ -238,10 +225,10 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.y_preds">
 <span class="sig-name descname"><span class="pre">y_preds</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.y_preds" title="Permalink to this definition"></a></dt>
-<dd><p>List of predictions, usually logits as torch.tensor.</p>
+<dd><p>Dict of predictions, usually logits as torch.tensor, tasks are key values</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list</p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -249,10 +236,10 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="fresco.training.training.ModelTrainer.y_trues">
 <span class="sig-name descname"><span class="pre">y_trues</span></span><a class="headerlink" href="#fresco.training.training.ModelTrainer.y_trues" title="Permalink to this definition"></a></dt>
-<dd><p>List of ints with ground truth values.</p>
+<dd><p>Dict of ints with ground truth values, tasks are key values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list</p>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>

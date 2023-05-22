@@ -11,10 +11,8 @@
   <![endif]-->
   
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -86,7 +84,7 @@
 
 
 <div class="viewcode-block" id="ValidateParams"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams">[docs]</a><span class="k">class</span> <span class="nc">ValidateParams</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class to validate model-specific parameters for MOSSAIC models.</span>
 
 <span class="sd">    Args:</span>
@@ -160,7 +158,7 @@
             <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Mixed precision must be boolean.&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ValidateParams.hisan_arg_check"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.hisan_arg_check">[docs]</a>    <span class="k">def</span> <span class="nf">hisan_arg_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check and modify HiSAN specific args.</span>
 
 <span class="sd">        Parameters: none</span>
@@ -184,7 +182,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">check_weights</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ValidateParams.mtcnn_arg_check"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.mtcnn_arg_check">[docs]</a>    <span class="k">def</span> <span class="nf">mtcnn_arg_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check the number of filters matchesthe number of windows.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;MTCNN_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;num_filters&#39;</span><span class="p">])</span> <span class="o">!=</span> \
@@ -195,7 +193,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">check_weights</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ValidateParams.check_data_train_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_data_train_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_train_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_pretrained</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verify arguments are appropriate for the chosen model options.</span>
 
 <span class="sd">        Parameters:</span>
@@ -252,7 +250,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="n">word</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="n">word</span><span class="p">])])</span></div>
 
 <div class="viewcode-block" id="ValidateParams.check_abstain_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_abstain_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_abstain_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verify keywords needed for abstention to work are present and valid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">abstain_kwargs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">,</span> <span class="s1">&#39;alphas&#39;</span><span class="p">,</span> <span class="s1">&#39;max_abs&#39;</span><span class="p">,</span> <span class="s1">&#39;min_acc&#39;</span><span class="p">,</span>
@@ -298,7 +296,7 @@
                 <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Ntask tasks are not a subset of the data tasks.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ValidateParams.check_keyword_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_keyword_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_keyword_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Validate keyword args.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;histology&#39;</span><span class="p">,</span> <span class="s1">&#39;laterality&#39;</span><span class="p">,</span> <span class="s1">&#39;site&#39;</span><span class="p">,</span> <span class="s1">&#39;subsite&#39;</span><span class="p">,</span> <span class="s1">&#39;behavior&#39;</span><span class="p">]</span>
@@ -307,7 +305,7 @@
                                         <span class="s2">&quot;histology, laterality, site, subsite, behavior&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ValidateParams.check_weights"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_weights">[docs]</a>    <span class="k">def</span> <span class="nf">check_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Validate class weights path exists.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">][</span><span class="s1">&#39;class_weights&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
@@ -317,7 +315,7 @@
                                             <span class="s2">&quot;class weights&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ValidateParams.check_data_files"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateParams.check_data_files">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verify the necessary data files exist.</span>
 
 <span class="sd">        Args:</span>
@@ -356,7 +354,7 @@
 
 
 <div class="viewcode-block" id="ValidateClcParams"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams">[docs]</a><span class="k">class</span> <span class="nc">ValidateClcParams</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class to validate model-specific parameters for MOSSAIC models.</span>
 
 <span class="sd">    Args:</span>
@@ -404,7 +402,7 @@
             <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Batch size must be an int value between 1 and 2048.&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ValidateClcParams.clc_arg_check"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.clc_arg_check">[docs]</a>    <span class="k">def</span> <span class="nf">clc_arg_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check and modify HiSAN specific args.</span>
 
 <span class="sd">        Parameters: none</span>
@@ -435,7 +433,7 @@
             <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Attn dim per head mut be an int between 1 and 100&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ValidateClcParams.check_data_train_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.check_data_train_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_train_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verify arguments are appropriate for the chosen model options.</span>
 
 <span class="sd">        Parameters: none</span>
@@ -475,7 +473,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;train_kwargs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="n">word</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_args</span><span class="p">[</span><span class="s1">&#39;data_kwargs&#39;</span><span class="p">][</span><span class="n">word</span><span class="p">])])</span></div>
 
 <div class="viewcode-block" id="ValidateClcParams.check_abstain_args"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.check_abstain_args">[docs]</a>    <span class="k">def</span> <span class="nf">check_abstain_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verify keywords needed for abstention to work are present and valid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">abstain_kwargs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;abstain_flag&#39;</span><span class="p">,</span> <span class="s1">&#39;alphas&#39;</span><span class="p">,</span> <span class="s1">&#39;max_abs&#39;</span><span class="p">,</span> <span class="s1">&#39;min_acc&#39;</span><span class="p">,</span>
@@ -518,7 +516,7 @@
                 <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ParamError</span><span class="p">(</span><span class="s2">&quot;Ntask tasks are not a subset of the data tasks.&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ValidateClcParams.check_data_files"><a class="viewcode-back" href="../../../fresco.validate.html#fresco.validate.validate_params.ValidateClcParams.check_data_files">[docs]</a>    <span class="k">def</span> <span class="nf">check_data_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verify the necessary data files exist.</span>
 
 <span class="sd">        Args:</span>

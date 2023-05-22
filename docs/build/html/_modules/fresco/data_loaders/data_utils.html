@@ -11,10 +11,8 @@
   <![endif]-->
   
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -93,7 +91,7 @@
 
 
 <div class="viewcode-block" id="LabelDict"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.LabelDict">[docs]</a><span class="k">class</span> <span class="nc">LabelDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create dict subclass for correct behaviour when mapping task unks.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">missing</span><span class="p">):</span>
@@ -107,14 +105,14 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__missing__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Assigns all missing keys to unknown in the label2id mapping.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">missing</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="DataHandler"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler">[docs]</a><span class="k">class</span> <span class="nc">DataHandler</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class for loading data.</span>
 
 <span class="sd">    Attributes:</span>
@@ -149,7 +147,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">grouped_cases</span> <span class="o">=</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="DataHandler.load_folds"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.load_folds">[docs]</a>    <span class="k">def</span> <span class="nf">load_folds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subset_frac</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load data for each fold in the dataset.</span>
 
 <span class="sd">        Parameters:</span>
@@ -202,7 +200,7 @@
                             <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="DataHandler.load_from_saved"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.load_from_saved">[docs]</a>    <span class="k">def</span> <span class="nf">load_from_saved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">subset_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load data files.</span>
 
 <span class="sd">        Arguments:</span>
@@ -267,7 +265,7 @@
         <span class="k">return</span> <span class="n">loaded_data</span></div>
 
 <div class="viewcode-block" id="DataHandler.get_vocab"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.get_vocab">[docs]</a>    <span class="k">def</span> <span class="nf">get_vocab</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the vocab from tokenized data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         
@@ -289,7 +287,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;word_embedding&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">vocab_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span></div>
 
 <div class="viewcode-block" id="DataHandler.convert_y"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.convert_y">[docs]</a>    <span class="k">def</span> <span class="nf">convert_y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add task unknown labels to Y and map values to integers for inference.</span>
 
 <span class="sd">        Post-condition:</span>
@@ -324,7 +322,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">][</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_data</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">][</span><span class="n">split</span><span class="p">][</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">label_dict</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataHandler.load_weights"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.load_weights">[docs]</a>    <span class="k">def</span> <span class="nf">load_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Loads class weights from pickle file or dict in model_args file.</span>
 
 <span class="sd">        Args:</span>
@@ -390,7 +388,7 @@
 <div class="viewcode-block" id="DataHandler.make_torch_dataloaders"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.make_torch_dataloaders">[docs]</a>    <span class="k">def</span> <span class="nf">make_torch_dataloaders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">switch_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
                                <span class="n">reproducible</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
                                <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create torch DataLoader classes for training module.</span>
 
 <span class="sd">        Returns a dictionary of PyTorch DataLoaders (train, val, test) for the training module.</span>
@@ -470,7 +468,7 @@
         <span class="k">return</span> <span class="n">loaders</span></div>
 
 <div class="viewcode-block" id="DataHandler.make_grouped_cases"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.make_grouped_cases">[docs]</a>    <span class="k">def</span> <span class="nf">make_grouped_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc_embeds</span><span class="p">,</span><span class="n">clc_args</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Created GroupedCases class for torch DataLoaders.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -489,7 +487,7 @@
 
 <div class="viewcode-block" id="DataHandler.seed_worker"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.DataHandler.seed_worker">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">seed_worker</span><span class="p">(</span><span class="n">worker_id</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set random seed for everything.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">worker_seed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">initial_seed</span><span class="p">()</span> <span class="o">%</span> <span class="mi">2</span><span class="o">**</span><span class="mi">32</span>
@@ -498,7 +496,7 @@
 
 
 <div class="viewcode-block" id="AddNoise"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.AddNoise">[docs]</a><span class="k">class</span> <span class="nc">AddNoise</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Optional transform object for the PathReports dataset.</span>
 
 <span class="sd">    This transform adds a random amount of padding at the front of the document using `unk_token` to reduce HiSAN overfitting. It also randomly replaces words with randomly selected other words to reduce overfitting.</span>
@@ -529,7 +527,7 @@
 
 <div class="viewcode-block" id="PathReports"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.PathReports">[docs]</a><span class="k">class</span> <span class="nc">PathReports</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">label_encoders</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">multilabel</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Torch DataLoader class for cancer path reports from generate_data.py.</span>
 
 <span class="sd">        Args:</span>
@@ -593,7 +591,7 @@
         <span class="k">return</span> <span class="n">sample</span></div>
 
 <div class="viewcode-block" id="GroupedCases"><a class="viewcode-back" href="../../../fresco.data_loaders.html#fresco.data_loaders.data_utils.GroupedCases">[docs]</a><span class="k">class</span> <span class="nc">GroupedCases</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Class for grouping cases for clc.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for grouping cases for clc.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">doc_embeds</span><span class="p">,</span>
@@ -603,7 +601,7 @@
                  <span class="n">device</span><span class="p">,</span>
                  <span class="n">exclude_single</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">shuffle_data_order</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create grouped cases for torch DataLoaders.</span>
 
 <span class="sd">        Args:</span>
