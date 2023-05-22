@@ -94,15 +94,14 @@ The default setting, if the `-m ` argument is omitted, is information extraction
 
 ### Deep-Abstaining Classifier and Ntask
 
-
 Both information extraction and case-level context models have the ability to incorporate abstention or Ntask. The deep abstaining 
 classifier (DAC) from the [CANDLE](https://github.com/ECP-CANDLE/Candle) repository, allows the model to not make a prediction on a 
-sample if the softmax score does not meet a predetermined threshold specified in the min_acc keyword ofthe model-args.yml file. It 
+sample if the softmax score does not meet a predetermined threshold specified in the min_acc keyword of the `model_args.yml` file. It 
 can be tuned to meet a threshold of accuracy, minimum number of samples abstained, or both through adapting the values of alpha through 
 the training process. This adapation is automated in the code, only requires the user to specify the initial values, tuning mode, and scaling.
 
 Ntask is useful for multi-task learning. It creates and additional 'task' that predicts if the softmax scores from all of the 
-tasks do not meet a specified threshold within the model_args file . It has its own parameters that are tuned during the training 
+tasks do not meet a specified threshold within the `model_args` file . It has its own parameters that are tuned during the training 
 process to obtain a minimum of abstained samples and maximum accuracy on the predicted samples. Ntask may not be enabled without 
 abstention being enabled as well. The code will throw an exception and halt if such configuration is passed.
 
@@ -110,7 +109,7 @@ abstention being enabled as well. The code will throw an exception and halt if s
 
 Training a model with the supplied default args, we see convergence within 50-60 epochs with 0.80-0.85 accuracy on the imdb data set and
 in excess of 0.90 accuracy across all tasks for the P3B3 dataset within 60 epochs or so. **NOTE:** P3B3 has a known issue training with mixed
-precision enabled. Please ensure `mixed_precision: False` for all runs with the P3B3 dataset.
+precision and with `DAC` and `NTask` enabled. Ensure these keywords are all `False` for all runs with the P3B3 dataset.
 
 
 ### Contributing
