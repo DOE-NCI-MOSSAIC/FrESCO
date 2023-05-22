@@ -7,9 +7,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-sys.path.append("../")
-from validate import validate_params
-from data_loaders import data_utils
+from fresco.validate import validate_params
+from fresco.data_loaders import data_utils
 
 
 def subset_check_X(dw, data, split):
