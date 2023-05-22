@@ -5,24 +5,16 @@ import argparse
 import json
 import os
 import random
+import sys
 
 import torch
-print(torch.__version__)
 import numpy as np
 
-from validate import exceptions
-from validate import validate_params
-from data_loaders import data_utils
-from abstention import abstention
-from keywords import keywords
-from models import mthisan, mtcnn
-from training import training
-from predict import predictions
-
-# needed for running on the vms
-# torch.multiprocessing.set_sharing_strategy('file_system')
-
-torch.backends.cudnn.benchmark = True
+from fresco.validate import exceptions
+from fresco.validate import validate_params
+from fresco.data_loaders import data_utils
+from fresco.abstention import abstention
+from fresco.models import mthisan, mtcnn
 
 from torch.profiler import profile, record_function, ProfilerActivity
 
@@ -84,10 +76,6 @@ def load_model(model_path, device, dw, valid_params):
     mismatches = [mod for mod in model_dict['metadata_package'].keys()
         if dw.metadata['metadata'][mod] != model_dict['metadata_package'][mod]]
 
-    # check to see if the stored package matches the expected one
-    # what is this?
-    # package['match'] = len(mismatches)==0
-
     if len(mismatches) > 0:
         with open('metadata_package.json', 'w', encoding='utf-8') as jd:
             json.dump(model_dict['metadata_package'], jd, indent=2)
@@ -145,13 +133,11 @@ def main():
         os.makedirs('predictions')
     args = parser.parse_args()
 
-
     # 1. validate model/data args
     print("Validating kwargs in model_args.yml file")
-    cache_class = [False]
     data_source = 'pre-generated'
 
-    valid_params = validate_params.ValidateParams(cache_class, args, data_source=data_source)
+    valid_params = validate_params.ValidateParams(args, data_source=data_source)
 
     valid_params.check_data_train_args()
 
@@ -163,7 +149,7 @@ def main():
     if valid_params.model_args['abstain_kwargs']['abstain_flag']:
         valid_params.check_abstain_args()
 
-    valid_params.check_data_files(args.data_path)
+    valid_params.check_data_files()
 
     if valid_params.model_args['data_kwargs']['reproducible']:
         seed = valid_params.model_args['data_kwargs']['random_seed']
@@ -177,7 +163,7 @@ def main():
 
     # 2. load data
     print("Loading data and creating DataLoaders")
-    dw = data_utils.DataHandler(data_source, valid_params.model_args, cache_class)
+    dw = data_utils.DataHandler(data_source, valid_params.model_args)
     dw.load_folds()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -196,62 +182,20 @@ def main():
                                              reproducible=valid_params.model_args['data_kwargs']['reproducible'],
                                              seed=seed)
 
-    if valid_params.model_args['train_kwargs']['keywords']:
-        kwds = keywords.Keywords(valid_params.model_args['data_kwargs']['tasks'],
-                                 dw.dict_maps['id2word'],
-                                 dw.dict_maps['id2label'],
-                                 device)
-        kwds.load_keyword_lists()
     # 3. create a model
     print("\nDefining a model")
     if len(args.model_path) == 0:
         model = create_model(valid_params, dw, device)
-        print("Device {0}".format(device))
+        print(f"Device {device}")
         sample = data_loaders['train']
-        sample
+        # sample
         for sample in data_loaders['train']:
             pass
         X = sample["X"].to(device)
-        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],use_cuda=True, record_shapes=True) as prof:
+        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
             with record_function("model_inference"):
                 model(X)
         print(prof.key_averages().table(sort_by="cpu_time_total",row_limit=50))
-#        # 4. train new model
-#        print("Creating model trainer")
-#        batch = valid_params.model_args['data_kwargs']['batch_per_gpu']
-#        trainer = training.ModelTrainer(valid_params.model_args, model, device)
-#
-#        if valid_params.model_args['abstain_kwargs']['abstain_flag']:
-#            print(f"Training a {valid_params.model_args['model_type']} dac model with " +
-#                  f"{torch.cuda.device_count()} {device} device\n")
-#            trainer.fit_model(data_loaders['train'], val_loader=data_loaders['val'], dac=dac)
-#        else:
-#            print(f"Training a {valid_params.model_args['model_type']} model with " +
-#                  f"{torch.cuda.device_count()} {device} device\n")
-#            trainer.fit_model(data_loaders['train'], val_loader=data_loaders['val'])
-#    else:
-#        model = load_model(args.model_path, device, dw, valid_params)
-#
-#    # 5. score predictions from pretrained model or model just trained
-#    evaluator = predictions.ScoreModel(valid_params.model_args, data_loaders, model, device)
-#
-#    # 5a. score a model
-#    # evaluator.score(dac=dac)
-#
-#    # 5b. make predictions
-#    # evaluator.predict(dw.metadata['metadata'], dw.dict_maps['id2label'])
-#
-#    # 5c. score and predict
-#    evaluator.evaluate_model(dw.metadata['metadata'], dw.dict_maps['id2label'], dac=dac)
-#
-#    # this is the default args filename and path
-#    with open(trainer.savepath + "_args.json", "w", encoding="utf-8") as f_out:
-#        json.dump(valid_params.model_args, f_out, indent=4)
-#
-#    if len(args.model_path) == 0:
-#        save_full_model(trainer.savepath,
-#                        dw.metadata['packages'],
-#                        dw.model_args['data_kwargs']['fold_number'])
 
 
 if __name__ == "__main__":

@@ -10,14 +10,13 @@ import torch
 
 import numpy as np
 
-from validate import exceptions
-from validate import validate_params
-from data_loaders import data_utils
-from abstention import abstention
-from keywords import keywords
-from models import mthisan, mtcnn
-from training import training
-from predict import predictions
+from fresco.validate import exceptions
+from fresco.validate import validate_params
+from fresco.data_loaders import data_utils
+from fresco.abstention import abstention
+from fresco.models import mthisan, mtcnn
+from fresco.training import training
+from fresco.predict import predictions
 
 from torch.profiler import profile, record_function, ProfilerActivity
 

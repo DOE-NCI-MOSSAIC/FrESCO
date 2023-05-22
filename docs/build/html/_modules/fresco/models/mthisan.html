@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.models.mthisan &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">fresco</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">fresco.models.mthisan</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for fresco.models.mthisan</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+
+<div class="viewcode-block" id="MTHiSAN"><a class="viewcode-back" href="../../../fresco.models.html#fresco.models.mthisan.MTHiSAN">[docs]</a><span class="k">class</span> <span class="nc">MTHiSAN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Multitask hierarchical self-attention network for classifying cancer pathology reports.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        embedding_matrix (numpy array): Numpy array of word embeddings.</span>
+<span class="sd">            Each row should represent a word embedding.</span>
+<span class="sd">            NOTE: The word index 0 is masked, so the first row is ignored.</span>
+<span class="sd">        num_classes (list[int]): Number of possible output classes for each task.</span>
+<span class="sd">        max_words_per_line (int): Number of words per line.</span>
+<span class="sd">            Used to split documents into smaller chunks.</span>
+<span class="sd">        max_lines (int): Maximum number of lines per document.</span>
+<span class="sd">            Additional lines beyond this limit are ignored.</span>
+<span class="sd">        att_dim_per_head (int, default: 50): Dimension size of output from each attention head.</span>
+<span class="sd">            Total output dimension is att_dim_per_head * att_heads.</span>
+<span class="sd">        att_heads (int, default: 8): Number of attention heads for multihead attention.</span>
+<span class="sd">        att_dropout (float, default: 0.1): Dropout rate for attention softmaxes and intermediate embeddings.</span>
+<span class="sd">        bag_of_embeddings (bool, default: False): Adds a parallel bag of embeddings layer.</span>
+<span class="sd">            Concats to the final document embedding.</span>
+<span class="sd">        embeddings_scale (float, default: 2.5): Scaling of word embeddings matrix columns.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">embedding_matrix</span><span class="p">,</span>
+                 <span class="n">num_classes</span><span class="p">,</span>
+                 <span class="n">max_words_per_line</span><span class="p">,</span>
+                 <span class="n">max_lines</span><span class="p">,</span>
+                 <span class="n">att_dim_per_head</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                 <span class="n">att_heads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                 <span class="n">att_dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                 <span class="n">bag_of_embeddings</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">embeddings_scale</span><span class="o">=</span><span class="mf">2.5</span>
+                 <span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_words_per_line</span> <span class="o">=</span> <span class="n">max_words_per_line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_lines</span> <span class="o">=</span> <span class="n">max_lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_len</span> <span class="o">=</span> <span class="n">max_lines</span> <span class="o">*</span> <span class="n">max_words_per_line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_per_head</span> <span class="o">=</span> <span class="n">att_dim_per_head</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">att_heads</span> <span class="o">=</span> <span class="n">att_heads</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span> <span class="o">=</span> <span class="n">att_heads</span> <span class="o">*</span> <span class="n">att_dim_per_head</span>
+
+        <span class="c1"># normalize and initialize embeddings</span>
+        <span class="n">embedding_matrix</span> <span class="o">-=</span> <span class="n">embedding_matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">embedding_matrix</span> <span class="o">/=</span> <span class="p">(</span><span class="n">embedding_matrix</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">embeddings_scale</span><span class="p">)</span>
+
+        <span class="n">embedding_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+                         <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">embedding_matrix</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">),</span>
+                         <span class="n">freeze</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_embed_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">att_dropout</span><span class="p">)</span>
+
+        <span class="c1"># Q, K, V, and other layers for word-level self-attention</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_q</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">embedding_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_q</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_q</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_k</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">embedding_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_k</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_k</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_v</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">embedding_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_v</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_v</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_att_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">att_dropout</span><span class="p">)</span>
+
+        <span class="c1"># target vector and other layers for word-level target attention</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_target_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">att_dropout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">word_target</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_target</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_embed_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">att_dropout</span><span class="p">)</span>
+
+        <span class="c1"># Q, K, V, and other layers for line-level self-attention</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_q</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_q</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_q</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_k</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_k</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_k</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_v</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_v</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_v</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="c1"># target vector and other layers for line-level target attention</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_att_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">att_dropout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_target_drop</span> <span class="o">=</span>  <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">att_dropout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_target</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_target</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doc_embed_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">att_dropout</span><span class="p">)</span>
+
+        <span class="c1"># optional bag of embeddings layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boe</span> <span class="o">=</span> <span class="n">bag_of_embeddings</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boe</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boe_dense</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">embedding_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">embedding_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boe_dense</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boe_dense</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boe_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="c1"># dense classification layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">classify_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">num_classes</span><span class="p">:</span>
+            <span class="n">in_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boe</span><span class="p">:</span>
+                <span class="n">in_size</span> <span class="o">+=</span> <span class="n">embedding_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_size</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">classify_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_split_heads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Splits the final dimension of a tensor into multiple heads for multihead attention.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (torch.tensor): Float tensor of shape [batch_size x seq_len x dim].</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.tensor: Float tensor of shape [batch_size x att_heads x seq_len x att_dim_per_head].</span>
+<span class="sd">            Reshaped tensor for multihead attention.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_per_head</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_attention</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask_q</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask_k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask_v</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Flexible attention operation for self and target attention.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].</span>
+<span class="sd">            k (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].</span>
+<span class="sd">            v (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim2].</span>
+<span class="sd">                NOTE: q and k must have the same dimension, but v can be different.</span>
+<span class="sd">            drop (torch.nn.Dropout): Dropout layer.</span>
+<span class="sd">            mask_q (torch.tensor): Boolean tensor of shape [batch x seq_len].</span>
+<span class="sd">            mask_k (torch.tensor): Boolean tensor of shape [batch x seq_len].</span>
+<span class="sd">            mask_v (torch.tensor): Boolean tensor of shape [batch x seq_len].</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># generate attention matrix</span>
+        <span class="c1"># batch x heads x seq_len x seq_len</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># this masks out empty entries in the attention matrix</span>
+        <span class="c1"># and prevents the softmax function from assigning them any attention</span>
+        <span class="k">if</span> <span class="n">mask_q</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mask_q</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">mask_q</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">mask_q</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">mask_q</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">padding_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">mask_q</span><span class="p">)</span>
+            <span class="n">scores</span> <span class="o">-=</span> <span class="mf">1.e7</span> <span class="o">*</span> <span class="n">padding_mask</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+
+        <span class="c1"># normalize attention matrix</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>                                          <span class="c1"># batch x heads x seq_len x seq_len</span>
+
+        <span class="c1"># this removes empty rows in the normalized attention matrix</span>
+        <span class="c1"># and prevents them from affecting the new output sequence</span>
+        <span class="k">if</span> <span class="n">mask_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mask_k</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">mask_k</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">mask_k</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">mask_k</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">mask_k</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+
+        <span class="c1"># optional attention dropout</span>
+        <span class="k">if</span> <span class="n">drop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">drop</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="c1"># use attention on values to generate new output sequence</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>                                        <span class="c1"># batch x heads x seq_len x dim2</span>
+
+        <span class="c1"># this applies padding to the entries in the output sequence</span>
+        <span class="c1"># and ensures all padded entries are set to 0</span>
+        <span class="k">if</span> <span class="n">mask_v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mask_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">mask_v</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">mask_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">mask_v</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">mask_v</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="MTHiSAN.forward"><a class="viewcode-back" href="../../../fresco.models.html#fresco.models.mthisan.MTHiSAN.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">,</span> <span class="n">return_embeds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Flexible attention operation for self and target attention.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].</span>
+<span class="sd">            k (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].</span>
+<span class="sd">            v (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim2].</span>
+<span class="sd">                NOTE: q and k must have the same dimension, but v can be different.</span>
+<span class="sd">            drop (torch.nn.Dropout): Dropout layer.</span>
+<span class="sd">            mask_q (torch.tensor): Boolean tensor of shape [batch x seq_len].</span>
+<span class="sd">            mask_k (torch.tensor): Boolean tensor of shape [batch x seq_len].</span>
+<span class="sd">            mask_v (torch.tensor): Boolean tensor of shape [batch x seq_len].</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1"># bag of embeddings operations if enabled</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boe</span><span class="p">:</span>
+            <span class="n">mask_words</span> <span class="o">=</span> <span class="p">(</span><span class="n">docs</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">words_per_line</span> <span class="o">=</span> <span class="n">mask_words</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">max_words</span> <span class="o">=</span> <span class="n">words_per_line</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="n">mask_words</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">mask_words</span><span class="p">[:,</span> <span class="p">:</span><span class="n">max_words</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">docs_input_reduced</span> <span class="o">=</span> <span class="n">docs</span><span class="p">[:,</span> <span class="p">:</span><span class="n">max_words</span><span class="p">]</span>
+            <span class="n">word_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">docs_input_reduced</span><span class="p">)</span>
+            <span class="n">word_embeds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">word_embeds</span><span class="p">,</span> <span class="n">mask_words</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">word_embeds</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+            <span class="n">bag_embeds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">word_embeds</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">bag_embeds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">bag_embeds</span><span class="p">,</span>
+                                   <span class="mf">1.0</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">words_per_line</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">bag_embeds</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+            <span class="n">bag_embeds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boe_dense</span><span class="p">(</span><span class="n">bag_embeds</span><span class="p">))</span>
+            <span class="n">bag_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boe_drop</span><span class="p">(</span><span class="n">bag_embeds</span><span class="p">)</span>
+
+        <span class="c1"># reshape into batch x lines x words</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="n">docs</span><span class="p">[:,</span> <span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">max_len</span><span class="p">]</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_words_per_line</span><span class="p">)</span>          <span class="c1"># batch x max_lines x max_words</span>
+
+        <span class="c1"># generate masks for word padding and empty lines</span>
+        <span class="c1"># remove extra padding that exists across all documents in batch</span>
+        <span class="n">mask_words</span> <span class="o">=</span> <span class="p">(</span><span class="n">docs</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>                                                <span class="c1"># batch x max_lines x max_words</span>
+        <span class="n">words_per_line</span> <span class="o">=</span> <span class="n">mask_words</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>                                     <span class="c1"># batch x max_lines</span>
+        <span class="n">max_words</span> <span class="o">=</span> <span class="n">words_per_line</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>                                        <span class="c1"># hereon referred to as &#39;words&#39;</span>
+        <span class="n">num_lines</span> <span class="o">=</span> <span class="p">(</span><span class="n">words_per_line</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>                               <span class="c1"># batch</span>
+        <span class="n">max_lines</span> <span class="o">=</span> <span class="n">num_lines</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>                                             <span class="c1"># hereon referred to as &#39;lines&#39;</span>
+        <span class="n">docs_input_reduced</span> <span class="o">=</span> <span class="n">docs</span><span class="p">[:,</span> <span class="p">:</span><span class="n">max_lines</span><span class="p">,</span> <span class="p">:</span><span class="n">max_words</span><span class="p">]</span>                      <span class="c1"># batch x lines x words</span>
+        <span class="n">mask_words</span> <span class="o">=</span> <span class="n">mask_words</span><span class="p">[:,</span> <span class="p">:</span><span class="n">max_lines</span><span class="p">,</span> <span class="p">:</span><span class="n">max_words</span><span class="p">]</span>                        <span class="c1"># batch x lines x words</span>
+        <span class="n">mask_lines</span> <span class="o">=</span> <span class="p">(</span><span class="n">words_per_line</span><span class="p">[:,</span> <span class="p">:</span><span class="n">max_lines</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>                        <span class="c1"># batch x lines</span>
+
+        <span class="c1"># combine batch dim and lines dim for word level functions</span>
+        <span class="c1"># also filter out empty lines for speedup and add them back in later</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">docs_input_reduced</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">docs_input_reduced</span> <span class="o">=</span> <span class="n">docs_input_reduced</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                             <span class="n">batch_size</span><span class="o">*</span><span class="n">max_lines</span><span class="p">,</span> <span class="n">max_words</span><span class="p">)</span>                    <span class="c1"># batch*lines x words</span>
+        <span class="n">mask_words</span> <span class="o">=</span> <span class="n">mask_words</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span><span class="o">*</span><span class="n">max_lines</span><span class="p">,</span> <span class="n">max_words</span><span class="p">)</span>         <span class="c1"># batch*lines x words</span>
+        <span class="n">mask_lines</span> <span class="o">=</span> <span class="n">mask_lines</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span><span class="o">*</span><span class="n">max_lines</span><span class="p">)</span>                   <span class="c1"># batch*lines</span>
+        <span class="n">docs_input_reduced</span> <span class="o">=</span> <span class="n">docs_input_reduced</span><span class="p">[</span><span class="n">mask_lines</span><span class="p">]</span>                     <span class="c1"># filtered x words</span>
+        <span class="n">mask_words</span> <span class="o">=</span> <span class="n">mask_words</span><span class="p">[</span><span class="n">mask_lines</span><span class="p">]</span>                                     <span class="c1"># filtered x words</span>
+        <span class="n">batch_size_reduced</span> <span class="o">=</span> <span class="n">docs_input_reduced</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>                         <span class="c1"># hereon referred to as &#39;filtered&#39;</span>
+
+        <span class="c1"># word embeddings</span>
+        <span class="n">word_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">docs_input_reduced</span><span class="p">)</span>                        <span class="c1"># filtered x words x embed</span>
+        <span class="n">word_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_embed_drop</span><span class="p">(</span><span class="n">word_embeds</span><span class="p">)</span>                         <span class="c1"># filtered x words x embed</span>
+
+        <span class="c1"># word self-attention</span>
+        <span class="n">word_q</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_q</span><span class="p">(</span><span class="n">word_embeds</span><span class="p">)))</span>             <span class="c1"># filtered x heads x words x dim</span>
+        <span class="n">word_k</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_k</span><span class="p">(</span><span class="n">word_embeds</span><span class="p">)))</span>             <span class="c1"># filtered x heads x words x dim</span>
+        <span class="n">word_v</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">word_v</span><span class="p">(</span><span class="n">word_embeds</span><span class="p">)))</span>             <span class="c1"># filtered x heads x words x dim</span>
+        <span class="n">word_att</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attention</span><span class="p">(</span><span class="n">word_q</span><span class="p">,</span> <span class="n">word_k</span><span class="p">,</span> <span class="n">word_v</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">word_att_drop</span><span class="p">,</span> <span class="n">mask_words</span><span class="p">,</span>
+                                   <span class="n">mask_words</span><span class="p">,</span> <span class="n">mask_words</span><span class="p">)</span>                        <span class="c1"># filtered x heads x words x dim</span>
+
+        <span class="c1"># word target attention</span>
+        <span class="n">word_target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">word_target</span><span class="p">(</span><span class="n">word_att</span><span class="o">.</span><span class="n">new_ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="n">word_target</span> <span class="o">=</span> <span class="n">word_target</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+                      <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_heads</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_per_head</span><span class="p">)</span>                 <span class="c1"># 1 x heads x 1 x dim</span>
+        <span class="n">line_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attention</span><span class="p">(</span><span class="n">word_target</span><span class="p">,</span> <span class="n">word_att</span><span class="p">,</span> <span class="n">word_att</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">word_target_drop</span><span class="p">,</span> <span class="n">mask_words</span><span class="p">)</span>                         <span class="c1"># filtered x heads x 1 x dim</span>
+        <span class="n">line_embeds</span> <span class="o">=</span> <span class="n">line_embeds</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+                      <span class="n">batch_size_reduced</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>       <span class="c1"># filtered x heads*dim</span>
+        <span class="n">line_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_embed_drop</span><span class="p">(</span><span class="n">line_embeds</span><span class="p">)</span>                         <span class="c1"># filtered x heads*dim</span>
+
+        <span class="c1"># add in empty lines that were dropped earlier for line level functions</span>
+        <span class="n">line_embeds_full</span> <span class="o">=</span> <span class="n">line_embeds</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span>
+                           <span class="n">batch_size</span><span class="o">*</span><span class="n">max_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>             <span class="c1"># batch*lines x heads*dim</span>
+        <span class="n">line_embeds_full</span><span class="p">[</span><span class="n">mask_lines</span><span class="p">]</span> <span class="o">=</span> <span class="n">line_embeds</span>
+        <span class="n">line_embeds</span> <span class="o">=</span> <span class="n">line_embeds_full</span>
+        <span class="n">line_embeds</span> <span class="o">=</span> <span class="n">line_embeds</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                      <span class="n">batch_size</span><span class="p">,</span> <span class="n">max_lines</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span>                  <span class="c1"># batch x lines x heads*dim</span>
+        <span class="n">mask_lines</span> <span class="o">=</span> <span class="n">mask_lines</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">max_lines</span><span class="p">)</span>                   <span class="c1"># batch x lines</span>
+
+        <span class="c1"># line self-attention</span>
+        <span class="n">line_q</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_q</span><span class="p">(</span><span class="n">line_embeds</span><span class="p">)))</span>             <span class="c1"># batch x heads x lines x dim</span>
+        <span class="n">line_k</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_k</span><span class="p">(</span><span class="n">line_embeds</span><span class="p">)))</span>             <span class="c1"># batch x heads x lines x dim</span>
+        <span class="n">line_v</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">line_v</span><span class="p">(</span><span class="n">line_embeds</span><span class="p">)))</span>             <span class="c1"># batch x heads x lines x dim</span>
+        <span class="n">line_att</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attention</span><span class="p">(</span><span class="n">line_q</span><span class="p">,</span> <span class="n">line_k</span><span class="p">,</span> <span class="n">line_v</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">line_att_drop</span><span class="p">,</span> <span class="n">mask_lines</span><span class="p">,</span>
+                                   <span class="n">mask_lines</span><span class="p">,</span> <span class="n">mask_lines</span><span class="p">)</span>                       <span class="c1"># batch x heads x lines x dim</span>
+
+        <span class="c1"># line target attention</span>
+        <span class="n">line_target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_target</span><span class="p">(</span><span class="n">line_att</span><span class="o">.</span><span class="n">new_ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="n">line_target</span> <span class="o">=</span> <span class="n">line_target</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_heads</span><span class="p">,</span>
+                                       <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_per_head</span><span class="p">)</span>                 <span class="c1"># 1 x heads x 1 x dim</span>
+        <span class="n">doc_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attention</span><span class="p">(</span><span class="n">line_target</span><span class="p">,</span> <span class="n">line_att</span><span class="p">,</span> <span class="n">line_att</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">line_target_drop</span><span class="p">,</span> <span class="n">mask_lines</span><span class="p">)</span>                          <span class="c1"># batch x heads x 1 x dim</span>
+        <span class="n">doc_embeds</span> <span class="o">=</span> <span class="n">doc_embeds</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+                     <span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">att_dim_total</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>                <span class="c1"># batch x heads*dim</span>
+        <span class="n">doc_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doc_embed_drop</span><span class="p">(</span><span class="n">doc_embeds</span><span class="p">)</span>                            <span class="c1"># batch x heads*dim</span>
+
+        <span class="c1"># if bag of embeddings enabled, concatenate to hisan output</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boe</span><span class="p">:</span>
+            <span class="n">doc_embeds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">doc_embeds</span><span class="p">,</span> <span class="n">bag_embeds</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>                   <span class="c1"># batch x heads*dim+embed</span>
+
+        <span class="c1"># generate logits for each task</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">classify_layers</span><span class="p">:</span>
+            <span class="n">logits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">(</span><span class="n">doc_embeds</span><span class="p">))</span>                                        <span class="c1"># batch x num_classes</span>
+
+        <span class="k">if</span> <span class="n">return_embeds</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">logits</span><span class="p">,</span> <span class="n">doc_embeds</span>
+        <span class="k">return</span> <span class="n">logits</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

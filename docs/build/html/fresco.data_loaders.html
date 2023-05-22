@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.data_loaders package &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fresco.models package" href="fresco.models.html" />
+    <link rel="prev" title="fresco package" href="fresco.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">fresco</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fresco.html">fresco package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fresco.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">fresco.data_loaders package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.models.html">fresco.models package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.training.html">fresco.training package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.validate.html">fresco.validate package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.data_setup">fresco.data_setup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_clc">fresco.run_clc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_ie">fresco.run_ie module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">fresco</a></li>
+          <li class="breadcrumb-item"><a href="fresco.html">fresco package</a></li>
+      <li class="breadcrumb-item active">fresco.data_loaders package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fresco.data_loaders.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fresco-data-loaders-package">
+<h1>fresco.data_loaders package<a class="headerlink" href="#fresco-data-loaders-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-fresco.data_loaders.data_utils">
+<span id="fresco-data-loaders-data-utils-module"></span><h2>fresco.data_loaders.data_utils module<a class="headerlink" href="#module-fresco.data_loaders.data_utils" title="Permalink to this heading"></a></h2>
+<p>Module for loading pre-generated data.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.AddNoise">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.data_loaders.data_utils.</span></span><span class="sig-name descname"><span class="pre">AddNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unk_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_pad_len</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocab_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">switch_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#AddNoise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.AddNoise" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Optional transform object for the PathReports dataset.</p>
+<p>This transform adds a random amount of padding at the front of the document using <cite>unk_token</cite> to reduce HiSAN overfitting. It also randomly replaces words with randomly selected other words to reduce overfitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>unk_token</strong> (<em>int</em>) – Integer mapping for unknown tokens.</p></li>
+<li><p><strong>max_pad_len</strong> (<em>int</em>) – Maximum amount of padding at the front of the document.</p></li>
+<li><p><strong>vocab_size</strong> (<em>int</em>) – Size of the vocabulary matrix or the maximum integer value to use when randomly replacing word tokens.</p></li>
+<li><p><strong>(</strong><strong>float</strong> (<em>switch_rate</em>) – 0.1): Percentage of words to randomly replace with random tokens.</p></li>
+<li><p><strong>default</strong> – 0.1): Percentage of words to randomly replace with random tokens.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.data_loaders.data_utils.</span></span><span class="sig-name descname"><span class="pre">DataHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clc_flag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for loading data.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.data_source">
+<span class="sig-name descname"><span class="pre">data_source</span></span><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.data_source" title="Permalink to this definition"></a></dt>
+<dd><p>Defines how data was generated. Needs to be ‘pre-generated’, ‘pipeline’, or ‘official’ (not implemented).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.model_args">
+<span class="sig-name descname"><span class="pre">model_args</span></span><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.model_args" title="Permalink to this definition"></a></dt>
+<dd><p>Keywords necessary to load data, build, and train a model_args.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Note: The present implementation is only for 1 fold. We presently cannot generate more than one fold of data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.convert_y">
+<span class="sig-name descname"><span class="pre">convert_y</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.convert_y"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.convert_y" title="Permalink to this definition"></a></dt>
+<dd><p>Add task unknown labels to Y and map values to integers for inference.</p>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>The data frame with the output, the ys, is modified in place by this function.
+It maps the string values to ints for inference, i.e., C50 -&gt; 48 for the site task.</p>
+</dd>
+<dt>Note: If loading data separately from creating torch dataloaders,</dt><dd><p>this function should be called if you want ints and not strings.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.get_vocab">
+<span class="sig-name descname"><span class="pre">get_vocab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.get_vocab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.get_vocab" title="Permalink to this definition"></a></dt>
+<dd><p>Get the vocab from tokenized data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.load_folds">
+<span class="sig-name descname"><span class="pre">load_folds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_frac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.load_folds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.load_folds" title="Permalink to this definition"></a></dt>
+<dd><p>Load data for each fold in the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fold</strong> (<em>int</em>) – Integer number of the fold to load.</p></li>
+<li><p><strong>subset_frac</strong> (<em>float</em>) – Float value for proportion to load.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Pre-condition: __init__ called and model_args is not None.</p>
+<p>Post-condition: Class attributes populated.</p>
+<p>Note: Case level context model will load fold 0 by default. See run_clc.py line 225.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.load_from_saved">
+<span class="sig-name descname"><span class="pre">load_from_saved</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.load_from_saved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.load_from_saved" title="Permalink to this definition"></a></dt>
+<dd><p>Load data files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fold</strong> (<em>int</em>) – Fold number. Should always be 0 for now.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Post-condition:</dt><dd><p>Modifies self.splits in-place.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.load_weights">
+<span class="sig-name descname"><span class="pre">load_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fold</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.load_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.load_weights" title="Permalink to this definition"></a></dt>
+<dd><p>Loads class weights from pickle file or dict in model_args file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fold</strong> (<em>int</em>) – Data fold to be loaded</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.make_grouped_cases">
+<span class="sig-name descname"><span class="pre">make_grouped_cases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doc_embeds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clc_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.make_grouped_cases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.make_grouped_cases" title="Permalink to this definition"></a></dt>
+<dd><p>Created GroupedCases class for torch DataLoaders.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.make_torch_dataloaders">
+<span class="sig-name descname"><span class="pre">make_torch_dataloaders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">switch_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reproducible</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.make_torch_dataloaders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.make_torch_dataloaders" title="Permalink to this definition"></a></dt>
+<dd><p>Create torch DataLoader classes for training module.</p>
+<p>Returns a dictionary of PyTorch DataLoaders (train, val, test) for the training module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>unk_tok</strong> (<em>int</em>) – Token to convert unknown words to.</p></li>
+<li><p><strong>vocab_size</strong> (<em>int</em>) – Number of words in the vocabulary.</p></li>
+<li><p><strong>switch_rate</strong> (<em>float</em>) – Proportion of words in each document to randomly flip.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.DataHandler.seed_worker">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">seed_worker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">worker_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#DataHandler.seed_worker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.DataHandler.seed_worker" title="Permalink to this definition"></a></dt>
+<dd><p>Set random seed for everything.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.GroupedCases">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.data_loaders.data_utils.</span></span><span class="sig-name descname"><span class="pre">GroupedCases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doc_embeds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_single</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle_data_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#GroupedCases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.GroupedCases" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>Class for grouping cases for clc.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.LabelDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.data_loaders.data_utils.</span></span><span class="sig-name descname"><span class="pre">LabelDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#LabelDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.LabelDict" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<p>Create dict subclass for correct behaviour when mapping task unks.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.data_loaders.data_utils.PathReports">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.data_loaders.data_utils.</span></span><span class="sig-name descname"><span class="pre">PathReports</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_encoders</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multilabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/data_loaders/data_utils.html#PathReports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.data_loaders.data_utils.PathReports" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+</dd></dl>
+
+</section>
+<section id="module-fresco.data_loaders">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fresco.data_loaders" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fresco.html" class="btn btn-neutral float-left" title="fresco package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fresco.models.html" class="btn btn-neutral float-right" title="fresco.models package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

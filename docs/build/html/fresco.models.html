@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fresco.models package &mdash; FrESCO 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fresco.training package" href="fresco.training.html" />
+    <link rel="prev" title="fresco.data_loaders package" href="fresco.data_loaders.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FrESCO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">fresco</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="fresco.html">fresco package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="fresco.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="fresco.data_loaders.html">fresco.data_loaders package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">fresco.models package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.training.html">fresco.training package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fresco.validate.html">fresco.validate package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.data_setup">fresco.data_setup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_clc">fresco.run_clc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco.run_ie">fresco.run_ie module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fresco.html#module-fresco">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FrESCO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">fresco</a></li>
+          <li class="breadcrumb-item"><a href="fresco.html">fresco package</a></li>
+      <li class="breadcrumb-item active">fresco.models package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fresco.models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fresco-models-package">
+<h1>fresco.models package<a class="headerlink" href="#fresco-models-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-fresco.models.clc">
+<span id="fresco-models-clc-module"></span><h2>fresco.models.clc module<a class="headerlink" href="#module-fresco.models.clc" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.models.clc.CaseLevelContext">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.models.clc.</span></span><span class="sig-name descname"><span class="pre">CaseLevelContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doc_embed_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">400</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_dim_per_head</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_heads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cuda'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/models/clc.html#CaseLevelContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.models.clc.CaseLevelContext" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.models.clc.CaseLevelContext.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doc_embeds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_docs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/models/clc.html#CaseLevelContext.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.models.clc.CaseLevelContext.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Case level context forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc_embeds</strong> (<em>torch.tensor</em>) – Float tensor of shape [batch_size x max_seq_length x doc_embed_size].
+Document embeddings.</p></li>
+<li><p><strong>num_docs</strong> (<em>torch.tensor</em>) – Integer tensor of shape [batch_size].
+Number of reports per case.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fresco.models.mtcnn">
+<span id="fresco-models-mtcnn-module"></span><h2>fresco.models.mtcnn module<a class="headerlink" href="#module-fresco.models.mtcnn" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.models.mtcnn.MTCNN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.models.mtcnn.</span></span><span class="sig-name descname"><span class="pre">MTCNN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embedding_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_sizes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_filters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bag_of_embeddings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embeddings_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/models/mtcnn.html#MTCNN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.models.mtcnn.MTCNN" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Multitask simple text CNN for classifying cancer pathology reports.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>embedding_matrix</strong> (<em>numpy.array</em>) – Numpy array of word embeddings.
+Each row should represent a word embedding.
+NOTE: The word index 0 is masked, so the first row is ignored.</p></li>
+<li><p><strong>num_classes</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – Number of possible output classes for each task.</p></li>
+<li><p><strong>(</strong><strong>list</strong><strong>[</strong><strong>int</strong><strong>]</strong> (<em>num_filters</em>) – [3, 4, 5]): Window size (consecutive tokens examined) in parallel convolution layers.
+Must match the length of num_filters.</p></li>
+<li><p><strong>default</strong> – [3, 4, 5]): Window size (consecutive tokens examined) in parallel convolution layers.
+Must match the length of num_filters.</p></li>
+<li><p><strong>(</strong><strong>list</strong><strong>[</strong><strong>int</strong><strong>]</strong> – [300, 300, 300]): Number of filters used in parallel convolution layers.
+Must match the length of window_sizes.</p></li>
+<li><p><strong>default</strong> – [300, 300, 300]): Number of filters used in parallel convolution layers.
+Must match the length of window_sizes.</p></li>
+<li><p><strong>(</strong><strong>float</strong> (<em>embeddings_scale</em>) – 0.5): Dropout rate applied to the final document embedding after maxpooling.</p></li>
+<li><p><strong>default</strong> – 0.5): Dropout rate applied to the final document embedding after maxpooling.</p></li>
+<li><p><strong>(</strong><strong>bool</strong> (<em>bag_of_embeddings</em>) – False): Adds a parallel bag of embeddings layer and concatenates it to the final document embedding.</p></li>
+<li><p><strong>default</strong> – False): Adds a parallel bag of embeddings layer and concatenates it to the final document embedding.</p></li>
+<li><p><strong>(</strong><strong>float</strong> – 2.5): Scaling of word embeddings matrix columns.</p></li>
+<li><p><strong>default</strong> – 2.5): Scaling of word embeddings matrix columns.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.models.mtcnn.MTCNN.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_embeds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="_modules/fresco/models/mtcnn.html#MTCNN.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.models.mtcnn.MTCNN.forward" title="Permalink to this definition"></a></dt>
+<dd><p>MT-CNN forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>docs</strong> (<em>torch.tensor</em>) – Batch of documents to classify.
+Each document should be a 0-padded row of mapped word indices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of predicted logits for each task.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[torch.tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fresco.models.mthisan">
+<span id="fresco-models-mthisan-module"></span><h2>fresco.models.mthisan module<a class="headerlink" href="#module-fresco.models.mthisan" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fresco.models.mthisan.MTHiSAN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fresco.models.mthisan.</span></span><span class="sig-name descname"><span class="pre">MTHiSAN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embedding_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_words_per_line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_dim_per_head</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_heads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bag_of_embeddings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embeddings_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/models/mthisan.html#MTHiSAN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.models.mthisan.MTHiSAN" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Multitask hierarchical self-attention network for classifying cancer pathology reports.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>embedding_matrix</strong> (<em>numpy array</em>) – Numpy array of word embeddings.
+Each row should represent a word embedding.
+NOTE: The word index 0 is masked, so the first row is ignored.</p></li>
+<li><p><strong>num_classes</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – Number of possible output classes for each task.</p></li>
+<li><p><strong>max_words_per_line</strong> (<em>int</em>) – Number of words per line.
+Used to split documents into smaller chunks.</p></li>
+<li><p><strong>max_lines</strong> (<em>int</em>) – Maximum number of lines per document.
+Additional lines beyond this limit are ignored.</p></li>
+<li><p><strong>(</strong><strong>int</strong> (<em>att_heads</em>) – 50): Dimension size of output from each attention head.
+Total output dimension is att_dim_per_head * att_heads.</p></li>
+<li><p><strong>default</strong> – 50): Dimension size of output from each attention head.
+Total output dimension is att_dim_per_head * att_heads.</p></li>
+<li><p><strong>(</strong><strong>int</strong> – 8): Number of attention heads for multihead attention.</p></li>
+<li><p><strong>default</strong> – 8): Number of attention heads for multihead attention.</p></li>
+<li><p><strong>(</strong><strong>float</strong> (<em>embeddings_scale</em>) – 0.1): Dropout rate for attention softmaxes and intermediate embeddings.</p></li>
+<li><p><strong>default</strong> – 0.1): Dropout rate for attention softmaxes and intermediate embeddings.</p></li>
+<li><p><strong>(</strong><strong>bool</strong> (<em>bag_of_embeddings</em>) – False): Adds a parallel bag of embeddings layer.
+Concats to the final document embedding.</p></li>
+<li><p><strong>default</strong> – False): Adds a parallel bag of embeddings layer.
+Concats to the final document embedding.</p></li>
+<li><p><strong>(</strong><strong>float</strong> – 2.5): Scaling of word embeddings matrix columns.</p></li>
+<li><p><strong>default</strong> – 2.5): Scaling of word embeddings matrix columns.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fresco.models.mthisan.MTHiSAN.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_embeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fresco/models/mthisan.html#MTHiSAN.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fresco.models.mthisan.MTHiSAN.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Flexible attention operation for self and target attention.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> (<em>torch.tensor</em>) – Float tensor of shape [batch x heads x seq_len x dim1].</p></li>
+<li><p><strong>k</strong> (<em>torch.tensor</em>) – Float tensor of shape [batch x heads x seq_len x dim1].</p></li>
+<li><p><strong>v</strong> (<em>torch.tensor</em>) – Float tensor of shape [batch x heads x seq_len x dim2].
+NOTE: q and k must have the same dimension, but v can be different.</p></li>
+<li><p><strong>drop</strong> (<em>torch.nn.Dropout</em>) – Dropout layer.</p></li>
+<li><p><strong>mask_q</strong> (<em>torch.tensor</em>) – Boolean tensor of shape [batch x seq_len].</p></li>
+<li><p><strong>mask_k</strong> (<em>torch.tensor</em>) – Boolean tensor of shape [batch x seq_len].</p></li>
+<li><p><strong>mask_v</strong> (<em>torch.tensor</em>) – Boolean tensor of shape [batch x seq_len].</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-fresco.models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-fresco.models" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fresco.data_loaders.html" class="btn btn-neutral float-left" title="fresco.data_loaders package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fresco.training.html" class="btn btn-neutral float-right" title="fresco.training package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Adam Spannaus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

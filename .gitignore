@@ -10,5 +10,7 @@ cached_file
 data/**
 savedmodels/
 predictions/
+build/*
 
 README.md
+.DS_Store
