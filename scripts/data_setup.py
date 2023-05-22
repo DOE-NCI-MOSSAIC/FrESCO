@@ -27,7 +27,7 @@ def main():
     embed_dim = 300
 
     print("Reading raw data")
-    df = pd.read_csv('./data/imdb/IMDB Dataset.csv')
+    df = pd.read_csv('../data/imdb/IMDB Dataset.csv')
 
     data = [d.lower() for d in df['review']]
     data = [gensim.parsing.preprocessing.strip_tags(d) for d in data]
@@ -57,7 +57,7 @@ def main():
     train_data = pd.concat([train_df, val_df])
 
     print("Creating vocab and word embeddings")
-    model = gensim.models.word2vec.Word2Vec(vector_size=embed_dim, min_count=2, epochs=2, workers=4)
+    model = gensim.models.word2vec.Word2Vec(vector_size=embed_dim, min_count=2, epochs=25, workers=4)
     model.build_vocab(train_data['review'].str.split())
     model.train(train_data['review'].str.split(), total_examples=model.corpus_count, epochs=model.epochs)
 
@@ -77,16 +77,16 @@ def main():
 
     print("Saving output files")
     df_out = pd.concat([train_df, val_df, test_df])
-    df_out.to_csv("./data/imdb/data_fold0.csv", index=False)
+    df_out.to_csv("../data/imdb/data_fold0.csv", index=False)
 
     labels = set(df['sentiment'])
     id2label = {'sentiment': {i: l for i, l in enumerate(labels)}}
-    with open('./data/imdb/id2labels_fold0.json', 'w') as f:
+    with open('../data/imdb/id2labels_fold0.json', 'w') as f:
         json.dump(id2label, f)
 
-    with open('./data/imdb/id2word.json', 'w') as f:
+    with open('../data/imdb/id2word.json', 'w') as f:
         json.dump(id2word, f)
-    np.save('./data/imdb/word_embeds_fold0.npy', w2v)
+    np.save('../data/imdb/word_embeds_fold0.npy', w2v)
 
 
 if __name__ == "__main__":
