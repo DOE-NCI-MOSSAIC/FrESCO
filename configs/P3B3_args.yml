@@ -1,0 +1,76 @@
+save_name: 'P3B3_model'  # foldX.h5 will be appended at the end; leave blank to autopopulate with a timestamp
+task_unks:
+  task_1: 'n1'
+  task_2: 'b2'
+  task_3: 'b3'
+  task_4: 'c4'
+  sentiment: 'negative'
+
+# dataloader settings
+data_kwargs:
+  tasks: ["task_1", "task_2", "task_3", "task_4"]
+  fold_number: 0  # 0-based fold indexing
+  data_path: '../data/P3B3/'
+  subset_proportion: 1.0
+  add_noise_flag: True
+  add_noise: 0.1
+  mutual_info_filter: False
+  mutual_info_threshold: 0.0005
+  # copied to train_kwargs
+  reproducible: True
+  random_seed: 42
+  batch_per_gpu: 128
+  doc_max_len: 3000
+  multilabel: False
+
+# general training args
+model_type: "mthisan" # mtcnn or mthisan
+train_kwargs:
+  max_epochs: 100
+  patience: 5
+  mixed_precision: False
+  class_weights: #  './weights/P3B3_weights.pickle' # path, dict, or blank
+  # copied from data_kwargs
+  # multilabel: False
+  # random_seed: 1234
+  # batch_per_gpu: 128
+  # doc_max_len: 3000
+
+# mthisan model args
+MTHiSAN_kwargs:
+  max_words_per_line: 15
+  att_heads: 8
+  att_dim_per_head: 50
+  att_dropout: 0.1
+  bag_of_embeddings: False
+  embeddings_scale: 2.5
+
+# mtcnn model args
+MTCNN_kwargs:
+  window_sizes: [3,4,5]
+  num_filters: [300,300,300]
+  dropout: 0.5
+  bag_of_embeddings: False
+  embeddings_scale: 20
+
+Transformers_kwargs:
+  
+# abstain args
+abstain_kwargs:
+  abstain_flag: False
+  abs_gain: 5.0
+  acc_gain: 10.0
+  alphas: {'task_1':5,'task_2':5,'task_3':5,'task_4':5}
+  max_abs: {'task_1':0.8,'task_2':0.8,'task_3':0.5,'task_4':0.8}
+  min_acc: {'task_1':0.975,'task_2':0.975,'task_3':0.975,'task_4':0.975}
+  alpha_scale: {'task_1':0.8,'task_2':0.8,'task_3':0.8,'task_4':0.8}
+  tune_mode: 'acc'
+  stop_limit: 0.005
+  stop_metric: 'max'
+  ntask_flag: False
+  ntask_tasks:  ["task_1", "task_2", "task_3", "task_4"]
+  ntask_alpha: 0.1
+  ntask_alpha_scale: 0.8
+  ntask_max_abs: 0.9
+  ntask_min_acc: 0.975
+
