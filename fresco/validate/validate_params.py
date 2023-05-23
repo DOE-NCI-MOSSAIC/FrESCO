@@ -35,7 +35,7 @@ class ValidateParams():
                 mod_args_file = cli_args.model_args
             else:
                 mod_args_file = 'model_args.yml'
-
+            print(cli_args.model_args)
             if os.path.isfile(mod_args_file):
                 with open(mod_args_file, "r", encoding="utf-8") as f_in:
                     self.model_args = yaml.safe_load(f_in)
@@ -299,7 +299,7 @@ class ValidateClcParams():
     def __init__(self, cli_args, data_source: str = 'pre-generated'):
 
         if len(cli_args.model_args) > 0:
-            mod_args_file = cli_args.args + "/clc_args.yml"
+            mod_args_file = cli_args.args
         else:
             mod_args_file = 'clc_args.yml'
 
@@ -373,7 +373,7 @@ class ValidateClcParams():
 
         Post-condition: self.model_args['train_kwargs']['doc_max_len'] is updated from the data_kwargs.
         """
-    
+
         schema = {'data_kwargs': ['tasks', 'exclude_single', 'shuffle_case_order',
                                   'subset_proportion', 'model_path',
                                   'random_seed', 'reproducible'],
