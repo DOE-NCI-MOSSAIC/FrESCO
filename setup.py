@@ -15,9 +15,6 @@ setup(
                       'gensim',                     
                       'numpy',                     
                       'tqdm',       
-                      'torch',
-                      'yaml',
-                      'gensim',
                       'torchmetrics>=0.11',                     
                       ],
 
