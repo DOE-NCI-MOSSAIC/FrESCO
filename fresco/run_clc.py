@@ -35,7 +35,6 @@ def create_model(params, dw, device):
     model = clc.CaseLevelContext(dw.num_classes, device=device, **params.model_args['model_kwargs'])
 
     model.to(device, non_blocking=True)
-    # should be run with >= 2 gpu?
     return torch.nn.DataParallel(model)
 
 
@@ -88,9 +87,6 @@ def load_model_dict(model_path, data_path=""):
         raise exceptions.ParamError(f'the model at {model_path} does not exist.')
 
     # check that model args all agree
-    # this needs to be looked ate carefully, not sure it deos what we want. AS-12/5
-    # need to check abstention args especially
-
     mismatches = [mod for mod in model_dict['metadata_package']['mod_args'].keys()
         if data_args[mod] != model_dict['metadata_package']['mod_args'][mod]]
 
@@ -106,9 +102,6 @@ def load_model_dict(model_path, data_path=""):
 
 
 def load_model(model_dict, device, dw):
-
-    # if torch.cuda.device_count() < 2:
-    #     raise exceptions.ParamError("Case level context requires > 2 gpus")
 
     model_args = model_dict['metadata_package']['mod_args']
 
@@ -140,7 +133,6 @@ def load_model(model_dict, device, dw):
 
 def save_full_model(kw_args, save_path, packages, fold):
     """Save trained model with package info metadata."""
-    # save_path = save_path + f"_fold{fold}.h5"
     path = 'savedmodels/' + kw_args['save_name'] + "/"
     now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     savename = path + kw_args['save_name'] + f"_{now}_fold{fold}_clc_full.h5"
@@ -152,9 +144,6 @@ def save_full_model(kw_args, save_path, packages, fold):
 
 
 def run_case_level(args):
-
-    # if not torch.cuda.device_count() > 1:
-    #     raise exceptions.ParamError("Case level context must use >= 2 gpus")
 
     clc_flag = True
     # 1. validate model/data args
@@ -187,6 +176,7 @@ def run_case_level(args):
     # model args of the first (one used for generating the doc embeddings) trained model
     # submodel_args = model_dict['metadata_package']['mod_args']
     # need to verify submodel args
+
     data_source = 'pre-generated'
     args.model_args = model_dict['metadata_package']['mod_args']
     print("Validating kwargs from pretrained model ")
@@ -255,7 +245,6 @@ def run_case_level(args):
     model = create_model(valid_params, dw, device)
     # 4. train new model
     print("Creating model trainer")
-    # batch = valid_params.model_args['train_kwargs']['batch_per_gpu']
 
     trainer = training.ModelTrainer(valid_params.model_args, model, dw, device=device,
                                     fold='clc',class_weights=dw.weights, clc=clc_flag)
@@ -271,27 +260,27 @@ def run_case_level(args):
                                        device,
                                        clc_flag=clc_flag)
 
-    ## Only need one of 5a, 5b, or 5c, depending on requirements
-    ## 5a. score a model
-    evaluator.score(dac=dac)
+    # Only need one of 5a, 5b, or 5c, depending on requirements
+    # 5a. score a model
+    # evaluator.score(dac=dac)
 
-    ## 5b. make predictions
-    evaluator = predictions.ScoreModel(valid_params.model_args,
-                                       dw.grouped_cases,
-                                       model,
-                                       device,
-                                       clc_flag=clc_flag)
-    evaluator.predict(dw.dict_maps['id2label'])
+    # 5b. make predictions
+    # evaluator = predictions.ScoreModel(valid_params.model_args,
+    #                                    dw.grouped_cases,
+    #                                    model,
+    #                                    device,
+    #                                    clc_flag=clc_flag)
+    # evaluator.predict(dw.dict_maps['id2label'])
 
     # 5c. score and predict
-    evaluator = predictions.ScoreModel(valid_params.model_args,
-                                       dw.grouped_cases,
-                                       model,
-                                       device,
-                                       clc_flag=clc_flag)
+    # evaluator = predictions.ScoreModel(valid_params.model_args,
+    #                                    dw.grouped_cases,
+    #                                    model,
+    #                                    device,
+    #                                    clc_flag=clc_flag)
     evaluator.evaluate_model(dw.dict_maps['id2label'], dac=dac)
 
-    ## this is the default args filename and path
+    # this is the default args filename and path
     with open(trainer.savepath + "clc_args.json", "w", encoding="utf-8") as f_out:
         json.dump(valid_params.model_args, f_out, indent=4)
 
