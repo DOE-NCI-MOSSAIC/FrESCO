@@ -8,9 +8,10 @@ __pycache__/**
 
 cached_file
 data/**
-savedmodels/
-predictions/
+**/savedmodels/**
+**/predictions/**
 build/*
+**/.ipynb_checkpoints/**
 
 README.md
 .DS_Store
