@@ -14,7 +14,10 @@ setup(
                       'pyyaml',                     
                       'gensim',                     
                       'numpy',                     
-                      'tqdm',                     
+                      'tqdm',       
+                      'torch',
+                      'yaml',
+                      'gensim',
                       'torchmetrics>=0.11',                     
                       ],
 
