@@ -28,6 +28,12 @@ pip install fresco .
 
 For further PyTorch instructions or more details for pytorch, head over to the [PyTorch docs](https://pytorch.org/docs/stable/index.html).
 
+### Notebooks and Examples
+
+We have supplied example notebooks for each of the sample datasets contained in this repository showing 
+model training on each dataset. We have also supplied `model_args` files for each of the 
+datasets contained within the repo to speedup the time to ge up and running with the codebase. 
+
 ### Data Preparation
 We have supplied three different datasets as examples, each must be
 unzipped before any model training via the `tar -xf dataset.tar.gz` command from the `data` directory.
@@ -35,6 +41,9 @@ The three datasets are:
   - imdb: binary sentiment classification with the imdb dataset,
   - P3B3: benchmark multi-task classification task, and
   - clc: case-level context multi-task classfication data.
+
+We have prepared `model_args` files for each dataset within the `configs/` directory. To run with your own data,
+the following instructions explain the requirements for the training data.
 
 Add the path to the desired dataset in the the `data_path` argument in the `configs/model_args.yml` file. The required data files are:
     - `data_fold0.csv`: Pandas dataframe with columns:
@@ -77,18 +86,18 @@ We have supplied test data for each of the model types provided. Information ext
 
 #### Case-Level Context Model
 
-If you're wanting a case-level context model, there is a two-step process. 
+If you're wanting a case-level context model, there is a two-step process. See `notebooks/clc_example.ipynb` for a fully worked example.
 
 Step 1: Create an information extraction model specifying the `data/clc` data directory in the `configs/model_args.yml`. Then run
 ```shell
-python train_model.py -m ie -args ../configs/model_args.yml
+python train_model.py -m ie -args ../configs/clc_step1.yml
 ```
 from the `scripts/` directory. 
 
-Step 2: To train a clc model, set the `model_path` keyword arg to the path of the trained model trained from step #1 step in the `configs/clc_args.yml` file. 
+Step 2: To train a clc model, set the `model_path` keyword arg to the path of the trained model trained from step 1 step in the `configs/clc_step2.yml` file. 
 Then run
 ```shell
-python train_model.py -m clc -args ../configs/clc_args.yml
+python train_model.py -m clc -args ../configs/clc_step2.yml
 ```
 from the `scripts/` directory to train a case-level context model.
 
