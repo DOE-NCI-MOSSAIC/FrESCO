@@ -34,14 +34,14 @@ class ScoreModel():
             n_task (bool): Are we using ntask?
             mixed_precision (bool): Use PyTorch automatic mixed precision?
             clc (bool): Are we training a clc model?
-            
+
             model (Model): Model definition, declared and initialized in the caller.
             device (torch.device): CUDA or CPU.
             data_loader (DataHandler): DataHandler class, initialized in the caller.
-            
+
             loss_funs (dict): Dictionary of torch loss functions for training each task.
             multilabel (bool): Multilabel classification?
-            
+
             y_preds (dict): Dict of predictions, usually logits as torch.tensor, tasks are key values
             y_trues (dict): Dict of ints with ground truth values, tasks are key values.
             logits (list): list of outputs from model.forward
@@ -99,6 +99,8 @@ class ScoreModel():
         self.logits = [[] for _ in range(len(self.tasks))]  # model output
 
         if savepath is None:
+            if not os.path.exists('predictions/'):
+                os.makedir("predictions/")
             self.savepath = "predictions/" + model_args['save_name']
         else:
             tmp_path = savepath + "predictions/"
