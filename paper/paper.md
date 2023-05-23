@@ -99,8 +99,10 @@ data, the HiSAN and CLC architectures are specifically designed to work
 with patient data and are not available in other software packages like
 PyHealth [@zhao2021pyhealth]. As an example, the CLC model uses multiple
 pathology reports linked to an individual patient in a hierarchical way.
-We have adapted the codebase from our workflow within the `MOSSAIC`
-project, which uses patient health data that is not publicly available,
+We have adapted the FrESCO codebase from our workflow within an airgapped system
+which uses patient health data that is not publicly available.
+This is the same tool we use internally, aside from internal consistency checks,
+we are making it publicly available
 to work with user supplied text data, the only requirement being the
 format of the data files, which is specified in the `README`.
 
