@@ -16,3 +16,4 @@ build/*
 README.md
 .DS_Store
 *.rst
+fresco.egg-info/*
