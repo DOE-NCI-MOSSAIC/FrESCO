@@ -1,4 +1,4 @@
-save_name: 'clc_test'  # foldX.h5 will be appended at the end; leave blank to autopopulate with a timestamp
+save_name: 'clc_model'  # foldX.h5 will be appended at the end; leave blank to autopopulate with a timestamp
 
 # dataloader settings
 data_kwargs:
