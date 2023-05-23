@@ -1,0 +1,45 @@
+save_name: 'clc_model'  # foldX.h5 will be appended at the end; leave blank to autopopulate with a timestamp
+
+# dataloader settings
+data_kwargs:
+  model_path: '../savedmodels/clc_model/model.h5'
+  tasks: ["task_1", "task_2", "task_3", "task_4"]
+  exclude_single: False
+  shuffle_case_order: False
+  subset_proportion: 0.5
+  reproducible: True
+  random_seed: 42
+
+# general training args
+train_kwargs:
+  batch_per_gpu: 128
+  max_epochs: 100
+  patience: 5
+  class_weights: #./weights/weights.pickle' # path, dict, or blank (None)
+  mixed_precision: False
+
+# case level context model args
+model_kwargs:
+  att_dim_per_head: 50
+  att_heads: 8
+  att_dropout: 0.1
+  forward_mask: True
+
+# abstain args
+abstain_kwargs:
+  abstain_flag: False
+  abs_gain: 5.0
+  acc_gain: 10.0
+  alphas: {'task_1':5,'task_2':5,'task_3':5,'task_4':5}
+  max_abs: {'task_1':0.8,'task_2':0.8,'task_3':0.5,'task_4':0.8}
+  min_acc: {'task_1':0.975,'task_2':0.975,'task_3':0.975,'task_4':0.975}
+  alpha_scale: {'task_1':0.8,'task_2':0.8,'task_3':0.8,'task_4':0.8}
+  tune_mode: 'acc'
+  stop_limit: 0.005
+  stop_metric: 'max'
+  ntask_flag: False
+  ntask_tasks:  ["task_1", "task_2", "task_3", "task_4"]
+  ntask_alpha: 0.1
+  ntask_alpha_scale: 0.8
+  ntask_max_abs: 0.9
+  ntask_min_acc: 0.975
