@@ -57,7 +57,7 @@ def main():
     train_data = pd.concat([train_df, val_df])
 
     print("Creating vocab and word embeddings")
-    model = gensim.models.word2vec.Word2Vec(vector_size=embed_dim, min_count=2, epochs=2, workers=4)
+    model = gensim.models.word2vec.Word2Vec(vector_size=embed_dim, min_count=2, epochs=25, workers=4)
     model.build_vocab(train_data['review'].str.split())
     model.train(train_data['review'].str.split(), total_examples=model.corpus_count, epochs=model.epochs)
 
