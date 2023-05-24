@@ -66,14 +66,13 @@ def main():
     val_df['X'] = val_df['review'].progress_apply(lambda d: word2int(d, model))
     test_df['X'] = test_df['review'].progress_apply(lambda d: word2int(d, model))
 
-    # add <unk> token
+    # add <unk> and <pad> tokens
     word_vecs = [model.wv.vectors[index] for index in model.wv.key_to_index.values()]
     rng = np.random.default_rng(seed)
     unk_embed = rng.normal(size=(1, embed_dim), scale=0.1)
-    w2v = np.append(word_vecs, unk_embed, axis=0)
-
-    id2word = {v: k for k, v in model.wv.key_to_index.items()}
-    id2word[len(model.wv.key_to_index)] = "<unk>"
+    w2v = np.concatenate((np.zeros(size=(1, embed_dim)), word_vecs, unk_embed), axis=0)
+    full_vocab = ["<pad>"] + list(model.wv.key_to_index.keys()) + ["<unk>"]
+    id2word = {idx: word for idx, word in enumerate(full_vocab)}
 
     print("Saving output files")
     df_out = pd.concat([train_df, val_df, test_df])
