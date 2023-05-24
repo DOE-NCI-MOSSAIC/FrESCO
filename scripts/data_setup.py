@@ -27,7 +27,7 @@ def main():
     embed_dim = 300
 
     print("Reading raw data")
-    df = pd.read_csv('./data/imdb/IMDB Dataset.csv')
+    df = pd.read_csv('../data/imdb/IMDB Dataset.csv')
 
     data = [d.lower() for d in df['review']]
     data = [gensim.parsing.preprocessing.strip_tags(d) for d in data]
