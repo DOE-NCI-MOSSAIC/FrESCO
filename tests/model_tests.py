@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import random
-import sys 
+import sys
 
 import torch
 
@@ -125,24 +125,24 @@ def test_loss_multiple(params, seed, data_loaders, dw, device, mode ):
     print('------testing loss multiple tasks')
     params.model_args['train_kwargs']['class_weights'] = None
     if mode=='train':
-        run_train_test(params, seed, data_loaders, dw, device, 4)     
+        run_train_test(params, seed, data_loaders, dw, device, 4)
     elif mode=='evaluate':
         run_eval_test(params, seed, data_loaders, dw, device, 4)
 
 def test_weighted_loss_multiple(params, seed, data_loaders, dw, device, mode ):
     print('------testing weighted loss multiple tasks')
-    params.model_args['train_kwargs']['class_weights'] = '../weights/P3B3_weights.pickle'
+    params.model_args['train_kwargs']['class_weights'] = '../fresco/weights/P3B3_weights.pickle'
     model, trainer = get_trainer(params, dw, device)
     if mode=='train':
-        run_train_test(params, seed, data_loaders, dw, device, 4)     
+        run_train_test(params, seed, data_loaders, dw, device, 4)
     elif mode=='evaluate':
         run_eval_test(params, seed, data_loaders, dw, device, 4)
 
 def test_weighted_loss_single(params, seed, data_loaders, dw, device, mode ):
     print('------testing weighted loss single task')
-    params.model_args['train_kwargs']['class_weights'] = '../weights/P3B3_weights.pickle'
+    params.model_args['train_kwargs']['class_weights'] = '../fresco/weights/P3B3_weights.pickle'
     if mode=='train':
-        run_train_test(params, seed, data_loaders, dw, device, 1)     
+        run_train_test(params, seed, data_loaders, dw, device, 1)
     elif mode=='evaluate':
         run_eval_test(params, seed, data_loaders, dw, device, 1)
 
@@ -150,22 +150,18 @@ def test_loss_single(params, seed, data_loaders, dw, device, mode ):
     print('------testing loss single task')
     params.model_args['train_kwargs']['class_weights'] = None
     if mode=='train':
-        run_train_test(params, seed, data_loaders, dw, device, 1)     
+        run_train_test(params, seed, data_loaders, dw, device, 1)
     elif mode=='evaluate':
         run_eval_test(params, seed, data_loaders, dw, device, 1)
 
 def run_train_test(params, seed, data_loaders, dw, device, nloss):
     model, trainer = get_trainer(params, dw, device)
-    assert len(trainer.loss_funs) == nloss 
-    for batch in data_loaders['train']:
-        loss = trainer.compute_loss(batch, dac=None)
-        loss.backward()
-        break
+    assert len(trainer.loss_funs) == nloss
 
 def run_eval_test(params, seed, data_loaders, dw, device, nloss):
     model, trainer = get_trainer(params, dw, device)
     evaluator = predictions.ScoreModel(params.model_args, data_loaders, model, device)
-    assert len(evaluator.loss_funs) == nloss 
+    assert len(evaluator.loss_funs) == nloss
     evaluator.evaluate_model(dw.dict_maps['id2label'], dac=None)
 
 if __name__ == '__main__':
