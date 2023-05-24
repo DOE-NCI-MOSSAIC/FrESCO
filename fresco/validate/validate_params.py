@@ -299,7 +299,7 @@ class ValidateClcParams():
     def __init__(self, cli_args, data_source: str = 'pre-generated'):
 
         if len(cli_args.model_args) > 0:
-            mod_args_file = cli_args.args
+            mod_args_file = cli_args.model_args
         else:
             mod_args_file = 'clc_args.yml'
 
