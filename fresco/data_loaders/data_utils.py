@@ -337,6 +337,11 @@ class DataHandler():
             worker = None
             gen = None
 
+        if torch.cuda.is_available():
+            pin_mem = True
+        else:
+            pin_mem = False
+
         loaders = {}
 
         vocab_size = self.inference_data['word_embedding'].shape[0]
@@ -361,7 +366,7 @@ class DataHandler():
                                  )
         loaders['train'] = DataLoader(train_data,
                                       batch_size=self.model_args['train_kwargs']['batch_per_gpu'],
-                                      shuffle=True, pin_memory=True, num_workers=n_wkrs,
+                                      shuffle=True, pin_memory=pin_mem, num_workers=n_wkrs,
                                       worker_init_fn=worker, generator=gen)
         self.train_size = len(train_data)
 
@@ -374,7 +379,7 @@ class DataHandler():
 
             loaders['val'] = DataLoader(val_data,
                                         batch_size=self.model_args['train_kwargs']['batch_per_gpu'],
-                                        shuffle=True, pin_memory=True, num_workers=n_wkrs,
+                                        shuffle=True, pin_memory=pin_mem, num_workers=n_wkrs,
                                         worker_init_fn=worker, generator=gen)
             self.val_size = len(val_data)
         else:
@@ -389,7 +394,7 @@ class DataHandler():
 
             loaders['test'] = DataLoader(test_data,
                                          batch_size=self.model_args['train_kwargs']['batch_per_gpu'],
-                                         shuffle=True, pin_memory=True, num_workers=n_wkrs,
+                                         shuffle=True, pin_memory=pin_mem, num_workers=n_wkrs,
                                          worker_init_fn=worker, generator=gen)
             self.test_size = len(test_data)
         else:
