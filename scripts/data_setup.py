@@ -70,22 +70,22 @@ def main():
     word_vecs = [model.wv.vectors[index] for index in model.wv.key_to_index.values()]
     rng = np.random.default_rng(seed)
     unk_embed = rng.normal(size=(1, embed_dim), scale=0.1)
-    w2v = np.concatenate((np.zeros(size=(1, embed_dim)), word_vecs, unk_embed), axis=0)
+    w2v = np.concatenate((np.zeros(shape=(1, embed_dim)), word_vecs, unk_embed), axis=0)
     full_vocab = ["<pad>"] + list(model.wv.key_to_index.keys()) + ["<unk>"]
     id2word = {idx: word for idx, word in enumerate(full_vocab)}
 
     print("Saving output files")
     df_out = pd.concat([train_df, val_df, test_df])
-    df_out.to_csv("./data/imdb/data_fold0.csv", index=False)
+    df_out.to_csv("../data/imdb/data_fold0.csv", index=False)
 
     labels = set(df['sentiment'])
     id2label = {'sentiment': {i: l for i, l in enumerate(labels)}}
-    with open('./data/imdb/id2labels_fold0.json', 'w') as f:
+    with open('../data/imdb/id2labels_fold0.json', 'w') as f:
         json.dump(id2label, f)
 
-    with open('./data/imdb/id2word.json', 'w') as f:
+    with open('../data/imdb/id2word.json', 'w') as f:
         json.dump(id2word, f)
-    np.save('./data/imdb/word_embeds_fold0.npy', w2v)
+    np.save('../data/imdb/word_embeds_fold0.npy', w2v)
 
 
 if __name__ == "__main__":
