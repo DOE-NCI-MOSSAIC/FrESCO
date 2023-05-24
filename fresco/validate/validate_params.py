@@ -35,7 +35,7 @@ class ValidateParams():
                 mod_args_file = cli_args.model_args
             else:
                 mod_args_file = 'model_args.yml'
-            print(cli_args.model_args)
+
             if os.path.isfile(mod_args_file):
                 with open(mod_args_file, "r", encoding="utf-8") as f_in:
                     self.model_args = yaml.safe_load(f_in)
