@@ -54,7 +54,7 @@ def create_doc_embeddings(model, model_type, data_loader, device):
             if embed.shape[0] == bs:
                 embeds[i*bs:(i+1)*bs, : ] = embed.cpu().numpy()
             else:
-                embeds[i*bs:, : ] = embed.cpu().numpy()
+                embeds[-embeds.shape[0]:, : ] = embed.cpu().numpy()
     return embeds
 
 
