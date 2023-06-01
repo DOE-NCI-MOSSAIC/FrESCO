@@ -35,7 +35,7 @@ def create_model(params, dw, device):
     model = clc.CaseLevelContext(dw.num_classes, device=device, **params.model_args['model_kwargs'])
 
     model.to(device, non_blocking=True)
-    return torch.nn.DataParallel(model)
+    return model
 
 
 def create_doc_embeddings(model, model_type, data_loader, device):
