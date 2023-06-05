@@ -15,7 +15,7 @@ git clone https://github.com/DOE-NCI-MOSSAIC/FrESCO.git
 ```
 Load the working branch and pull in the subrepos
 ```shell
-cd fresco
+cd FrESCO
 git checkout main
 ```
 Setup the conda environment (the default name for the environment is "ms39", this can be edited in the ms39.yml file)
