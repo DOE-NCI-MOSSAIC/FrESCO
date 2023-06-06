@@ -25,7 +25,7 @@ conda activate fresco
 ```
 Install the FrESCO library and dependencies
 ```shell
-pip install fresco .
+pip install .
 ```
 
 For further PyTorch instructions or more details for pytorch, head over to the [PyTorch docs](https://pytorch.org/docs/stable/index.html).
