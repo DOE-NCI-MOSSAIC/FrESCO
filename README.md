@@ -7,8 +7,13 @@ Documentation is available over at [Read the Docs](https://doe-nci-fresco.readth
 
 
 ## Quickstart Guide
+### Install via pip
+Install from [pypi](https://pypi.org/project/nci-fresco/) using 
+```shell
+pip install nci-fresco
+```
 
-### Initial Setup
+### Install from source
 Clone the repo
 ```shell
 git clone https://github.com/DOE-NCI-MOSSAIC/FrESCO.git
