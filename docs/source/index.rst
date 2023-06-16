@@ -267,7 +267,7 @@ bibtex entry is:
 Documentation
 =============
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    ../modules
 
