@@ -14,9 +14,6 @@ Welcome to FrESCO's documentation!
    :maxdepth: 2
 
    ../../README.md
-
-   :caption: Contents:
-
    modules
 
 Indices and tables
