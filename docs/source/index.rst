@@ -6,7 +6,7 @@
 FrESCO: Framework for Exploring Scalable Computational Oncology
 ===============================================================
 
-.. image:: extra/logo.png
+.. image:: logo.png
   :width: 400
   :alt: FrESCO logo
 
@@ -32,9 +32,6 @@ such as precision medicine. Here we present FrESCO: Framework for
 Exploring Scalable Computational Oncology, a modular deep-learning
 natural language processing (NLP) library for extracting pathology
 information from clinical text documents.
-
-Documentation is available over at `Read the
-Docs <https://doe-nci-fresco.readthedocs.io/en/latest/>`__.
 
 Quickstart Guide
 ----------------
@@ -266,10 +263,12 @@ bibtex entry is:
    month = {3},
    note =
    }
+
+Documentation
+=============
 .. toctree::
    :maxdepth: 2
 
-   ../extra/readme
    ../modules
 
 Indices and tables
