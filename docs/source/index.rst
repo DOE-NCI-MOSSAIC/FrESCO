@@ -13,7 +13,7 @@ Welcome to FrESCO's documentation!
 .. toctree::
    :maxdepth: 2
 
-   ../../README.md
+   readme
    modules
 
 Indices and tables
