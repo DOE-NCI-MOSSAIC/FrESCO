@@ -6,14 +6,14 @@
 Welcome to FrESCO's documentation!
 ==================================
 
-.. image:: logo.png
+.. image:: extra/logo.png
   :width: 400
   :alt: FrESCO logo
 
 .. toctree::
    :maxdepth: 2
 
-   readme
+   extra/readme
    modules
 
 Indices and tables
