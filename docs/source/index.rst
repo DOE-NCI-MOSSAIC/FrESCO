@@ -10,10 +10,11 @@ Welcome to FrESCO's documentation!
   :width: 400
   :alt: FrESCO logo
 
-.. mdinclude:: ../../README.md 
-
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
+
+   ../../README.md
+
    :caption: Contents:
 
    modules
