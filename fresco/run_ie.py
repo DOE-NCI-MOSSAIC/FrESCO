@@ -99,7 +99,7 @@ def load_model(model_path, device, dw, valid_params):
     elif valid_params.model_args['model_type'] == 'mtcnn':
         model = mtcnn.MTCNN(dw.inference_data['word_embedding'],
                             dw.num_classes,
-                            **valid_params.model_args['MTHiSAN_kwargs'])
+                            **valid_params.model_args['MTCNN_kwargs'])
 
     model.to(device, non_blocking=True)
     if torch.cuda.device_count() > 1:
