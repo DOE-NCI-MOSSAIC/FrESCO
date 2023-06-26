@@ -8,6 +8,9 @@ setup(
     author='Adam Spannaus',
     author_email='spannausat@ornl.gov',
     license='MIT',
+    entry_points = {
+        'console_scripts': ['fresco=fresco.cli:main'],
+    },
     packages=find_packages(include=['fresco', 'fresco.*']),
     install_requires=[ 'pandas',                     
                       'scikit-learn',                     
