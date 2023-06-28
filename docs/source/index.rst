@@ -82,7 +82,7 @@ Notebooks and Examples
 ~~~~~~~~~~~~~~~~~~~~~~
 
 We have supplied example notebooks for each of the sample datasets
-contained in the `Github repository <https://github.com/DOE-NCI-MOSSAIC/FrESCO>`__ showing model training on each dataset. We
+contained in the `Github repository <https://github.com/DOE-NCI-MOSSAIC/FrESCO/tree/main/notebooks>`__ showing model training on each dataset. We
 have also supplied ``model_args`` files for each of the datasets
 contained within the repo to speedup the time to ge up and running with
 the codebase.
