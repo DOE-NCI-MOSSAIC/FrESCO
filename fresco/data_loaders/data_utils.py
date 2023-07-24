@@ -77,7 +77,7 @@ class DataHandler():
             self.clc_flag = True
             self.grouped_cases = {}
 
-    def load_folds(self, fold=None, subset_frac=None):
+    def load_folds(self, fold: int, subset_frac: float = None):
         """
         Load data for each fold in the dataset.
 
@@ -104,6 +104,7 @@ class DataHandler():
             subset_frac = self.model_args['data_kwargs']['subset_proportion']
         else:
             subset_frac = subset_frac
+
         loaded = data_loader(fold, subset_frac)
 
         loaded['packages'] = {"mod_args": self.model_args,
@@ -136,6 +137,7 @@ class DataHandler():
 
         Arguments:
             fold (int): Fold number. Should always be 0 for now.
+            subset_frac (float): Proportion of data to load.
 
         Post-condition:
             Modifies self.splits in-place.
@@ -149,7 +151,7 @@ class DataHandler():
             tmp = json.load(f)
 
         loaded_data['id2label'] = {task: {int(k): str(v) for k, v in labels.items()}
-                                   for task, labels in tmp.items()}
+                                   for task, labels in tmp.items() if task in self.tasks}
 
         df = pd.read_csv(os.path.join(data_path, 'data_fold' + str(fold) + '.csv'),
                          dtype=str, engine='c', memory_map=True)
@@ -421,6 +423,51 @@ class DataHandler():
                                                 clc_args['train_kwargs']['batch_per_gpu'],
                                                 shuffle=False) for split in self.splits}
 
+    def inference_loader(self, reproducible: bool = True, 
+                         seed: int = None, batch_size: int = 128) -> dict:
+        """
+        Create torch DataLoader class for inference from a trained model.
+
+        Returns a dictionary of PyTorch DataLoaders (test) for inference.
+
+        Args:
+            reproducible (bool): Seet all random number seeds.
+            seed (int): Random number generator seed.
+            batch_size (int): Batch size for inference.
+        """
+        if reproducible:
+            gen = torch.Generator()
+            gen.manual_seed(seed)
+            worker = self.seed_worker
+        else:
+            worker = None
+            gen = None
+
+        if torch.cuda.is_available():
+            pin_mem = True
+        else:
+            pin_mem = False
+
+        loaders = {}
+
+        # num multiprocessing workers for DataLoaders
+        n_wkrs = 4
+        print(f"Num workers: {n_wkrs}, reproducible: {self.model_args['data_kwargs']['reproducible']}")
+
+        # Y is None for predictions without ground truth.
+        inference_data = PathReports(self.inference_data['X']['test'], None,
+                                     tasks=self.model_args['data_kwargs']['tasks'],
+                                     label_encoders=None,
+                                     max_len=self.model_args['train_kwargs']['doc_max_len'],
+                                     transform=None
+                                    )
+        loaders['test'] = DataLoader(inference_data,
+                                      batch_size=self.model_args['train_kwargs']['batch_per_gpu'],
+                                      shuffle=True, pin_memory=pin_mem, num_workers=n_wkrs,
+                                      worker_init_fn=worker, generator=gen)
+
+        return loaders
+
     @staticmethod
     def seed_worker(worker_id):
         """
@@ -473,6 +520,7 @@ class PathReports(Dataset):
             label_encoders (dict): Dictionary of task-to-label encoders to convert raw labels into integers.
             max_len (int, default: 3000): Maximum length for a document. Should match the value in data_args.json. Longer documents will be cut, and shorter documents will be zero-padded.
             transform (object, default: None): Optional transform to apply to document tensors.
+            pred_only(bool): For making predictions on unlabeled data.
 
         Outputs per batch:
             dict[str, torch.Tensor]: A sample dictionary with the following keys and values:
@@ -490,20 +538,24 @@ class PathReports(Dataset):
         self.transform = transform
         self.max_len = max_len
         self.multilabel = multilabel
+        self.pred_only = False
 
-        for task in tasks:
-            y = np.asarray(Y[task].values, dtype=np.int16)
-            le = {v: int(k) for k, v in self.label_encoder[task].items()}
-            # ignore abstention class if it exists
-            if f'abs_{task}' in le:
-                del le[f'abs_{task}']
-            self.num_classes[task] = len(le)
-            self.ys[task] = y
+        if Y is None:  # for predictions w/o ground truth
+            self.pred_only = True
+        else:
+            for task in tasks:
+                y = np.asarray(Y[task].values, dtype=np.int16)
+                le = {v: int(k) for k, v in self.label_encoder[task].items()}
+                # ignore abstention class if it exists
+                if f'abs_{task}' in le:
+                    del le[f'abs_{task}']
+                self.num_classes[task] = len(le)
+                self.ys[task] = y
 
-            if self.multilabel:
-                y_onehot = np.zeros((len(y), len(le)), dtype=np.int16)
-                y_onehot[np.arange(len(y)), y] = 1
-                self.ys_onehot[task] = y_onehot
+                if self.multilabel:
+                    y_onehot = np.zeros((len(y), len(le)), dtype=np.int16)
+                    y_onehot[np.arange(len(y)), y] = 1
+                    self.ys_onehot[task] = y_onehot
 
     def __len__(self) -> int:
         return len(self.X)
@@ -517,13 +569,14 @@ class PathReports(Dataset):
         array[:doc.shape[0]] = doc
         sample = {'X': torch.tensor(array, dtype=torch.long),
                   'index': self.X.index[idx]}  # indexing allows us to keep track of the metadata associated with each X
-        for _, task in enumerate(self.tasks):
-            if self.multilabel:
-                y = self.ys_onehot[task][idx]
-                sample[f'y_{task}'] = torch.tensor(y, dtype=torch.float)
-            else:
-                y = self.ys[task][idx]
-                sample[f'y_{task}'] = torch.tensor(y, dtype=torch.long)
+        if not self.pred_only:
+            for _, task in enumerate(self.tasks):
+                if self.multilabel:
+                    y = self.ys_onehot[task][idx]
+                    sample[f'y_{task}'] = torch.tensor(y, dtype=torch.float)
+                else:
+                    y = self.ys[task][idx]
+                    sample[f'y_{task}'] = torch.tensor(y, dtype=torch.long)
         return sample
 
 class GroupedCases(Dataset):
