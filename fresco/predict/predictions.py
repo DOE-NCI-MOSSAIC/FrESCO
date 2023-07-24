@@ -389,15 +389,21 @@ class ScoreModel():
         df_list = []
 
         for task in self.tasks:
-            cols[f"{task}_true"] = [i.tolist() for i in preds['true_ys'][task]]
             cols[f"{task}_pred"] = [i.tolist() for i in preds['pred_ys'][task]]
             cols[f"{task}_probs"] = [i.tolist() for i in preds['probs'][task]]
-            col_ids = [f"{task}_true", f"{task}_pred"]
+            if len(preds['true_ys'][task]) > 0:
+                cols[f"{task}_true"] = [i.tolist() for i in preds['true_ys'][task]]
+                col_ids = [f"{task}_true", f"{task}_pred"]
+            else:
+                col_ids = [f"{task}_pred"]
             if self.clc:
                 df = pd.DataFrame(cols, columns=col_ids)
             else:
                 df = pd.DataFrame(cols, columns=col_ids, index=preds['idxs'])
-            df[f"{task}_true"].map(id2label[task])
+
+            if len(preds['true_ys'][task]) > 0:
+                df[f"{task}_true"].map(id2label[task])
+
             df[f"{task}_pred"].map(id2label[task])
             df_list.append(df)
 
@@ -749,7 +755,8 @@ class ScoreModel():
         for j, task in enumerate(self.tasks):
             outputs = logits[j].detach().cpu().numpy()
             preds['pred_ys'][task].extend(np.argmax(outputs, axis=1))
-            preds['true_ys'][task].extend(batch[f"y_{task}"].numpy())
+            if f'y_{task}' in batch.keys():
+                preds['true_ys'][task].extend(batch[f"y_{task}"].numpy())
 
             if save_probs:
                 if self.multilabel:
