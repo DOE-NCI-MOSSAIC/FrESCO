@@ -1,5 +1,7 @@
 """
     Top-level model building script using independent modules.
+
+    typical call is: $python use_model.py -mp /path/to/model -dp /path/to/data/`
 """
 import argparse
 import json
