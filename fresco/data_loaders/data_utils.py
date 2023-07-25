@@ -168,9 +168,11 @@ class DataHandler():
         for split in self.splits:
             loaded_data['X'][split] = df[df['split'] == split]['X'].apply(lambda x: np.array(json.loads(x),
                                                                                              dtype=np.int32))
-            loaded_data['Y'][split] = df[df['split'] == split][sorted(loaded_data['id2label'].keys())]
             loaded_data['metadata'][split] = df[df['split'] == split][[v for v in df.columns
                                                              if v not in ['X', *loaded_data['id2label'].keys()]]]
+            data_tasks = set([v for v in df.columns if v in loaded_data['id2label'].keys()])
+            if len(data_tasks) > 0: 
+                loaded_data['Y'][split] = df[df['split'] == split][sorted(loaded_data['id2label'].keys())]
 
         if subset_frac < 1:
             rng = np.random.default_rng(self.model_args['train_kwargs']['random_seed'])
