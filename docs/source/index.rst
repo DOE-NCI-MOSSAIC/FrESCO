@@ -99,7 +99,8 @@ classfication data.
 
 We have prepared ``model_args`` files for each dataset within the
 ``configs/`` directory. To run with your own data, the following
-instructions explain the requirements for the training data.
+instructions explain the requirements for the training data. Model 
+arguments are described in the subsequent section. 
 
 Add the path to the desired dataset in the the ``data_path`` argument in
 the ``configs/model_args.yml`` file. The required data files are: -
@@ -266,6 +267,56 @@ bibtex entry is:
 
 Documentation
 =============
+.. code:: shell
+   Model arguments:
+   ~~~~~~~~~~~~~~~~
+   save_name: # name of the file without a file extension. 
+   task_unks: # task unknowns; assign classes in the test set this value. Use the form below. 
+     task_name: 'uknown_label'
+   
+   # dataloader settings
+   data_kwargs:
+     tasks: ["task_1", "task_2", "task_3", "task_4"] # list of the name of tasks for multitask model
+     fold_number: 0  # which datafold to load
+     data_path: # path to the data 
+     subset_proportion: 1.0 # subset of the data to use (0-1.0)
+     add_noise_flag: # Boolean, whether flip random words in the data set
+     add_noise: # fraction of words to flip 
+     mutual_info_filter: False  # Boolean; filter data based on mutual data 
+     mutual_info_threshold: # threshold to use
+     # copied to train_kwargs
+     reproducible: True # sets all random seeds for reproducible train/test split and training features. 
+     random_seed: 42 # seed to use for reproducibility 
+     batch_per_gpu: 128 # batches per GPU
+     doc_max_len: 3000  # The maximum number of words used to train the model 
+     multilabel: False
+   
+   # general training args
+   model_type: "mthisan" # mtcnn or mthisan
+   train_kwargs:
+     max_epochs: 100
+     patience: 5
+     mixed_precision: False
+     class_weights: #  './weights/P3B3_weights.pickle' # path, dict, or blank
+   
+   # mthisan model args
+   MTHiSAN_kwargs:
+     max_words_per_line: 15  
+     att_heads: 8
+     att_dim_per_head: 50
+     att_dropout: 0.1
+     bag_of_embeddings: False
+     embeddings_scale: 2.5
+   
+   # mtcnn model args
+   MTCNN_kwargs:
+     window_sizes: [3,4,5]
+     num_filters: [300,300,300]
+     dropout: 0.5
+     bag_of_embeddings: False
+     embeddings_scale: 20
+
+
 .. toctree::
    :maxdepth: 4
 
