@@ -266,6 +266,7 @@ bibtex entry is:
 
 Documentation
 =============
+
 .. code:: shell
    Model arguments:
    ~~~~~~~~~~~~~~~~
