@@ -240,7 +240,7 @@ Description of model arguments
    save_name: # name of the file without a file extension. 
    task_unks: # task unknowns; assign classes in the test set this value. Use the form below. 
      task_name: 'uknown_label'
-   
+
    # dataloader settings
    data_kwargs:
      tasks: ["task_1", "task_2", "task_3", "task_4"] # list of the name of tasks for multitask model
