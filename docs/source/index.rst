@@ -232,44 +232,11 @@ epochs or so. **NOTE:** P3B3 has a known issue training with mixed
 precision and with ``DAC`` and ``NTask`` enabled. Ensure these keywords
 are all ``False`` for all runs with the P3B3 dataset.
 
-Contributing
-~~~~~~~~~~~~
-
-Get in touch if you would like to help in writing code, example
-notebooks, and documentation are essential aspects of the project. To
-contribute please fork the project, make your proposed changes and
-submit a pull request. We will do our best to sort out any issues and
-get your contributions merged into the main branch.
-
-If you found a bug, have questions, or are just having trouble with the
-library, please open an issue in our issue tracker and we’ll try to help
-resolve it.
-
-How to Cite
-~~~~~~~~~~~
-
-Please cite our software if you use it in your work. The
-bibtex entry is:
-
-::
-
-   @misc{osti_1958817,
-   title = {FrESCO},
-   author = {Spannaus, Adam and Gounley, John and Hanson, Heidi and Chandra Shekar, Mayanka and Schaefferkoetter, Noah and Mohd-Yusof, Jamaludin and Fox, Zach and USDOE},
-   abstractNote = {The National Cancer Institute (NCI) monitors population level cancer trends as part of its Surveillance, Epidemiology, and End Results (SEER) program. This program consists of state or regional level cancer registries which collect, analyze, and annotate cancer pathology reports. From these annotated pathology reports, each individual registry aggregates cancer phenotype information and summary statistics about cancer prevalence to facilitate population level monitoring of cancer incidence. Extracting cancer phenotype from these reports is a labor intensive task, requiring specialized knowledge about the reports and cancer. Automating this information extraction process from cancer pathology reports has the potential to improve not only the quality of the data by extracting information in a consistent manner across registries, but to improve the quality of patient outcomes by reducing the time to assimilate new data and enabling time-sensitive applications such as precision medicine. Here we present FrESCO: Framework for Exploring Scalable Computational Oncology, a modular deep-learning natural language processing (NLP) library for extracting pathology information from clinical text documents.},
-   url = {https://www.osti.gov//servlets/purl/1958817},
-   doi = {10.11578/dc.20230227.2},
-   url = {https://www.osti.gov/biblio/1958817}, year = {2023},
-   month = {3},
-   note =
-   }
-
-Documentation
-=============
+Description of model arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: shell
-   Model arguments:
-   ~~~~~~~~~~~~~~~~
+
    save_name: # name of the file without a file extension. 
    task_unks: # task unknowns; assign classes in the test set this value. Use the form below. 
      task_name: 'uknown_label'
@@ -315,6 +282,42 @@ Documentation
      dropout: 0.5
      bag_of_embeddings: False
      embeddings_scale: 20
+
+Contributing
+~~~~~~~~~~~~
+
+Get in touch if you would like to help in writing code, example
+notebooks, and documentation are essential aspects of the project. To
+contribute please fork the project, make your proposed changes and
+submit a pull request. We will do our best to sort out any issues and
+get your contributions merged into the main branch.
+
+If you found a bug, have questions, or are just having trouble with the
+library, please open an issue in our issue tracker and we’ll try to help
+resolve it.
+
+How to Cite
+~~~~~~~~~~~
+
+Please cite our software if you use it in your work. The
+bibtex entry is:
+
+::
+
+   @misc{osti_1958817,
+   title = {FrESCO},
+   author = {Spannaus, Adam and Gounley, John and Hanson, Heidi and Chandra Shekar, Mayanka and Schaefferkoetter, Noah and Mohd-Yusof, Jamaludin and Fox, Zach and USDOE},
+   abstractNote = {The National Cancer Institute (NCI) monitors population level cancer trends as part of its Surveillance, Epidemiology, and End Results (SEER) program. This program consists of state or regional level cancer registries which collect, analyze, and annotate cancer pathology reports. From these annotated pathology reports, each individual registry aggregates cancer phenotype information and summary statistics about cancer prevalence to facilitate population level monitoring of cancer incidence. Extracting cancer phenotype from these reports is a labor intensive task, requiring specialized knowledge about the reports and cancer. Automating this information extraction process from cancer pathology reports has the potential to improve not only the quality of the data by extracting information in a consistent manner across registries, but to improve the quality of patient outcomes by reducing the time to assimilate new data and enabling time-sensitive applications such as precision medicine. Here we present FrESCO: Framework for Exploring Scalable Computational Oncology, a modular deep-learning natural language processing (NLP) library for extracting pathology information from clinical text documents.},
+   url = {https://www.osti.gov//servlets/purl/1958817},
+   doi = {10.11578/dc.20230227.2},
+   url = {https://www.osti.gov/biblio/1958817}, year = {2023},
+   month = {3},
+   note =
+   }
+
+Documentation
+=============
+
 .. toctree::
    :maxdepth: 4
 
