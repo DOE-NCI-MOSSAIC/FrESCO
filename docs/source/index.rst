@@ -237,49 +237,68 @@ Description of model arguments
 
 .. code:: shell
 
-   save_name: # name of the file without a file extension.
-   task_unks: # task unknowns; assign classes in the test set this value. Use the form below.
-     task_name: 'unknown_label'
-   
-   # dataloader settings
-   data_kwargs:
-     tasks: ["task_1", "task_2", "task_3", "task_4"] # list of the name of tasks for multitask model
-     fold_number: 0  # which datafold to load
-     data_path: # path to the data
-     subset_proportion: 1.0 # subset of the data to use (0-1.0)
-     add_noise_flag: # Boolean, whether flip random words in the data set, eg 56 -> 346
-     add_noise: # fraction of words to flip
-     # copied to train_kwargs
-     reproducible: True # sets all random seeds for reproducible train/test split and training features.
-     random_seed: 42 # seed to use for reproducibility, int or None
-     batch_per_gpu: 128 # batches per GPU
-     doc_max_len: 3000  # The maximum number of words used to train the model
-     multilabel: False
-   
-   # general training args
-   model_type: "mthisan" # mtcnn or mthisan
-   train_kwargs:
-     max_epochs: 100
-     patience: 5
-     mixed_precision: False
-     class_weights: #  './weights/P3B3_weights.pickle' # path to pickle file with dict
-   
-   # mthisan model args
-   MTHiSAN_kwargs:
-     max_words_per_line: 15
-     att_heads: 8
-     att_dim_per_head: 50
-     att_dropout: 0.1
-     bag_of_embeddings: False
-     embeddings_scale: 2.5
-   
-   # mtcnn model args
-   MTCNN_kwargs:
-     window_sizes: [3,4,5]
-     num_filters: [300,300,300]
-     dropout: 0.5
-     bag_of_embeddings: False
-     embeddings_scale: 20
+save_name: # name of the file without a file extension.
+task_unks: # task unknowns; assign classes in the test set this value. Use the form below.
+   task_name: 'unknown_label'
+
+# dataloader settings
+data_kwargs:
+  tasks: ["task_1", "task_2", "task_3", "task_4"] # list of the name of tasks for multitask model
+  fold_number: 0  # which datafold to load
+  data_path: # path to the data
+  subset_proportion: 1.0 # subset of the data to use (0-1.0)
+  add_noise_flag: # Boolean, whether flip random words in the data set, eg 56 -> 346
+  add_noise: # fraction of words to flip
+  # copied to train_kwargs
+  reproducible: True # sets all random seeds for reproducible train/test split and training features.
+  random_seed: 42 # seed to use for reproducibility, int or None
+  batch_per_gpu: 128 # batches per GPU
+  doc_max_len: 3000  # The maximum number of words used to train the model
+  multilabel: False
+
+# general training args
+model_type: "mthisan" # mtcnn or mthisan
+train_kwargs:
+  max_epochs: 100
+  patience: 5
+  mixed_precision: False
+  class_weights: #  './weights/P3B3_weights.pickle' # path to pickle file with dict
+
+# mthisan model args
+MTHiSAN_kwargs:
+  max_words_per_line: 15
+  att_heads: 8
+  att_dim_per_head: 50
+  att_dropout: 0.1
+  bag_of_embeddings: False
+  embeddings_scale: 2.5
+
+# mtcnn model args
+MTCNN_kwargs:
+  window_sizes: [3,4,5]
+  num_filters: [300,300,300]
+  dropout: 0.5
+  bag_of_embeddings: False
+  embeddings_scale: 20
+
+# abstain args
+abstain_kwargs:
+  abstain_flag: False  # bool, whether to allow the model to not make a classification
+  abs_gain: 5.0  # factor to modify abstention penalty when tuning for abstention rate
+  acc_gain: 10.0  # factor to modify abstention penalty when tuning for accuracy rate
+  alphas: {'task_1':5,'task_2':5,'task_3':5,'task_4':5}  # penalty for abstaining on a sample
+  max_abs: {'task_1':0.8,'task_2':0.8,'task_3':0.5,'task_4':0.8}  # maximum desired abstention rates
+  min_acc: {'task_1':0.975,'task_2':0.975,'task_3':0.975,'task_4':0.975}  # minimum desired accuracy rates
+  alpha_scale: {'task_1':0.8,'task_2':0.8,'task_3':0.8,'task_4':0.8}  # scale factor when adapting abstention penalty
+  tune_mode: 'acc'  # how to tune abstention, acc: accuracy, abs: abstention rate, abs_acc: both
+  stop_limit: 0.005  # threshold for early stopping with abstention
+  stop_metric: 'max'  # max: l1 metric for early stopping with abstention
+  ntask_flag: False  # bool, whether to allow the model to enable Ntask
+  ntask_tasks:  ["task_1", "task_2", "task_3", "task_4"]  # tasks to use for Ntask determination
+  ntask_alpha: 0.1  # Ntask penalty
+  ntask_alpha_scale: 0.8  # scale to modify Ntask alpha penalty
+  ntask_max_abs: 0.9  # maximum desired abstention rate with Ntask
+  ntask_min_acc: 0.975  # minimum desired accuracy rate with Ntask
 
 
 Contributing
