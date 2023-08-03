@@ -52,20 +52,23 @@ The three datasets are:
   - P3B3: benchmark multi-task classification task, and
   - clc: case-level context multi-task classfication data.
 
-We have prepared `model_args` files for each dataset within the `configs/` directory. To run with your own data,
+We have prepared `model_args` files for each dataset within the `configs/` directory. For the `P3B3` and `clc` datasets we have provided the required files. To create 
+these files for the `imdb` dataset, you may run the `data_setup.py` script within the `scripts` folder to create the necessary files for model training.
+
+To run with your own data,
 the following instructions explain the requirements for the training data.
 
-Add the path to the desired dataset in the the `data_path` argument in the `configs/model_args.yml` file. The required data files are:
-    - `data_fold0.csv`: Pandas dataframe with columns:
-    - `X`: list of input values, of `int` type
-    - `task_n`: output for task `n`, a `string` type (these are the y-values)
-    - `split`: one of `train`, `test`, or `val`
-    - `id2labels_fold0.json`: index to label dictionary mapping for each of the string representations of the outputs to an integer value, dict keys must match the y-values label
-    - `word_embeds_fold0.npy`: word embedding matrix for the vocabulary, dimensions are `words x embedding_dim`. If no word embedding exists, the model will use randomly generated embeddings. 
-    
-   For the `P3B3` and `clc` datasets we have provided the required files. To create these files for the `imdb` dataset, you
-   may run the `data_setup.py` script within the `scripts` folder to create these necessary files for model training.
+#### Custom Datasets
 
+Add the path to the desired dataset in the the `data_path` argument in the `configs/model_args.yml` file. The required data files are:
+  - `data_fold0.csv`: Pandas dataframe with columns:
+  - `X`: list of input values, of `int` type
+  - `task_n`: output for task `n`, a `string` type (these are the y-values)
+  - `split`: one of `train`, `test`, or `val`
+  - `id2labels_fold0.json`: index to label dictionary mapping for each of the string representations of the outputs to an integer value, dict keys must match the y-values label
+  - `word_embeds_fold0.npy`: word embedding matrix for the vocabulary, dimensions are `words x embedding_dim`. If no word embedding exists, the model will use randomly generated embeddings. 
+    
+   
 You will also need to set the `tasks`, these must correspond to the task columns names in the `data_fold0.csv` file and keys in the `id2labels_fold0.json` dictionary.
 For example, in the P3B3 data, the task columns are `task_n, n = 1,2,3,4`. Whereas the imdb data has the `sentiment` task.
 If using any sort of class weighting scheme, the keyword `class_weights` must be either a pickle file or dictionary
@@ -78,7 +81,7 @@ present within the data. For example, all rows where `group = 17` are associated
 
 ### Model Training
 The `model_args.yaml` file controls the settings for model training. Edit this file as desired based on your requirements and desired outcome.
-The `"save_name"` entry controls the name used for model checkpoints and prediction outputs; if left empty, a datetimestamp will be used.
+The `"save_name"` entry controls the name used for model checkpoints and prediction outputs; if left empty, a datetime stamp will be used.
 
 The following commands allow setting your GPUs, if enabled, before training your model.
 ```shell
