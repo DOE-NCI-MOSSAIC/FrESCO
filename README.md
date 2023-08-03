@@ -98,7 +98,7 @@ We have supplied test data for each of the model types provided. Information ext
 
 If you're wanting a case-level context model, there is a two-step process. See `notebooks/clc_example.ipynb` for a fully worked example.
 
-Step 1: Create an information extraction model specifying the `data/clc` data directory in the `configs/model_args.yml`. Then run
+Step 1: Create an information extraction model specifying the `data/clc` data directory in the file `configs/clc_step1.yml`. Then run
 ```shell
 python train_model.py -m ie -args ../configs/clc_step1.yml
 ```

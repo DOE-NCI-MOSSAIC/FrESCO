@@ -15,8 +15,6 @@ data_kwargs:
   subset_proportion: 1.0
   add_noise_flag: True
   add_noise: 0.1
-  mutual_info_filter: False
-  mutual_info_threshold: 0.0005
   # copied to train_kwargs
   reproducible: True
   random_seed: 42
