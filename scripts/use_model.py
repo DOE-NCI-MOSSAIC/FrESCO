@@ -1,5 +1,6 @@
 """
-    Top-level model building script using independent modules.
+    Top-level script for loading pre-trained model and making predictions
+    on new data.
 
     typical call is: $python use_model.py -mp /path/to/model -dp /path/to/data/`
 """
@@ -59,7 +60,16 @@ def load_model_dict(model_path, valid_params, data_path=""):
 
 
 def load_model(model_dict, device, dw):
+    """Load pretrained model_state_dict from disk.
 
+        Args:
+            model_path: str, from command line args, points to saved model
+            device: torch.device, either 'cpu' or 'cuda'
+            dw: DataHandler class
+
+        Loads the model type and state_dict for inference from a pretrained model.
+
+    """
     model_args = model_dict['metadata_package']['mod_args']
 
     if model_args['model_type'] == 'mthisan':
@@ -77,6 +87,8 @@ def load_model(model_dict, device, dw):
         model = torch.nn.DataParallel(model)
 
     model_dict = {k: v for k,v in model_dict.items() if k!='metadata_package'}
+    # Line 91 is needed if loading trained model on different system than 
+    # that which the model was trained on.
     # model_dict = {k.replace('module.',''): v for k,v in model_dict.items()}
     model.load_state_dict(model_dict)
 
