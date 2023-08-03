@@ -137,7 +137,6 @@ class ValidateParams():
         'max_lines' is added to the hisan kw_args.
         """
         schema = {'data_kwargs': ['doc_max_len', 'tasks', 'fold_number', 'data_path',
-                                  'mutual_info_filter', 'mutual_info_threshold',
                                   'subset_proportion', 'add_noise', 'add_noise_flag',
                                   'multilabel', 'random_seed', 'batch_per_gpu', 'reproducible'],
                   'MTHiSAN_kwargs': ['max_words_per_line',
