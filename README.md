@@ -90,7 +90,7 @@ To train the model for any information extraction task, multi-task calssificatio
 ```shell
 python train_model.py -m ie -args ../configs/model_args.yml
 ```
-from the `scripts` directory.
+from the `scripts` directory which will train a model on the `P3B3` dataset.
 
 We have supplied test data for each of the model types provided. Information extraction models may be created with either `P3B3` or `imdb` data.
 
