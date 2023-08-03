@@ -51,8 +51,7 @@ population health statistic and enabling rapid case ascertainment for
 clinical trials. Here we present `FrESCO`, a modular deep-learning
 natural language processing (NLP) library initially designed for extracting pathology
 information from clinical text documents. Our library is not limited to 
-clinical medical text, but may also be used by  
-researchers just getting started with NLP methods and those
+clinical medical text, but may also be used by researchers just getting started with NLP methods and those
 looking for a robust solution for their classification problems.
 
 # State of the Field
