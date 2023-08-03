@@ -49,8 +49,11 @@ extracting information in a consistent manner across registries. It can
 also improve patient outcomes by reducing the time from diagnosis to
 population health statistic and enabling rapid case ascertainment for
 clinical trials. Here we present `FrESCO`, a modular deep-learning
-natural language processing (NLP) library for extracting pathology
-information from clinical text documents.
+natural language processing (NLP) library initially designed for extracting pathology
+information from clinical text documents. Our library is not limited to 
+clinical medical text, but may also be used by  
+researchers just getting started with NLP methods and those
+looking for a robust solution for their classification problems.
 
 # State of the Field
 
@@ -60,7 +63,8 @@ Monai [@cardoso2022monai] is oriented towards ML on medical imaging data
 and FuseMedML [@golts2023fusemedml] creates general and multimodal data
 structures that are useful for biomedical ML. Most similar to `FrESCO`
 is PyHealth [@zhao2021pyhealth] though it is more broadly scoped,
-focusing on MIMIC, electronic intensive care unit (eICU), and
+focusing on MIMIC (Medical Information Mart for Intensive Care),
+electronic intensive care unit (eICU), and
 observational medical outcomes partnership common data model (OMOP-CDM)
 databases. Biomedical libraries such as Med7 [@kormilitzin2021med7] and
 EHRkit [@li2022ehrkit] focus on electronic health records in general and
