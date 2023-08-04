@@ -228,7 +228,7 @@ class ScoreModel():
             metrics[f'{task}_micro'] = f1_score(_preds, _trues, average='micro')
             metrics[f'{task}_macro'] = f1_score(_preds, _trues, average='macro')
 
-            metrics[f'{task}_accuracy'] = accuracy(_preds, _trues)
+            metrics[f'{task}_accuracy'] = accuracy_score(_preds, _trues)
 
             metrics[f'{task}_precision_micro'] = precision_score(_preds, _trues, average='micro', zero_division=0)
             metrics[f'{task}_precision_macro'] = precision_score(_preds, _trues, average='macro', zero_division=0)
