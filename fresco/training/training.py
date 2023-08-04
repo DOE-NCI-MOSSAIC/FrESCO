@@ -304,7 +304,7 @@ class ModelTrainer():
                 print(f"saving to {self.savename}", flush=True)
                 # loading weights of best model
                 checkpoint = torch.load(self.savename)
-                self.model.state_dict(checkpoint['model_state_dict'])
+                self.model.load_state_dict(checkpoint['model_state_dict'])
                 scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
                 with open(self.savepath + scores, "wb") as f_out:
                     pickle.dump(all_scores, f_out, pickle.HIGHEST_PROTOCOL)
@@ -313,7 +313,7 @@ class ModelTrainer():
             print('\nModel training hit max epochs, not converged')
             # loading weights of best model
             checkpoint = torch.load(self.savename)
-            self.model.state_dict(checkpoint['model_state_dict'])
+            self.model.load_state_dict(checkpoint['model_state_dict'])
             print(f"saving to {self.savename}", flush=True)
             scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
             with open(self.savepath + scores, "wb") as f_out:
