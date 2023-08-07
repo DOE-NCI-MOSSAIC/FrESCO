@@ -294,27 +294,27 @@ class ModelTrainer():
 
             if val_scores['val_loss'][0] < best_loss:
                 best_loss = val_scores['val_loss'][0]
-                model_weights = self.model.state_dict()
+                torch.save({'epoch': epoch,
+                            'model_state_dict': self.model.state_dict(), 
+                            'opt_state_dict': self.opt.state_dict(),
+                            'val_loss': best_loss
+                            }, self.savename)
 
             if stop:
                 print(f"saving to {self.savename}", flush=True)
-                if model_weights is None:
-                    torch.save(self.model.state_dict(), self.savename)
-                else:
-                    torch.save(model_weights, self.savename)
-                self.model.state_dict = copy.deepcopy(model_weights)
+                # loading weights of best model
+                checkpoint = torch.load(self.savename)
+                self.model.load_state_dict(checkpoint['model_state_dict'])
                 scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
                 with open(self.savepath + scores, "wb") as f_out:
                     pickle.dump(all_scores, f_out, pickle.HIGHEST_PROTOCOL)
                 break
         if epoch + 1 == self.epochs:
             print('\nModel training hit max epochs, not converged')
+            # loading weights of best model
+            checkpoint = torch.load(self.savename)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
             print(f"saving to {self.savename}", flush=True)
-            if model_weights is None:
-                torch.save(self.model.state_dict(), self.savename)
-            else:
-                torch.save(model_weights, self.savename)
-            self.model.state_dict = copy.deepcopy(model_weights)
             scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
             with open(self.savepath + scores, "wb") as f_out:
                 pickle.dump(all_scores, f_out, pickle.HIGHEST_PROTOCOL)
