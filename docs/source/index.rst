@@ -237,7 +237,6 @@ Description of model arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: shell
-
    save_name: # name of the file without a file extension.
    task_unks: # task unknowns; assign classes in the test set this value. Use the form below.
       task_name: 'unknown_label'
