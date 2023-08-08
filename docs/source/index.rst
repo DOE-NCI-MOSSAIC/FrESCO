@@ -284,6 +284,25 @@ Description of model arguments
      bag_of_embeddings: False
      embeddings_scale: 20
 
+   # abstain args
+   abstain_kwargs:
+     abstain_flag: False  # bool, whether to allow the model to not make a classification
+     abs_gain: 5.0  # factor to modify abstention penalty when tuning for abstention rate
+     acc_gain: 10.0  # factor to modify abstention penalty when tuning for accuracy rate
+     alphas: {'task_1':5,'task_2':5,'task_3':5,'task_4':5}  # penalty for abstaining on a sample
+     max_abs: {'task_1':0.8,'task_2':0.8,'task_3':0.5,'task_4':0.8}  # maximum desired abstention rates
+     min_acc: {'task_1':0.975,'task_2':0.975,'task_3':0.975,'task_4':0.975}  # minimum desired accuracy rates
+     alpha_scale: {'task_1':0.8,'task_2':0.8,'task_3':0.8,'task_4':0.8}  # scale factor when adapting abstention penalty
+     tune_mode: 'acc'  # how to tune abstention, acc: accuracy, abs: abstention rate, abs_acc: both
+     stop_limit: 0.005  # threshold for early stopping with abstention
+     stop_metric: 'max'  # max: l1 metric for early stopping with abstention
+     ntask_flag: False  # bool, whether to allow the model to enable Ntask
+     ntask_tasks:  ["task_1", "task_2", "task_3", "task_4"]  # tasks to use for Ntask determination
+     ntask_alpha: 0.1  # Ntask penalty
+     ntask_alpha_scale: 0.8  # scale to modify Ntask alpha penalty
+     ntask_max_abs: 0.9  # maximum desired abstention rate with Ntask
+     ntask_min_acc: 0.975  # minimum desired accuracy rate with Ntask
+
 
 Contributing
 ~~~~~~~~~~~~
