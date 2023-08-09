@@ -47,15 +47,6 @@ def load_model_dict(model_path, valid_params, data_path=""):
     else:
         raise exceptions.ParamError(f'the model at {model_path} does not exist.')
 
-    mismatches = []
-    # check to see if the stored package matches the expected one
-    if len(mismatches) > 0:
-        with open('metadata_package.json', 'w', encoding='utf-8') as f_out:
-            json.dump(model_dict['metadata_package'], f_out, indent=2)
-            raise exceptions.ParamError(f'the package(s) {", ".join(mismatches)} does not match ' +
-                                        f'the generated data in {data_path}.' +
-                                         '\nThe needed recreation info is in metadata_package.json')
-
     return model_dict
 
 
@@ -87,8 +78,8 @@ def load_model(model_dict, device, dw):
         model = torch.nn.DataParallel(model)
 
     model_dict = {k: v for k,v in model_dict.items() if k!='metadata_package'}
-    # Line 91 is needed if loading trained model on different system than 
-    # that which the model was trained on.
+    # Line 83 is needed if loading trained model on different system than 
+    # that which the model was trained on, ie dufferent number of gpus, gout train, load on cpu, etc
     # model_dict = {k.replace('module.',''): v for k,v in model_dict.items()}
     model.load_state_dict(model_dict)
 
