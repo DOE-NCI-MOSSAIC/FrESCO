@@ -105,8 +105,8 @@ def main():
         os.makedirs('predictions')
     args = parser.parse_args()
 
-    if len(args.model_path) == 0 or len(args.data_path) == 0:
-        raise exceptions.ParamError("Model and/or data path cannot be empty, please specify both.")
+    if len(args.model_path) == 0 and len(args.data_path) == 0:
+        raise exceptions.ParamError("Model and data path cannot be empty, please specify both.")
 
     # 1. validate model/data args
     print("Validating kwargs in model_args.yml file")
