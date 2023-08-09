@@ -22,28 +22,18 @@ from fresco.training import training
 from fresco.predict import predictions
 
 
-def load_model_dict(model_path, valid_params, data_path=""):
+def load_model_dict(model_path):
     """Load pretrained model from disk.
 
         Args:
             model_path: str, from command line args, points to saved model
-            valid_params: ValidateParams class, with model_args dict
-            data_path: str or None, using data from the trained model, or different one
 
-        We check if the supplied path is valid and if the packages match needed
-            to run the pretrained model.
+        We check if the supplied model path is valid.
 
     """
     if os.path.exists(model_path):
-        model_dict = torch.load(model_path, map_location=torch.device('cpu'))
-    else:
-        raise exceptions.ParamError("Provided model path does not exist")
-    if len(data_path) > 0:
-        with open(data_path + 'metadata.json', 'r', encoding='utf-8') as f:
-            data_args = json.load(f)
-
-    if os.path.exists(model_path):
         print(f"Loading trained model from {model_path}")
+        model_dict = torch.load(model_path, map_location=torch.device('cpu'))
     else:
         raise exceptions.ParamError(f'the model at {model_path} does not exist.')
 
@@ -113,7 +103,7 @@ def main():
     data_source = 'pre-generated'
     # use the model args file from training
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_dict = load_model_dict(args.model_path, device)
+    model_dict = load_model_dict(args.model_path)
     mod_args = model_dict['metadata_package']['mod_args']
 
     print("Validating kwargs from pretrained model ")
