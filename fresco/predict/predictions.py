@@ -391,9 +391,8 @@ class ScoreModel():
                 df = pd.DataFrame(cols, columns=col_ids, index=preds['idxs'])
 
             if len(preds['true_ys'][task]) > 0:
-                df[f"{task}_true"].map(id2label[task])
-
-            df[f"{task}_pred"].map(id2label[task])
+                df[f"{task}_true"] = df[f"{task}_true"].map(id2label[task])
+            df[f"{task}_pred"] = df[f"{task}_pred"].map(id2label[task])
             df_list.append(df)
 
         final_df = pd.concat(df_list, axis=1)
@@ -426,8 +425,8 @@ class ScoreModel():
                 df = pd.DataFrame(cols, columns=col_ids)
             else:
                 df = pd.DataFrame(cols, columns=col_ids, index=preds['idxs'])
-            df[f"{task}_true"].map(id2label[task])
-            df[f"{task}_pred"].map(id2label[task])
+            df[f"{task}_true"] = df[f"{task}_true"].map(id2label[task])
+            df[f"{task}_pred"] = df[f"{task}_pred"].map(id2label[task])
 
             df_list.append(df)
             col_list.extend(col_ids)
