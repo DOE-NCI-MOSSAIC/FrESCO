@@ -277,7 +277,9 @@ def run_case_level(args):
                                                dw.tasks,
                                                device)
 
-    dw.make_grouped_cases(outputs, valid_params.model_args, device, seed)
+    dw.make_grouped_cases(outputs, valid_params.model_args,
+                          device, reproducible=valid_params.model_args['data_kwargs']['reproducible'],
+                          seed=seed)
 
     # 3. create a CLC model
     print("\nDefining a CLC model")
