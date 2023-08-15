@@ -13,6 +13,7 @@ import torch
 
 import numpy as np
 import pandas as pd
+import polars as pl
 
 
 from torch.utils.data import DataLoader
@@ -357,11 +358,8 @@ class DataHandler():
             worker = None
             gen = None
 
-        if torch.cuda.is_available():
-            pin_mem = True
-        else:
-            pin_mem = False
-
+        pin_mem = bool(torch.cuda.is_available())
+        
         loaders = {}
 
         vocab_size = self.inference_data['word_embedding'].shape[0]
@@ -423,23 +421,33 @@ class DataHandler():
 
         return loaders
 
-    def make_grouped_cases(self, doc_embeds,clc_args, device):
-        """
-        Created GroupedCases class for torch DataLoaders.
-        """
+    def make_grouped_cases(self, doc_embeds, clc_args, device, reproducible:bool = True, seed: int = None):
+        """Created GroupedCases class for torch DataLoaders."""
 
-        datasets = {split: GroupedCases(doc_embeds[split],
-                                        self.inference_data['y'][split],
+        if reproducible:
+            gen = torch.Generator()
+            gen.manual_seed(seed)
+            worker = self.seed_worker
+        else:
+            worker = None
+            gen = None
+        
+        datasets = {split: GroupedCases(doc_embeds[split]['X'],
+                                        doc_embeds[split]['y'],
+                                        doc_embeds[split]['index'],
                                         self.model_args['data_kwargs']['tasks'],
                                         self.metadata['metadata'][split],
                                         device,
                                         exclude_single=clc_args['data_kwargs']['exclude_single'],
-                                        shuffle_data_order=clc_args['data_kwargs']['shuffle_case_order'])
-                                        for split in self.splits}
+                                        shuffle_case_order=clc_args['data_kwargs']['shuffle_case_order'],
+                                        split_by_tumor_id=clc_args['data_kwargs']['split_by_tumorid']
+                                        ) for split in self.splits}
 
         self.grouped_cases = {split: DataLoader(datasets[split],
-                                                clc_args['train_kwargs']['batch_per_gpu'],
-                                                shuffle=False) for split in self.splits}
+                                                batch_size=clc_args['train_kwargs']['batch_per_gpu'],
+                                                shuffle=False,
+                                                worker_init_fn=worker,
+                                                generator=gen) for split in self.splits}
 
     def inference_loader(self, reproducible: bool = True,
                          seed: int = None, batch_size: int = 128) -> dict:
@@ -598,104 +606,110 @@ class PathReports(Dataset):
         return sample
 
 class GroupedCases(Dataset):
-    """Class for grouping cases for clc."""
+    """Create grouped cases for torch DataLoaders.
 
+        args:
+            doc_embeds - document embeddings from trained model as np.ndarray
+            Y - dict of integer Y values, keys are the splits
+            tasks - list of tasks
+            metadata - dict of model metadata
+            device - torch.device, either cuda or cpu
+            exclude_single - are we omitting sinlge cases, default is True
+            shuffle_case_order - shuffle cases, default is True
+            split_by_tumor_id - split the cases by tumorId, default is True
+
+
+    """
     def __init__(self,
                  doc_embeds,
                  Y,
+                 idxs,
                  tasks,
                  metadata,
                  device,
                  exclude_single=True,
-                 shuffle_data_order=True):
-        """
-        Create grouped cases for torch DataLoaders.
-
-        Args:
-            doc_embeds (np.ndarray): Document embeddings from a trained model.
-            Y (dict): Dictionary of integer Y values, where keys are the splits.
-            tasks (list): List of tasks.
-            metadata (dict): Dictionary of model metadata.
-            device (torch.device): Device to use (either cuda or cpu).
-            exclude_single (bool, default: True): Whether to exclude single cases.
-            shuffle_case_order (bool, default: True): Whether to shuffle the order of cases.
-            split_by_tumor_id (bool, default: True): Whether to split the cases by tumorId.
-
-        Returns:
-            torch.utils.data.DataLoader: A grouped DataLoader object.
+                 shuffle_case_order=True,
+                 split_by_tumor_id=True):
+        """Class for grouping cases for clc.
 
         """
         self.embed_size = doc_embeds.shape[1]
         self.tasks = tasks
-        self.shuffle_data_order = shuffle_data_order
+        self.shuffle_case_order = shuffle_case_order
         self.label_encoders = {}  # label_encoders
         self.grouped_X = []
         self.grouped_y = {task: [] for task in self.tasks}
         self.new_idx = []
         self.device = device
 
-        groups = metadata.reset_index().groupby('group')
-        self.max_seq_len = groups.agg('count').max().tolist()[0]
-        self.X_array = torch.zeros((self.max_seq_len, self.embed_size),
-                                    device=device, dtype=torch.float32)
-        self.y_array = torch.zeros((self.max_seq_len),
-                                    device=device, dtype=torch.long)
-        self.idx_array = torch.zeros((self.max_seq_len),
-                                      device=device, dtype=torch.long)
+        if split_by_tumor_id:
+            metadata['uid'] = metadata['registryId'] + metadata['patientId'].astype(str) +\
+                metadata['tumorId'].astype(str)
+        else:
+            metadata['uid'] = metadata['registryId'] + metadata['patientId'].astype(str)
+        uids = metadata['uid'].tolist()
+        metadata_idxs = metadata.index.tolist()
 
-        Y = Y.reset_index()
+        uid_pl = pl.DataFrame({'index': metadata_idxs, 'uid': uids}).with_columns(pl.col("index").cast(pl.Int32))
 
-        for (_, group) in groups:
-            if exclude_single and len(group.index) == 1:
-                continue
-            g = group.sort_values(by='group')
-            group = []
-            idxs = []
-            labels = {task: [] for task in self.tasks}
+        self.max_seq_len = uid_pl.groupby('uid').count().max().select("count").item()
 
-            for idx in g.index:
-                group.append(doc_embeds[idx])
-                idxs.append(idx)
-                for task in self.tasks:
-                    labels[task].append(Y[task][idx])
+        # num docs x 400
+        X_pl = pl.Series('doc_embeds', doc_embeds) 
+        # dict of numpy arrays, each 1 x num docs, keys are tasks
+        y_pl = pl.from_dict(Y)
+        # numpy array, idxs.shape[0] = num docs
+        idx_pl = pl.Series('index', idxs)
+        df_pl = pl.DataFrame([idx_pl, X_pl]).hstack(y_pl)
 
-            self.grouped_X.append(np.vstack(group))
-            self.new_idx.append(idxs)
-            for task in self.tasks:
-                self.grouped_y[task].append(labels[task])
+        pl_cols = [task for task in self.tasks]
+        pl_cols.append("index")
+        pl_cols.append("doc_embeds")
+
+        groups_pl = (uid_pl.join(df_pl, on='index', how='inner')
+                           .groupby(by="uid", maintain_order=True).agg([pl.col(col) for col in pl_cols]))
+        del pl_cols[-2:]
+        
+        grouped_X = groups_pl.select("doc_embeds").to_series().to_list()
+        self.grouped_X = []
+        self.lens = []
+        for X in grouped_X: 
+            blank = torch.zeros((self.max_seq_len, self.embed_size), dtype=torch.float32)
+            blank[:len(X),:] = torch.Tensor(X)
+            self.grouped_X.append( blank )
+            self.lens.append(len(X))
+        self.new_idx = groups_pl.select("index").to_series()
+        self.grouped_y = groups_pl.select(pl_cols).to_dict(as_series=False)
 
     def __len__(self):
         return len(self.grouped_X)
 
     def __getitem__(self, idx):
         seq = self.grouped_X[idx]
-        ys = []
+        ys = {}
 
         for task in self.tasks:
-            ys.append(self.grouped_y[task][idx])
+            ys[task] = np.array(self.grouped_y[task][idx]).flatten()
 
-        if self.shuffle_data_order:
+        if self.shuffle_case_order:
             ys = np.array(ys).T
             shuffled = list(zip(seq, ys))
             random.shuffle(shuffled)
             seq, ys = zip(*shuffled)
             seq = np.array(seq)
             ys = np.array(ys).T
+        
+        sample = {"X": self.grouped_X[idx]}
+        _len = self.lens[idx]
+        sample['len'] = _len   # , device=self.device)
 
-        self.X_array[:] = 0.0
-        self.y_array[:] = 0
-        self.idx_array[:] = 0
+        y_array = torch.zeros((self.max_seq_len,), dtype=torch.long)
+        for task in self.tasks:
+            y_array[:_len] = torch.from_numpy(ys[task])
+            sample[f"y_{task}"] = y_array.clone()
 
-        _len = seq.shape[0]
-        self.X_array[:_len, :] = torch.from_numpy(seq)
-        sample = {"X": self.X_array}  # , "index": self.X_array}
-        sample['len'] = torch.tensor(_len, dtype=torch.float32, device=self.device)
-
-        for i, task in enumerate(self.tasks):
-            self.y_array[:_len] = torch.Tensor(ys[i])
-            sample[f"y_{task}"] = self.y_array.clone()
-
-        self.idx_array[:_len] = torch.Tensor(self.new_idx[idx])
-        sample['index'] = self.idx_array.clone()
+        idx_array = torch.zeros((self.max_seq_len,), dtype=torch.int16)
+        idx_array[:_len] = torch.tensor(self.new_idx[idx])
+        sample['index'] = idx_array.clone()
 
         return sample

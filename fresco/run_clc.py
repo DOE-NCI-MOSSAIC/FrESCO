@@ -37,25 +37,58 @@ def create_model(params, dw, device):
     model.to(device, non_blocking=True)
     return model
 
-
-def create_doc_embeddings(model, model_type, data_loader, device):
+def create_doc_embeddings(model, model_type, data_loader, tasks, device):
     """Generate document embeddings from trained model."""
     model.eval()
     if model_type == 'mtcnn':
-        embed_dim  = 900
+        embed_dim = 900
     else:
         embed_dim = 400
-    embeds = np.empty((len(data_loader.dataset), embed_dim))
+
     bs = data_loader.batch_size
+    embeds = torch.empty((len(data_loader.dataset), embed_dim), device=device)
+    ys = {task: torch.empty(len(data_loader.dataset), dtype=torch.int, device=device)
+          for task in tasks}
+    idxs = torch.empty((len(data_loader.dataset), ), dtype=torch.int, device=device)
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
             X = batch["X"].to(device, non_blocking=True)
             _, embed = model(X, return_embeds=True)
             if embed.shape[0] == bs:
-                embeds[i*bs:(i+1)*bs, : ] = embed.cpu().numpy()
+                embeds[i*bs:(i+1)*bs] = embed
+                idxs[i*bs:(i+1)*bs] = batch['index']
+                for task in tasks:
+                    if task != 'Ntask':
+                        ys[task][i*bs:(i+1)*bs] = batch[f'y_{task}']
             else:
-                embeds[-embed.shape[0]:, : ] = embed.cpu().numpy()
-    return embeds
+                embeds[-embed.shape[0]:] = embed
+                idxs[-embed.shape[0]:] = batch['index']
+                for task in tasks:
+                    if task != "Ntask":
+                        ys[task][-embed.shape[0]:] = batch[f'y_{task}']
+    ys_np = {task: vals.cpu().numpy() for task, vals in ys.items()}
+    outputs = {"X": embeds.cpu().numpy(), 'y': ys_np, 'index': idxs.cpu().numpy()}
+    return outputs
+
+
+# def create_doc_embeddings(model, model_type, data_loader, device):
+#     """Generate document embeddings from trained model."""
+#     model.eval()
+#     if model_type == 'mtcnn':
+#         embed_dim  = 900
+#     else:
+#         embed_dim = 400
+#     embeds = np.empty((len(data_loader.dataset), embed_dim))
+#     bs = data_loader.batch_size
+#     with torch.no_grad():
+#         for i, batch in enumerate(data_loader):
+#             X = batch["X"].to(device, non_blocking=True)
+#             _, embed = model(X, return_embeds=True)
+#             if embed.shape[0] == bs:
+#                 embeds[i*bs:(i+1)*bs, : ] = embed.cpu().numpy()
+#             else:
+#                 embeds[-embed.shape[0]:, : ] = embed.cpu().numpy()
+#     return embeds
 
 
 def load_model_dict(model_path, data_path=""):
@@ -119,7 +152,7 @@ def load_model(model_dict, device, dw):
     if torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
 
-    model_dict = {k: v for k,v in model_dict.items() if k!='metadata_package'}
+    model_dict = {k: v for k, v in model_dict.items() if k != 'metadata_package'}
     try:
         model.load_state_dict(model_dict)
     except RuntimeError:
@@ -172,10 +205,6 @@ def run_case_level(args):
 
     valid_params.model_args['data_kwargs']['data_path'] = model_dict['metadata_package']['mod_args']['data_kwargs']['data_path']
     valid_params.check_data_files(valid_params.model_args['data_kwargs']['data_path'])
-
-    # model args of the first (one used for generating the doc embeddings) trained model
-    # submodel_args = model_dict['metadata_package']['mod_args']
-    # need to verify submodel args
 
     data_source = 'pre-generated'
     args.model_args = model_dict['metadata_package']['mod_args']
@@ -230,16 +259,22 @@ def run_case_level(args):
     else:
         dac = None
 
-    data_loaders = dw.make_torch_dataloaders(submodel_args.model_args['data_kwargs']['add_noise'],
-                                             reproducible=valid_params.model_args['data_kwargs']['reproducible'],
+    data_loaders = dw.make_torch_dataloaders(switch_rate=0.0, 
+                                             reproducible=clc_params.model_args['data_kwargs']['reproducible'],
+                                             shuffle_data=False,
                                              seed=seed)
 
     model = load_model(model_dict, device, dw)
-    embeds = {k: create_doc_embeddings(model, submodel_args.model_args['model_type'], v, device)
-              for k, v in data_loaders.items()}
+    outputs = {}
+    for split in dw.splits:
+        outputs[split] = create_doc_embeddings(model,
+                                               submodel_args.model_args['model_type'],
+                                               data_loaders[split],
+                                               dw.tasks,
+                                               device)
 
-    dw.make_grouped_cases(embeds, valid_params.model_args, device)
-
+    dw.make_grouped_cases(outputs, clc_params.model_args, device, seed)
+    
     # 3. create a CLC model
     print("\nDefining a CLC model")
     model = create_model(valid_params, dw, device)
