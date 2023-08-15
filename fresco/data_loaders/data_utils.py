@@ -649,17 +649,12 @@ class GroupedCases(Dataset):
         self.new_idx = []
         self.device = device
 
-        if split_by_tumor_id:
-            metadata['uid'] = metadata['registryId'] + metadata['patientId'].astype(str) +\
-                metadata['tumorId'].astype(str)
-        else:
-            metadata['uid'] = metadata['registryId'] + metadata['patientId'].astype(str)
-        uids = metadata['uid'].tolist()
+        groups = metadata['group'].tolist()
         metadata_idxs = metadata.index.tolist()
 
-        uid_pl = pl.DataFrame({'index': metadata_idxs, 'uid': uids}).with_columns(pl.col("index").cast(pl.Int32))
+        groups_pl = pl.DataFrame({'index': metadata_idxs, 'group': groups}).with_columns(pl.col("index").cast(pl.Int32))
 
-        self.max_seq_len = uid_pl.groupby('uid').count().max().select("count").item()
+        self.max_seq_len = groups_pl.groupby('group').count().max().select("count").item()
 
         # num docs x 400
         X_pl = pl.Series('doc_embeds', doc_embeds) 
@@ -673,8 +668,8 @@ class GroupedCases(Dataset):
         pl_cols.append("index")
         pl_cols.append("doc_embeds")
 
-        groups_pl = (uid_pl.join(df_pl, on='index', how='inner')
-                           .groupby(by="uid", maintain_order=True).agg([pl.col(col) for col in pl_cols]))
+        groups_pl = (groups_pl.join(df_pl, on='index', how='inner')
+                           .groupby(by="group", maintain_order=True).agg([pl.col(col) for col in pl_cols]))
         del pl_cols[-2:]
         
         grouped_X = groups_pl.select("doc_embeds").to_series().to_list()
