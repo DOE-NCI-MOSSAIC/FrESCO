@@ -19,7 +19,7 @@ from fresco.models import mthisan, mtcnn, clc
 from fresco.training import training
 from fresco.predict import predictions
 
-def create_model(params, dw, device):
+def create_model(params, dw, device, embed_dim):
     """
     Define a model based on model_args.
 
@@ -27,12 +27,16 @@ def create_model(params, dw, device):
         params (dict): Dictionary of model_args file.
         dw (DataHandler): DataHandler class object.
         device (torch.device): Torch device, either 'cpu' or 'cuda'.
+        embed_dim (int): dimension of doc embeddings.
 
     Returns:
         A model.
     """
 
-    model = clc.CaseLevelContext(dw.num_classes, device=device, **params.model_args['model_kwargs'])
+    model = clc.CaseLevelContext(dw.num_classes,
+                                 device=device,
+                                 doc_embed_size=embed_dim,
+                                 **params.model_args['model_kwargs'])
 
     model.to(device, non_blocking=True)
     return model
@@ -260,7 +264,7 @@ def run_case_level(args):
         dac = None
 
     data_loaders = dw.make_torch_dataloaders(switch_rate=0.0, 
-                                             reproducible=clc_params.model_args['data_kwargs']['reproducible'],
+                                             reproducible=valid_params.model_args['data_kwargs']['reproducible'],
                                              shuffle_data=False,
                                              seed=seed)
 
@@ -274,10 +278,10 @@ def run_case_level(args):
                                                device)
 
     dw.make_grouped_cases(outputs, clc_params.model_args, device, seed)
-    
+
     # 3. create a CLC model
     print("\nDefining a CLC model")
-    model = create_model(valid_params, dw, device)
+    model = create_model(valid_params, dw, device, outputs['train']['X'].shape[1])
     # 4. train new model
     print("Creating model trainer")
 

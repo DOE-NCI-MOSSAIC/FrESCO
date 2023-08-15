@@ -46,6 +46,10 @@ class ValidateParams():
         else:
             self.model_args = model_args
 
+        if self.model_args['abstain_kwargs']['ntask_flag'] and not\
+            self.model_args['abstain_kwargs']['abstain_flag']:
+            raise exceptions.ParamError("Ntask cannot be enables without Abstention")
+
         if self.model_args['model_type'] not in ['mtcnn', 'mthisan']:
             raise exceptions.ParamError("model type was not found " +
                                         "to be 'mtcnn' or 'mthisan'. " +
@@ -154,6 +158,8 @@ class ValidateParams():
             schema['MTHiSAN_kwargs'] = ['max_words_per_line', 'max_lines',
                                         'att_heads', 'att_dim_per_head',
                                         'att_dropout', 'bag_of_embeddings', 'embeddings_scale']
+            schema['MTCNN_kwargs'] = ['window_sizes', 'num_filters',
+                                      'dropout', 'bag_of_embeddings', 'embeddings_scale'],
 
 
         model_kwds = ['MTCNN_kwargs', 'MTHiSAN_kwargs', 'Transformers_kwargs',
@@ -216,10 +222,6 @@ class ValidateParams():
         if len(self.model_args['abstain_kwargs']['alpha_scale']) != \
                 len(self.model_args['data_kwargs']['tasks']):
             raise exceptions.ParamError("Number of alpha scales is different than number of tasks.")
-
-        if self.model_args['abstain_kwargs']['ntask_flag'] and not\
-            self.model_args['abstain_kwargs']['abstain_flag']:
-            raise exceptions.ParamError("Ntask cannot be enables without Abstention")
 
         if self.model_args['abstain_kwargs']['ntask_flag']:
             if set(self.model_args['abstain_kwargs']['ntask_tasks']).isdisjoint(self.model_args['data_kwargs']['tasks']):
