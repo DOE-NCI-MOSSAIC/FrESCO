@@ -359,7 +359,10 @@ class DataHandler():
         else:
             worker = None
             gen = None
-
+        
+        vocab_size = self.inference_data['word_embedding'].shape[0]
+        unk_tok = vocab_size - 1
+        
         pin_mem = bool(torch.cuda.is_available())
 
         if switch_rate == 0.0:
@@ -374,8 +377,7 @@ class DataHandler():
 
         loaders = {}
 
-        vocab_size = self.inference_data['word_embedding'].shape[0]
-        unk_tok = vocab_size - 1
+
         # num multiprocessing workers for DataLoaders
         n_wkrs = 4
         print(f"Num workers: {n_wkrs}, reproducible: {self.model_args['data_kwargs']['reproducible']}")
