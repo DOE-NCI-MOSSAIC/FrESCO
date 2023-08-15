@@ -731,7 +731,6 @@ class ScoreModel():
         Post-condition:
             y_preds and y_trues populated.
         """
-        X = batch["X"].to(self.device)
 
         X = batch["X"].to(self.device)
         logits = self.model(X)
@@ -766,7 +765,7 @@ class ScoreModel():
         """
 
         X = batch["X"].to(self.device)
-        y = {task: batch[f"y_{task}"] for task in self.tasks}
+        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks}
         batch_len = batch['len'].to(self.device)
         max_seq_len = X.shape[1]
         logits = self.model(X, batch_len)
