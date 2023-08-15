@@ -21,6 +21,16 @@ from torch.utils.data import Dataset
 from fresco.validate import exceptions
 
 
+def word2int(tok, vocab):
+    """Map words to tokens for random embeddings.
+
+        If a word doesn't exist in the training/val split, it is mapped
+        to 'unk', the unknown token.
+
+    """
+    unk = len(vocab)
+    return [x if x is not None else unk for x in tok]
+
 class LabelDict(dict):
     """
     Create dict subclass for correct behaviour when mapping task unks.
@@ -77,7 +87,7 @@ class DataHandler():
             self.clc_flag = True
             self.grouped_cases = {}
 
-    def load_folds(self, fold: int, subset_frac: float = None):
+    def load_folds(self, fold: int = 0, subset_frac: float = None):
         """
         Load data for each fold in the dataset.
 
@@ -112,12 +122,12 @@ class DataHandler():
                                            "numpy": str(np.__version__),
                                            "pandas": str(pd.__version__)},
                               "fold": fold
-                             }  
+                             }
 
         self.inference_data['X'] = loaded['X']
         self.inference_data['y'] = loaded['Y']
         if loaded['we'] is None:
-            self.get_vocab() 
+            self.get_vocab()
         else:
             self.inference_data['word_embedding'] = loaded['we']
             self.dict_maps['id2word'] = loaded['id2word']
@@ -171,7 +181,7 @@ class DataHandler():
             loaded_data['metadata'][split] = df[df['split'] == split][[v for v in df.columns
                                                              if v not in ['X', *loaded_data['id2label'].keys()]]]
             data_tasks = set([v for v in df.columns if v in loaded_data['id2label'].keys()])
-            if len(data_tasks) > 0: 
+            if len(data_tasks) > 0:
                 loaded_data['Y'][split] = df[df['split'] == split][sorted(loaded_data['id2label'].keys())]
 
         if subset_frac < 1:
@@ -201,25 +211,31 @@ class DataHandler():
 
     def get_vocab(self):
         """
-        Get the vocab from tokenized data.
+        Get the vocab and word embeddings from tokenized data.
         """
-        
+
         embedding_dim = 300
 
         X = self.inference_data['X']['train']
-        
-        if 'val' in self.inference_data['X'].keys():
-            X = pd.concat([X, self.inference_data['X']['val']])        
-        
-        # find all unique tokens
-        s1 = set(X.iloc[0]).union(X.iloc[1])
 
+        if 'val' in self.inference_data['X'].keys():
+            X = pd.concat([X, self.inference_data['X']['val']])
+
+        # find all unique tokens
+        s1 = set(X.iloc[0])
         for x in X:
             s1 = set(x).union(s1)
 
         vocab_len = np.max(list(s1))
+        unk = vocab_len + 1 
+        self.inference_data['X']['test'].apply(lambda d: word2int(d, s1))
         rng = np.random.default_rng(self.model_args['train_kwargs']['random_seed'])
-        self.inference_data['word_embedding'] = rng.standard_normal(size=(vocab_len + 1, embedding_dim), dtype=np.float32) * 0.1
+        unk_embed = rng.normal(size=(1, embedding_dim), scale=0.1)
+        random_embeds = rng.standard_normal(size=(vocab_len, embedding_dim), dtype=np.float32) * 0.1
+        self.inference_data['word_embedding'] = np.concatenate((np.zeros(shape=(1, embedding_dim)),
+                                                                random_embeds,
+                                                                unk_embed),
+                                                                axis=0)
 
     def convert_y(self):
         """
@@ -261,7 +277,7 @@ class DataHandler():
         Loads class weights from pickle file or dict in model_args file.
 
         Args:
-            fold (int): Data fold to be loaded 
+            fold (int): Data fold to be loaded
 
         """
 
@@ -275,7 +291,7 @@ class DataHandler():
             tmp = json.load(f)
         id2label = {task: {int(k): str(v) for k, v in labels.items()}
                            for task, labels in tmp.items()}
-		
+
         if isinstance(self.model_args['train_kwargs']['class_weights'], dict):
             self.weights = self.model_args['train_kwargs']['class_weights']
 
@@ -425,7 +441,7 @@ class DataHandler():
                                                 clc_args['train_kwargs']['batch_per_gpu'],
                                                 shuffle=False) for split in self.splits}
 
-    def inference_loader(self, reproducible: bool = True, 
+    def inference_loader(self, reproducible: bool = True,
                          seed: int = None, batch_size: int = 128) -> dict:
         """
         Create torch DataLoader class for inference from a trained model.

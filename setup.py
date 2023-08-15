@@ -15,7 +15,6 @@ setup(
                       'gensim',                     
                       'numpy',                     
                       'tqdm',       
-                      'torchmetrics>=0.11',                     
                       ],
 
     classifiers=[

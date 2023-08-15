@@ -13,8 +13,12 @@ import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 import scipy.special
-import sklearn.metrics
-import torchmetrics
+
+from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+# import torchmetrics
 
 
 class ScoreModel():
@@ -216,36 +220,21 @@ class ScoreModel():
         metrics = {}
         # per task metrics
         for i, task in enumerate(self.tasks):
-            logits = torch.tensor(np.vstack(self.logits[i])).to(self.device)
-            scores = torch.nn.functional.softmax(logits, dim=1)
+            logits = np.vstack(self.logits[i])
+            scores = scipy.special.softmax(logits, axis=-1)
             _trues = [v.item() for v in self.y_trues[task]]
             _preds = [v.item() for v in self.y_preds[task]]
 
-            _trues = torch.tensor(_trues).to(self.device)
-            _preds = torch.tensor(_preds).to(self.device)
-            num_classes = scores.shape[1]
+            metrics[f'{task}_micro'] = f1_score(_preds, _trues, average='micro')
+            metrics[f'{task}_macro'] = f1_score(_preds, _trues, average='macro')
 
-            # macro hack
-            _cat_trues_preds = torch.cat((_trues, _preds), dim=0)
-            scale_classes = num_classes / len(torch.unique(_cat_trues_preds))
+            metrics[f'{task}_accuracy'] = accuracy_score(_preds, _trues)
 
-            f1_micro = torchmetrics.F1Score(task='multiclass', num_classes=num_classes, average='micro').to(self.device)
-            metrics[f'{task}_micro'] = f1_micro(_preds, _trues)
-            f1_macro = torchmetrics.F1Score(task='multiclass', num_classes=num_classes, average='macro').to(self.device)
-            metrics[f'{task}_macro'] = f1_macro(_preds, _trues) * scale_classes
+            metrics[f'{task}_precision_micro'] = precision_score(_preds, _trues, average='micro', zero_division=0)
+            metrics[f'{task}_precision_macro'] = precision_score(_preds, _trues, average='macro', zero_division=0)
 
-            accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=num_classes).to(self.device)
-            metrics[f'{task}_accuracy'] = accuracy(_preds, _trues)
-
-            precision_micro = torchmetrics.Precision(task='multiclass', num_classes=num_classes, average='micro').to(self.device)
-            metrics[f'{task}_precision_micro'] = precision_micro(_preds, _trues)
-            precision_macro = torchmetrics.Precision(task='multiclass', num_classes=num_classes, average='macro').to(self.device)
-            metrics[f'{task}_precision_macro'] = precision_macro(_preds, _trues) * scale_classes
-
-            recall_micro = torchmetrics.Recall(task='multiclass', num_classes=num_classes, average='micro').to(self.device)
-            metrics[f'{task}_recall_micro'] = recall_micro(_preds, _trues)
-            recall_macro = torchmetrics.Recall(task='multiclass', num_classes=num_classes, average='macro').to(self.device)
-            metrics[f'{task}_recall_macro'] = recall_macro(_preds, _trues) * scale_classes
+            metrics[f'{task}_recall_micro'] = recall_score(_preds, _trues, average='micro', zero_division=0)
+            metrics[f'{task}_recall_macro'] = recall_score(_preds, _trues, average='macro', zero_division=0)
 
 
         if self.abstain:
@@ -402,9 +391,8 @@ class ScoreModel():
                 df = pd.DataFrame(cols, columns=col_ids, index=preds['idxs'])
 
             if len(preds['true_ys'][task]) > 0:
-                df[f"{task}_true"].map(id2label[task])
-
-            df[f"{task}_pred"].map(id2label[task])
+                df[f"{task}_true"] = df[f"{task}_true"].map(id2label[task])
+            df[f"{task}_pred"] = df[f"{task}_pred"].map(id2label[task])
             df_list.append(df)
 
         final_df = pd.concat(df_list, axis=1)
@@ -437,8 +425,8 @@ class ScoreModel():
                 df = pd.DataFrame(cols, columns=col_ids)
             else:
                 df = pd.DataFrame(cols, columns=col_ids, index=preds['idxs'])
-            df[f"{task}_true"].map(id2label[task])
-            df[f"{task}_pred"].map(id2label[task])
+            df[f"{task}_true"] = df[f"{task}_true"].map(id2label[task])
+            df[f"{task}_pred"] = df[f"{task}_pred"].map(id2label[task])
 
             df_list.append(df)
             col_list.extend(col_ids)

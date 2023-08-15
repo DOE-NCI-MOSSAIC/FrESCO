@@ -294,27 +294,27 @@ class ModelTrainer():
 
             if val_scores['val_loss'][0] < best_loss:
                 best_loss = val_scores['val_loss'][0]
-                model_weights = self.model.state_dict()
+                torch.save({'epoch': epoch,
+                            'model_state_dict': self.model.state_dict(), 
+                            'opt_state_dict': self.opt.state_dict(),
+                            'val_loss': best_loss
+                            }, self.savename)
 
             if stop:
                 print(f"saving to {self.savename}", flush=True)
-                if model_weights is None:
-                    torch.save(self.model.state_dict(), self.savename)
-                else:
-                    torch.save(model_weights, self.savename)
-                self.model.state_dict = copy.deepcopy(model_weights)
+                # loading weights of best model
+                checkpoint = torch.load(self.savename)
+                self.model.load_state_dict(checkpoint['model_state_dict'])
                 scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
                 with open(self.savepath + scores, "wb") as f_out:
                     pickle.dump(all_scores, f_out, pickle.HIGHEST_PROTOCOL)
                 break
         if epoch + 1 == self.epochs:
             print('\nModel training hit max epochs, not converged')
+            # loading weights of best model
+            checkpoint = torch.load(self.savename)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
             print(f"saving to {self.savename}", flush=True)
-            if model_weights is None:
-                torch.save(self.model.state_dict(), self.savename)
-            else:
-                torch.save(model_weights, self.savename)
-            self.model.state_dict = copy.deepcopy(model_weights)
             scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
             with open(self.savepath + scores, "wb") as f_out:
                 pickle.dump(all_scores, f_out, pickle.HIGHEST_PROTOCOL)
@@ -614,53 +614,6 @@ class ModelTrainer():
         # average over all tasks
         return loss / len(self.tasks)
 
-    def compute_val_loss(self, batch, dac=None):
-        """
-        Compute forward pass and loss function.
-
-        Args:
-            batch (torch.tensor): Iterate from DataLoader.
-            dac (Abstention): Deep abstaining classifier class.
-            ntask_abs (float): Probability of abstaining on the entire document.
-
-        Returns:
-            loss (torch.tensor): Float tensor.
-
-        Post-condition:
-            y_preds and y_trues are populated.
-            loss is updated.
-        """
-        X = batch["X"].to(self.device, non_blocking=True)
-        y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
-        logits = self.model(X)
-
-        loss = 0.0
-        if self.ntask:
-            ntask_abs = torch.sigmoid(logits[-1])[:, -1]
-            dac.get_ntask_filter(ntask_abs)
-        for i, task in enumerate(self.tasks):
-            if self.ntask:
-                if task in dac.ntask_tasks:
-                    loss += dac.abstention_loss(logits[i], y[task], i, ntask_abs_prob=ntask_abs)
-                else:
-                    loss += dac.abstention_loss(logits[i], y[task], i)
-            elif self.abstain:  # just the dac
-                loss += dac.abstention_loss(logits[i], y[task], i)
-            else:  # nothing fancy
-                loss += self.loss_funs[task](logits[i], y[task])
-
-            if self.multilabel:
-                self.val_trues[task].extend(np.argmax(batch[f"y_{task}"], 1))
-                self.val_preds[task].extend(torch.argmax(logits[i], 1))
-            else:
-                self.val_trues[task].extend(batch[f"y_{task}"])
-                self.val_preds[task].extend(torch.argmax(logits[i], 1))
-
-        if self.ntask:
-            loss = loss - torch.mean(dac.ntask_alpha * torch.log(1 - ntask_abs + 1e-6))
-        # average over all tasks
-        return loss / len(self.tasks)
-
     def compute_clc_loss(self, logits, y, idxs, dac=None, val=False):
         """
         Compute forward pass and case level loss function.
@@ -705,58 +658,6 @@ class ModelTrainer():
                 loss += self.loss_fun(y_pred, y_true)
             y_preds[task].extend(np.argmax(y_pred.detach().cpu().numpy(), 1))
             y_trues[task].extend(y_true.detach().cpu().numpy())
-
-        if self.ntask:
-            loss = loss - torch.mean(dac.ntask_alpha * torch.log(1 - ntask_abs + 1e-6))
-        # average over all tasks
-        return loss / len(self.tasks)
-
-    def compute_clc_val_loss(self, batch, dac=None):
-        """
-        Compute forward pass and loss function for case level context.
-
-        Args:
-            batch (torch.tensor): Iterate from DataLoader.
-            dac (Abstention): Deep abstaining classifier class.
-            ntask_abs (float): Probability of abstaining on the entire document.
-
-        Returns:
-            loss (torch.tensor): Float tensor.
-
-        Post-condition:
-            y_preds and y_trues are populated.
-            loss is updated.
-        """
-
-        X = batch["X"].to(self.device, non_blocking=True)
-        y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
-        batch_len = batch['len'].to(self.device, non_blocking=True)
-        max_seq_len = X.shape[1]
-        logits = self.model(X, batch_len)
-
-        loss = torch.tensor(0.0, dtype=torch.float32, device=self.device)
-        mask = torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
-        idxs = torch.nonzero(mask, as_tuple=True)
-
-        if self.ntask:
-            ntask_abs = torch.sigmoid(logits[-1][idxs])[:, -1]
-            dac.get_ntask_filter(ntask_abs)
-        for i, task in enumerate(self.tasks):
-            y_true = y[task][idxs]
-            y_pred = logits[i][idxs]
-
-            if self.ntask:
-                if task in dac.ntask_tasks:
-                    loss += dac.abstention_loss(y_pred, y_true, i, ntask_abs_prob=ntask_abs)
-                else:
-                    loss += dac.abstention_loss(y_pred, y_true, i)
-            elif self.abstain:  # just the dac
-                loss += dac.abstention_loss(y_pred, y_true, i)
-            else:  # nothing fancy
-                loss += self.loss_fun(y_pred, y_true)
-
-            self.val_trues[task].extend(y_true)
-            self.val_preds[task].extend(torch.argmax(y_pred, 1))
 
         if self.ntask:
             loss = loss - torch.mean(dac.ntask_alpha * torch.log(1 - ntask_abs + 1e-6))

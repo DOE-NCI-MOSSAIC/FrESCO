@@ -1,5 +1,6 @@
 """
-    Top-level model building script using independent modules.
+    Top-level script for loading pre-trained model and making predictions
+    on new data.
 
     typical call is: $python use_model.py -mp /path/to/model -dp /path/to/data/`
 """
@@ -21,45 +22,35 @@ from fresco.training import training
 from fresco.predict import predictions
 
 
-def load_model_dict(model_path, valid_params, data_path=""):
+def load_model_dict(model_path):
     """Load pretrained model from disk.
 
         Args:
             model_path: str, from command line args, points to saved model
-            valid_params: ValidateParams class, with model_args dict
-            data_path: str or None, using data from the trained model, or different one
 
-        We check if the supplied path is valid and if the packages match needed
-            to run the pretrained model.
+        We check if the supplied model path is valid.
 
     """
     if os.path.exists(model_path):
+        print(f"Loading trained model from {model_path}")
         model_dict = torch.load(model_path, map_location=torch.device('cpu'))
     else:
-        raise exceptions.ParamError("Provided model path does not exist")
-    if len(data_path) > 0:
-        with open(data_path + 'metadata.json', 'r', encoding='utf-8') as f:
-            data_args = json.load(f)
-
-    if os.path.exists(model_path):
-        print(f"Loading trained model from {model_path}")
-    else:
         raise exceptions.ParamError(f'the model at {model_path} does not exist.')
-
-    mismatches = []
-    # check to see if the stored package matches the expected one
-    if len(mismatches) > 0:
-        with open('metadata_package.json', 'w', encoding='utf-8') as f_out:
-            json.dump(model_dict['metadata_package'], f_out, indent=2)
-            raise exceptions.ParamError(f'the package(s) {", ".join(mismatches)} does not match ' +
-                                        f'the generated data in {data_path}.' +
-                                         '\nThe needed recreation info is in metadata_package.json')
 
     return model_dict
 
 
 def load_model(model_dict, device, dw):
+    """Load pretrained model_state_dict from disk.
 
+        Args:
+            model_path: str, from command line args, points to saved model
+            device: torch.device, either 'cpu' or 'cuda'
+            dw: DataHandler class
+
+        Loads the model type and state_dict for inference from a pretrained model.
+
+    """
     model_args = model_dict['metadata_package']['mod_args']
 
     if model_args['model_type'] == 'mthisan':
@@ -77,6 +68,8 @@ def load_model(model_dict, device, dw):
         model = torch.nn.DataParallel(model)
 
     model_dict = {k: v for k,v in model_dict.items() if k!='metadata_package'}
+    # Line 83 is needed if loading trained model on different system than 
+    # that which the model was trained on, ie dufferent number of gpus, gout train, load on cpu, etc
     # model_dict = {k.replace('module.',''): v for k,v in model_dict.items()}
     model.load_state_dict(model_dict)
 
@@ -102,15 +95,15 @@ def main():
         os.makedirs('predictions')
     args = parser.parse_args()
 
-    if len(args.model_path) == 0 or len(args.data_path) == 0:
-        raise exceptions.ParamError("Model and/or data path cannot be empty, please specify both.")
+    if len(args.model_path) == 0 and len(args.data_path) == 0:
+        raise exceptions.ParamError("Model and data path cannot be empty, please specify both.")
 
     # 1. validate model/data args
     print("Validating kwargs in model_args.yml file")
     data_source = 'pre-generated'
     # use the model args file from training
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_dict = load_model_dict(args.model_path, device)
+    model_dict = load_model_dict(args.model_path)
     mod_args = model_dict['metadata_package']['mod_args']
 
     print("Validating kwargs from pretrained model ")
