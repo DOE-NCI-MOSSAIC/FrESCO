@@ -565,7 +565,7 @@ class ScoreModel():
                 for j, task in enumerate(self.tasks):
                     # for scoring the model
                     if self.clc:
-                        preds['true_ys'][task].extend(batch[f"y_{task}"][idxs])
+                        preds['true_ys'][task].extend(y[f"{task}"][idxs])
                         preds['pred_ys'][task].extend(torch.argmax(logits[j][idxs], dim=1))
                         if save_probs:
                             preds['probs'][task].extend(F.softmax(logits[j][idxs], dim=1))
