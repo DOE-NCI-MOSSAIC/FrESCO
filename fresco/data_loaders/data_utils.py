@@ -447,7 +447,6 @@ class DataHandler():
                                         device,
                                         exclude_single=clc_args['data_kwargs']['exclude_single'],
                                         shuffle_case_order=clc_args['data_kwargs']['shuffle_case_order'],
-                                        split_by_tumor_id=clc_args['data_kwargs']['split_by_tumorid']
                                         ) for split in self.splits}
 
         self.grouped_cases = {split: DataLoader(datasets[split],
@@ -635,8 +634,7 @@ class GroupedCases(Dataset):
                  metadata,
                  device,
                  exclude_single=True,
-                 shuffle_case_order=True,
-                 split_by_tumor_id=True):
+                 shuffle_case_order=True):
         """Class for grouping cases for clc.
 
         """
