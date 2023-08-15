@@ -158,10 +158,10 @@ def load_model(model_dict, device, dw):
 
     model_dict = {k: v for k, v in model_dict.items() if k != 'metadata_package'}
     try:
-        model.load_state_dict(model_dict)
+        model.load_state_dict(model_dict['model_state_dict'])
     except RuntimeError:
-        model_dict = {k.replace('module.',''): v for k,v in model_dict.items()}
-        model.load_state_dict(model_dict)
+        model_dict = {k.replace('module.',''): v for k,v in model_dict['model_state_dict'].items()}
+        model.load_state_dict(model_dict['model_state_dict'])
 
     print('model loaded')
 
