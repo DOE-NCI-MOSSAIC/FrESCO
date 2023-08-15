@@ -158,8 +158,8 @@ class ValidateParams():
             schema['MTHiSAN_kwargs'] = ['max_words_per_line', 'max_lines',
                                         'att_heads', 'att_dim_per_head',
                                         'att_dropout', 'bag_of_embeddings', 'embeddings_scale']
-            schema['MTCNN_kwargs'] = ['window_sizes', 'num_filters',
-                                      'dropout', 'bag_of_embeddings', 'embeddings_scale'],
+            schema['MTCNN_kwargs'] = ['bag_of_embeddings', 'dropout',
+                                      'embeddings_scale', 'num_filters', 'window_sizes']
 
 
         model_kwds = ['MTCNN_kwargs', 'MTHiSAN_kwargs', 'Transformers_kwargs',
