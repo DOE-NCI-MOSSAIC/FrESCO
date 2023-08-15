@@ -75,26 +75,6 @@ def create_doc_embeddings(model, model_type, data_loader, tasks, device):
     return outputs
 
 
-# def create_doc_embeddings(model, model_type, data_loader, device):
-#     """Generate document embeddings from trained model."""
-#     model.eval()
-#     if model_type == 'mtcnn':
-#         embed_dim  = 900
-#     else:
-#         embed_dim = 400
-#     embeds = np.empty((len(data_loader.dataset), embed_dim))
-#     bs = data_loader.batch_size
-#     with torch.no_grad():
-#         for i, batch in enumerate(data_loader):
-#             X = batch["X"].to(device, non_blocking=True)
-#             _, embed = model(X, return_embeds=True)
-#             if embed.shape[0] == bs:
-#                 embeds[i*bs:(i+1)*bs, : ] = embed.cpu().numpy()
-#             else:
-#                 embeds[-embed.shape[0]:, : ] = embed.cpu().numpy()
-#     return embeds
-
-
 def load_model_dict(model_path, data_path=""):
     """
     Load pretrained model from disk.
