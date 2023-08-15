@@ -339,6 +339,7 @@ class DataHandler():
 
     def make_torch_dataloaders(self, switch_rate: float,
                                reproducible: bool = False,
+                               shuffle_data: bool = False,
                                seed: int = None) -> dict:
         """
         Create torch DataLoader classes for training module.
@@ -346,9 +347,10 @@ class DataHandler():
         Returns a dictionary of PyTorch DataLoaders (train, val, test) for the training module.
 
         Args:
-            unk_tok (int): Token to convert unknown words to.
-            vocab_size (int): Number of words in the vocabulary.
             switch_rate (float): Proportion of words in each document to randomly flip.
+            reproducible (bool): Set all random number seeds.
+            shuffle_data (bool): Shuffle ordering of data within data loader.
+            seed (int): Random number seed.
         """
         if reproducible:
             gen = torch.Generator()
@@ -359,7 +361,17 @@ class DataHandler():
             gen = None
 
         pin_mem = bool(torch.cuda.is_available())
-        
+
+        if switch_rate == 0.0:
+            _transform = None
+        else:
+            _transform = AddNoise(unk_tok,
+                                  self.model_args['train_kwargs']['doc_max_len'],
+                                  vocab_size,
+                                  switch_rate,
+                                  seed
+                                  )
+
         loaders = {}
 
         vocab_size = self.inference_data['word_embedding'].shape[0]
@@ -375,16 +387,11 @@ class DataHandler():
                                  tasks=self.model_args['data_kwargs']['tasks'],
                                  label_encoders=self.dict_maps['id2label'],
                                  max_len=self.model_args['train_kwargs']['doc_max_len'],
-                                 transform=AddNoise(unk_tok,
-                                                    self.model_args['train_kwargs']['doc_max_len'],
-                                                    vocab_size,
-                                                    switch_rate,
-                                                    seed
-                                                    )
+                                 transform=_transform
                                  )
         loaders['train'] = DataLoader(train_data,
                                       batch_size=self.model_args['train_kwargs']['batch_per_gpu'],
-                                      shuffle=True, pin_memory=pin_mem, num_workers=n_wkrs,
+                                      shuffle=shuffle_data, pin_memory=pin_mem, num_workers=n_wkrs,
                                       worker_init_fn=worker, generator=gen)
         self.train_size = len(train_data)
 
@@ -397,7 +404,7 @@ class DataHandler():
 
             loaders['val'] = DataLoader(val_data,
                                         batch_size=self.model_args['train_kwargs']['batch_per_gpu'],
-                                        shuffle=True, pin_memory=pin_mem, num_workers=n_wkrs,
+                                        shuffle=shuffle_data, pin_memory=pin_mem, num_workers=n_wkrs,
                                         worker_init_fn=worker, generator=gen)
             self.val_size = len(val_data)
         else:
@@ -412,7 +419,7 @@ class DataHandler():
 
             loaders['test'] = DataLoader(test_data,
                                          batch_size=self.model_args['train_kwargs']['batch_per_gpu'],
-                                         shuffle=True, pin_memory=pin_mem, num_workers=n_wkrs,
+                                         shuffle=shuffle_data, pin_memory=pin_mem, num_workers=n_wkrs,
                                          worker_init_fn=worker, generator=gen)
             self.test_size = len(test_data)
         else:
@@ -457,7 +464,7 @@ class DataHandler():
         Returns a dictionary of PyTorch DataLoaders (test) for inference.
 
         Args:
-            reproducible (bool): Seet all random number seeds.
+            reproducible (bool): Set all random number seeds.
             seed (int): Random number generator seed.
             batch_size (int): Batch size for inference.
         """
