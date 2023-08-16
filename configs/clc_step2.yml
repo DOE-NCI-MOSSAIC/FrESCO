@@ -15,7 +15,7 @@ train_kwargs:
   batch_per_gpu: 128
   max_epochs: 100
   patience: 5
-  class_weights: #./weights/weights.pickle' # path, dict, or blank (None)
+  class_weights: #./weights/weights.pickle' # path dict saved as pickle or blank (None)
   mixed_precision: False
 
 # case level context model args
