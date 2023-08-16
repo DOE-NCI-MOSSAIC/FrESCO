@@ -27,7 +27,7 @@ train_kwargs:
   max_epochs: 100
   patience: 5
   mixed_precision: False
-  class_weights: #  './weights/P3B3_weights.pickle' # path, dict, or blank
+  class_weights: #  './weights/P3B3_weights.pickle' # path dict saved as pickle or blank (None)
   # copied from data_kwargs
   # multilabel: False
   # random_seed: 1234
