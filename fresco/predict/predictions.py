@@ -104,12 +104,12 @@ class ScoreModel():
 
         if savepath is None:
             if not os.path.exists('predictions/'):
-                os.makedir("predictions/")
+                os.mkdir("predictions/")
             self.savepath = "predictions/" + model_args['save_name']
         else:
             tmp_path = savepath + "predictions/"
             if not os.path.exists(os.path.dirname(tmp_path)):
-                os.makedirs(os.path.dirname(tmp_path))
+                os.mkdir(os.path.dirname(tmp_path))
             self.savepath = savepath + "predictions/" + model_args['save_name']
 
         # define dicts for all scores
