@@ -61,7 +61,7 @@ Other software to meet the demanding challenges of bringing ML to
 biomedical studies have emerged in recent years.
 Monai [@cardoso2022monai] is oriented towards ML on medical imaging data
 and FuseMedML [@golts2023fusemedml] creates general and multimodal data
-structures that are useful for biomedical ML. Most similar to `FrESCO`
+structures that are useful for biomedical ML. Most similar to FrESCO
 is PyHealth [@zhao2021pyhealth] though it is more broadly scoped,
 focusing on MIMIC (Medical Information Mart for Intensive Care),
 electronic intensive care unit (eICU), and
@@ -91,7 +91,7 @@ the code repository are three model architectures to classify text data:
 2.  the hierarchical self-attention network (HiSAN) described
     in [@GAO2019101726], and
 
-3.  the case-level context model (CLC) of [@case-level-context], for
+3.  the case-level context model (CLC) of [@case-level-context] for
     hierarchical datasets.
 
 Each of these models is available with the deep-abstaining classifier
