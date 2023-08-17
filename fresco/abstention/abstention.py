@@ -51,7 +51,7 @@ class DacLoss(nn.Module):
         Pre-condition: Loss function defined in class constructor.
         """
 
-        eps = 1e-4
+        eps = 1e-6
 
         # updated loss
         if self.multilabel:
@@ -109,8 +109,8 @@ class AbstainingClassifier():
             self.ntask_min_acc = kw_args['abstain_kwargs']['ntask_min_acc']
             self.ntask_alpha_scale = kw_args['abstain_kwargs']['ntask_alpha_scale']
 
-            self.ntask_min_scale = self.ntask_alpha_scale
-            self.ntask_max_scale = 1.0 / self.ntask_min_scale
+            self.ntask_min_scale = min(self.ntask_alpha_scale, 1.0 / self.ntask_alpha_scale)
+            self.ntask_max_scale = max(self.ntask_alpha_scale, 1.0 / self.ntask_alpha_scale)
             self.ntask_filter = []
             self.ntask_acc = 0.0
             self.ntask_abs_rate = 0.0
@@ -129,8 +129,10 @@ class AbstainingClassifier():
         self.max_abs = kw_args['abstain_kwargs']['max_abs']
         self.min_acc = kw_args['abstain_kwargs']['min_acc']
         self.alpha_scale = kw_args['abstain_kwargs']['alpha_scale']
-        self.alpha_min_scale = self.alpha_scale
-        self.alpha_max_scale = {task: 1.0 / self.alpha_min_scale[task] for task in self.tasks}
+        self.alpha_min_scale = {task: min(1.0 / self.alpha_scale[task], self.alpha_scale)
+                                for task in self.tasks}
+        self.alpha_max_scale = {task: max(1.0 / self.alpha_scale[task], self.alpha_scale)
+                                for task in self.tasks}
 
         self.tune_mode = kw_args['abstain_kwargs']['tune_mode']
         self.abs_gain = kw_args['abstain_kwargs']['abs_gain']
@@ -337,9 +339,14 @@ class AbstainingClassifier():
         for i, task in enumerate(self.tasks):
 
             # these are common to all tuning methods
-            acc_error = scores[task]['micro'] - self.min_acc[task]
+            if scores[task]['micro'] == 0:
+                acc_error = 1.0 - self.min_acc[task]
+                acc_ratio = 1.0 / self.min_acc[task]
+            else:
+                acc_error = scores[task]['micro'] - self.min_acc[task]
+                acc_ratio = scores[task]['micro'] / self.min_acc[task]
+
             abs_error = self.abs_rates[f'{task}_abs'] - self.max_abs[task]
-            acc_ratio = scores[task]['micro'] / self.min_acc[task]
             abs_ratio = self.abs_rates[f'{task}_abs'] / self.max_abs[task]
 
             if self.tune_mode == 'abs_acc':
@@ -398,9 +405,13 @@ class AbstainingClassifier():
 
         """
 
-        acc_error = self.ntask_acc - self.ntask_min_acc
+        if self.ntask_acc == 0:
+            acc_error = 1.0 - self.ntask_min_acc
+            acc_ratio = 1.0 / self.ntask_min_acc
+        else:
+            acc_error = self.ntask_acc - self.ntask_min_acc
+            acc_ratio = self.ntask_acc / self.ntask_min_acc
         abs_error = self.ntask_abs_rate - self.ntask_max_abs
-        acc_ratio = self.ntask_acc / self.ntask_min_acc
         abs_ratio = self.ntask_abs_rate / self.ntask_max_abs
 
         if self.tune_mode == 'abs_acc':

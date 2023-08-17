@@ -104,12 +104,12 @@ class ScoreModel():
 
         if savepath is None:
             if not os.path.exists('predictions/'):
-                os.makedir("predictions/")
+                os.mkdir("predictions/")
             self.savepath = "predictions/" + model_args['save_name']
         else:
             tmp_path = savepath + "predictions/"
             if not os.path.exists(os.path.dirname(tmp_path)):
-                os.makedirs(os.path.dirname(tmp_path))
+                os.mkdir(os.path.dirname(tmp_path))
             self.savepath = savepath + "predictions/" + model_args['save_name']
 
         # define dicts for all scores
@@ -565,7 +565,7 @@ class ScoreModel():
                 for j, task in enumerate(self.tasks):
                     # for scoring the model
                     if self.clc:
-                        preds['true_ys'][task].extend(batch[f"y_{task}"][idxs])
+                        preds['true_ys'][task].extend(y[f"{task}"][idxs])
                         preds['pred_ys'][task].extend(torch.argmax(logits[j][idxs], dim=1))
                         if save_probs:
                             preds['probs'][task].extend(F.softmax(logits[j][idxs], dim=1))
@@ -731,7 +731,6 @@ class ScoreModel():
         Post-condition:
             y_preds and y_trues populated.
         """
-        X = batch["X"].to(self.device)
 
         X = batch["X"].to(self.device)
         logits = self.model(X)
@@ -766,7 +765,7 @@ class ScoreModel():
         """
 
         X = batch["X"].to(self.device)
-        y = {task: batch[f"y_{task}"] for task in self.tasks}
+        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks}
         batch_len = batch['len'].to(self.device)
         max_seq_len = X.shape[1]
         logits = self.model(X, batch_len)
