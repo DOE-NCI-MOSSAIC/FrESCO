@@ -8,14 +8,14 @@ data_kwargs:
   shuffle_case_order: False
   subset_proportion: 1.0
   reproducible: True
-  random_seed: 42
+  random_seed: 56789
 
 # general training args
 train_kwargs:
   batch_per_gpu: 128
   max_epochs: 100
   patience: 5
-  class_weights: #./weights/weights.pickle' # path, dict, or blank (None)
+  class_weights: #./weights/weights.pickle' # path dict saved as pickle or blank (None)
   mixed_precision: False
 
 # case level context model args

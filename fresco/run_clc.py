@@ -19,7 +19,7 @@ from fresco.models import mthisan, mtcnn, clc
 from fresco.training import training
 from fresco.predict import predictions
 
-def create_model(params, dw, device):
+def create_model(params, dw, device, embed_dim):
     """
     Define a model based on model_args.
 
@@ -27,35 +27,52 @@ def create_model(params, dw, device):
         params (dict): Dictionary of model_args file.
         dw (DataHandler): DataHandler class object.
         device (torch.device): Torch device, either 'cpu' or 'cuda'.
+        embed_dim (int): dimension of doc embeddings.
 
     Returns:
         A model.
     """
 
-    model = clc.CaseLevelContext(dw.num_classes, device=device, **params.model_args['model_kwargs'])
+    model = clc.CaseLevelContext(dw.num_classes,
+                                 device=device,
+                                 doc_embed_size=embed_dim,
+                                 **params.model_args['model_kwargs'])
 
     model.to(device, non_blocking=True)
     return model
 
-
-def create_doc_embeddings(model, model_type, data_loader, device):
+def create_doc_embeddings(model, model_type, data_loader, tasks, device):
     """Generate document embeddings from trained model."""
     model.eval()
     if model_type == 'mtcnn':
-        embed_dim  = 900
+        embed_dim = 900
     else:
         embed_dim = 400
-    embeds = np.empty((len(data_loader.dataset), embed_dim))
+
     bs = data_loader.batch_size
+    embeds = torch.empty((len(data_loader.dataset), embed_dim), device=device)
+    ys = {task: torch.empty(len(data_loader.dataset), dtype=torch.int, device=device)
+          for task in tasks}
+    idxs = torch.empty((len(data_loader.dataset), ), dtype=torch.int, device=device)
     with torch.no_grad():
         for i, batch in enumerate(data_loader):
             X = batch["X"].to(device, non_blocking=True)
             _, embed = model(X, return_embeds=True)
             if embed.shape[0] == bs:
-                embeds[i*bs:(i+1)*bs, : ] = embed.cpu().numpy()
+                embeds[i*bs:(i+1)*bs] = embed
+                idxs[i*bs:(i+1)*bs] = batch['index']
+                for task in tasks:
+                    if task != 'Ntask':
+                        ys[task][i*bs:(i+1)*bs] = batch[f'y_{task}']
             else:
-                embeds[-embed.shape[0]:, : ] = embed.cpu().numpy()
-    return embeds
+                embeds[-embed.shape[0]:] = embed
+                idxs[-embed.shape[0]:] = batch['index']
+                for task in tasks:
+                    if task != "Ntask":
+                        ys[task][-embed.shape[0]:] = batch[f'y_{task}']
+    ys_np = {task: vals.cpu().numpy() for task, vals in ys.items()}
+    outputs = {"X": embeds.cpu().numpy(), 'y': ys_np, 'index': idxs.cpu().numpy()}
+    return outputs
 
 
 def load_model_dict(model_path, data_path=""):
@@ -119,12 +136,12 @@ def load_model(model_dict, device, dw):
     if torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
 
-    model_dict = {k: v for k,v in model_dict.items() if k!='metadata_package'}
+    model_dict = {k: v for k, v in model_dict.items() if k != 'metadata_package'}
     try:
-        model.load_state_dict(model_dict)
+        model.load_state_dict(model_dict['model_state_dict'])
     except RuntimeError:
-        model_dict = {k.replace('module.',''): v for k,v in model_dict.items()}
-        model.load_state_dict(model_dict)
+        model_dict = {k.replace('module.',''): v for k,v in model_dict['model_state_dict'].items()}
+        model.load_state_dict(model_dict['model_state_dict'])
 
     print('model loaded')
 
@@ -172,10 +189,6 @@ def run_case_level(args):
 
     valid_params.model_args['data_kwargs']['data_path'] = model_dict['metadata_package']['mod_args']['data_kwargs']['data_path']
     valid_params.check_data_files(valid_params.model_args['data_kwargs']['data_path'])
-
-    # model args of the first (one used for generating the doc embeddings) trained model
-    # submodel_args = model_dict['metadata_package']['mod_args']
-    # need to verify submodel args
 
     data_source = 'pre-generated'
     args.model_args = model_dict['metadata_package']['mod_args']
@@ -230,19 +243,27 @@ def run_case_level(args):
     else:
         dac = None
 
-    data_loaders = dw.make_torch_dataloaders(submodel_args.model_args['data_kwargs']['add_noise'],
+    data_loaders = dw.make_torch_dataloaders(switch_rate=0.0, 
                                              reproducible=valid_params.model_args['data_kwargs']['reproducible'],
+                                             shuffle_data=False,
                                              seed=seed)
 
     model = load_model(model_dict, device, dw)
-    embeds = {k: create_doc_embeddings(model, submodel_args.model_args['model_type'], v, device)
-              for k, v in data_loaders.items()}
+    outputs = {}
+    for split in dw.splits:
+        outputs[split] = create_doc_embeddings(model,
+                                               submodel_args.model_args['model_type'],
+                                               data_loaders[split],
+                                               dw.tasks,
+                                               device)
 
-    dw.make_grouped_cases(embeds, valid_params.model_args, device)
+    dw.make_grouped_cases(outputs, valid_params.model_args,
+                          device, reproducible=valid_params.model_args['data_kwargs']['reproducible'],
+                          seed=seed)
 
     # 3. create a CLC model
     print("\nDefining a CLC model")
-    model = create_model(valid_params, dw, device)
+    model = create_model(valid_params, dw, device, outputs['train']['X'].shape[1])
     # 4. train new model
     print("Creating model trainer")
 

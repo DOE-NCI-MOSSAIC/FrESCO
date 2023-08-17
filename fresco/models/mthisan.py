@@ -54,7 +54,7 @@ class MTHiSAN(nn.Module):
         embedding_matrix[0] = 0
         self.embedding = nn.Embedding.from_pretrained(
                          torch.tensor(embedding_matrix, dtype=torch.float),
-                         freeze=False)
+                         freeze=False, padding_idx=0)
         self.word_embed_drop = nn.Dropout(p=att_dropout)
 
         # Q, K, V, and other layers for word-level self-attention
