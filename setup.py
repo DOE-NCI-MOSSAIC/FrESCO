@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='fresco',
-    version='0.2.0',    
+    version='0.2.3',    
     description='',
     url='https://github.com/DOE-NCI-MOSSAIC/FrESCO',
     author='Adam Spannaus',
