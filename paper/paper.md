@@ -47,11 +47,10 @@ labor intensive task, requiring specialized knowledge about the reports
 and cancer. Automating the information extraction process from cancer
 pathology reports has the potential to improve data quality by
 extracting information in a consistent manner across registries. It can
-also improve patient outcomes by reducing the time from diagnosis to
-population health statistic and enabling rapid case ascertainment for
-clinical trials. Here we present `FrESCO`, a modular deep-learning
+also improve patient outcomes by reducing the time from diagnosis, enabling rapid case ascertainment for
+clinical trials. Here we present FrESCO, a modular deep-learning
 natural language processing (NLP) library initially designed for extracting pathology
-information from clinical text documents. Our library is not limited to 
+information from clinical text documents. This repository is not solely limited to 
 clinical medical text, but may also be used by researchers just getting started with NLP methods and those
 looking for a robust solution for their classification problems.
 
@@ -69,7 +68,7 @@ observational medical outcomes partnership common data model (OMOP-CDM)
 databases. Biomedical libraries such as Med7 [@kormilitzin2021med7] and
 EHRkit [@li2022ehrkit] focus on electronic health records in general and
 machine learning tasks such as named-entity recognition and document
-summarization. Our `FrESCO` library is singularly focused on cancer
+summarization. Our FrESCO library is singularly focused on cancer
 pathology reports and provides the model building workflow for
 auto-coding SEER pathology reports, which is a fundamental requirement
 in a clinical deployment environment [@harris2022clinical].
@@ -85,7 +84,7 @@ and creating data structures, (2) building and training deep-learning
 models, and (3) scoring and evaluating trained models. Provided within
 the code repository are three model architectures to classify text data:
 
-1.  the multi-task convolutional neural network
+1.  the multi-task convolutional neural network (MTCNN)
     of [@alawad2020automatic],
 
 2.  the hierarchical self-attention network (HiSAN) described
@@ -99,7 +98,7 @@ Each of these models is available with the deep-abstaining classifier
 code repository [@Candle]. The DAC adds an additional "abstention" class
 to the specified model so that the classifier may choose none of the
 available labels for a given task. While each model may work on generic
-data, the HiSAN and CLC architectures are specifically designed to work
+data, the HiSAN and CLC architectures were specifically designed to work
 with patient data and are not available in other software packages like
 PyHealth [@zhao2021pyhealth]. As an example, the CLC model uses multiple
 pathology reports linked to an individual patient in a hierarchical way.
