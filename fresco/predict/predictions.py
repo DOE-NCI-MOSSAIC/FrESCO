@@ -218,12 +218,21 @@ class ScoreModel():
         """
 
         metrics = {}
+        if self.abstain:
+            pred_idxs = dac.compute_accuracy(self.y_trues, self.y_preds)
+            
         # per task metrics
         for i, task in enumerate(self.tasks):
             logits = np.vstack(self.logits[i])
             scores = scipy.special.softmax(logits, axis=-1)
-            _trues = [v.item() for v in self.y_trues[task]]
-            _preds = [v.item() for v in self.y_preds[task]]
+            if self.abstain:
+                _trues = np.asarray([v.item() for v in self.y_trues[task]],
+                                         dtype=np.int)[pred_idxs[task]]
+                _preds = np.asarray([v.item() for v in self.y_preds[task]],
+                                         dtype=np.int)[pred_idxs[task]]
+            else:
+                _trues = [v.item() for v in self.y_trues[task]]
+                _preds = [v.item() for v in self.y_preds[task]]
 
             metrics[f'{task}_micro'] = f1_score(_preds, _trues, average='micro')
             metrics[f'{task}_macro'] = f1_score(_preds, _trues, average='macro')
