@@ -220,7 +220,7 @@ class ScoreModel():
         metrics = {}
         if self.abstain:
             pred_idxs = dac.compute_accuracy(self.y_trues, self.y_preds)
-            
+
         # per task metrics
         for i, task in enumerate(self.tasks):
             logits = np.vstack(self.logits[i])

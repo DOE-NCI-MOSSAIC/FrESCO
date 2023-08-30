@@ -295,7 +295,7 @@ class ModelTrainer():
             if val_scores['val_loss'][0] < best_loss:
                 best_loss = val_scores['val_loss'][0]
                 torch.save({'epoch': epoch,
-                            'model_state_dict': self.model.state_dict(), 
+                            'model_state_dict': self.model.state_dict(),
                             'opt_state_dict': self.opt.state_dict(),
                             'val_loss': best_loss
                             }, self.savename)
@@ -515,7 +515,7 @@ class ModelTrainer():
             idx (int): Indexing self.tasks.
 
         Returns:
-            scores: 
+            scores:
         """
         scores = {}
         _y_pred = [y.item() for y in y_pred]

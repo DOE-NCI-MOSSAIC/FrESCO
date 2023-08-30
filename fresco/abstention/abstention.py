@@ -129,9 +129,9 @@ class AbstainingClassifier():
         self.max_abs = kw_args['abstain_kwargs']['max_abs']
         self.min_acc = kw_args['abstain_kwargs']['min_acc']
         self.alpha_scale = kw_args['abstain_kwargs']['alpha_scale']
-        self.alpha_min_scale = {task: min(1.0 / self.alpha_scale[task], self.alpha_scale)
+        self.alpha_min_scale = {task: min(1.0 / self.alpha_scale[task], self.alpha_scale[task])
                                 for task in self.tasks}
-        self.alpha_max_scale = {task: max(1.0 / self.alpha_scale[task], self.alpha_scale)
+        self.alpha_max_scale = {task: max(1.0 / self.alpha_scale[task], self.alpha_scale[task])
                                 for task in self.tasks}
 
         self.tune_mode = kw_args['abstain_kwargs']['tune_mode']
