@@ -24,9 +24,9 @@ authors:
   - name: Heidi A. Hanson
     affiliation: 1
 affiliations:
-  - name: Oak Ridge National Laboratory, Oak Ridge, TN, USA
+  - name: Oak Ridge National Laboratory, Oak Ridge, TN, United States of America
     index: 1
-  - name: Los Alamos National Laboratory, Los Alamos, NM, USA
+  - name: Los Alamos National Laboratory, Los Alamos, NM, United States of America
     index: 2
 date: 8 March 2023
 bibliography: shared/refs.bib
