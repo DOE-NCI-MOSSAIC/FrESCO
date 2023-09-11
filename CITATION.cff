@@ -1,0 +1,56 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Spannaus
+  given-names: Adam
+  orcid: "https://orcid.org/0000-0002-2521-3657"
+- family-names: Gounley
+  given-names: John
+- family-names: Shekar
+  given-names: Mayanka Chandra
+- family-names: Fox
+  given-names: Zachary R.
+- family-names: Mohd-Yusof
+  given-names: Jamaludin
+- family-names: Schaefferkoetter
+  given-names: Noah
+- family-names: Hanson
+  given-names: Heidi A.
+contact:
+- family-names: Spannaus
+  given-names: Adam
+  orcid: "https://orcid.org/0000-0002-2521-3657"
+doi: 10.5281/zenodo.8325993
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Spannaus
+    given-names: Adam
+    orcid: "https://orcid.org/0000-0002-2521-3657"
+  - family-names: Gounley
+    given-names: John
+  - family-names: Shekar
+    given-names: Mayanka Chandra
+  - family-names: Fox
+    given-names: Zachary R.
+  - family-names: Mohd-Yusof
+    given-names: Jamaludin
+  - family-names: Schaefferkoetter
+    given-names: Noah
+  - family-names: Hanson
+    given-names: Heidi A.
+  date-published: 2023-09-11
+  doi: 10.21105/joss.05345
+  issn: 2475-9066
+  issue: 89
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 5345
+  title: "FrESCO: Framework for Exploring Scalable Computational
+    Oncology"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.05345"
+  volume: 8
+title: "FrESCO: Framework for Exploring Scalable Computational Oncology"
+
