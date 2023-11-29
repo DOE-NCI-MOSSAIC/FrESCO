@@ -11,6 +11,7 @@ import torch
 import torch.nn.functional as F
 
 import numpy as np
+
 # import numpy.ma as ma
 
 from sklearn.metrics import accuracy_score
@@ -23,7 +24,7 @@ class DacLoss(nn.Module):
     Custom loss class for the DAC.
 
     Args:
-        loss_fin (torch.nn.loss): Torch loss function, either Cross Entropy or Binary Cross Entropy (for multilabel).
+        loss_fun (torch.nn.loss): Torch loss function, either Cross Entropy or Binary Cross Entropy (for multilabel).
         multilabel (bool): Indicates if it is a multilabel problem.
         alphas (torch.Tensor): Torch tensor of alphas for the DAC.
     """
@@ -34,11 +35,9 @@ class DacLoss(nn.Module):
         self.multilabel = multilabel
         self.alphas = alphas
 
-    def forward(self,
-                y_pred: torch.tensor,
-                y_true: torch.tensor,
-                idx: int,
-                ntask_abs_prob: int = 1) -> torch.tensor:
+    def forward(
+        self, y_pred: torch.tensor, y_true: torch.tensor, idx: int, ntask_abs_prob: int = 1
+    ) -> torch.tensor:
         """
         Compute DAC loss.
 
@@ -87,33 +86,33 @@ class DacLoss(nn.Module):
         return tmp - out
 
 
-class AbstainingClassifier():
+class AbstainingClassifier:
     """
     Class for deep abstaining classifier.
 
     Args:
         id2label (dict): Dictionary mapping int values to label values for each task.
         kw_args (dict): Dictionary with necessary keywords for abstention.
-        device (str): 'cuda' or 'cpu', set from model_suite.py.
+        device (str): 'cuda' or 'cpu', set in caller.
     """
 
     def __init__(self, kw_args: dict, device: torch.device, class_weights=None, clc: bool = False):
-
-        self.tasks = kw_args['data_kwargs']['tasks']
-        self.ntask = kw_args['abstain_kwargs']['ntask_flag']
+        self.tasks = kw_args["data_kwargs"]["tasks"]
+        self.ntask = kw_args["abstain_kwargs"]["ntask_flag"]
 
         if self.ntask:
-            self.ntask_tasks = kw_args['abstain_kwargs']['ntask_tasks']
-            self.ntask_alpha = kw_args['abstain_kwargs']['ntask_alpha']
-            self.ntask_max_abs = kw_args['abstain_kwargs']['ntask_max_abs']
-            self.ntask_min_acc = kw_args['abstain_kwargs']['ntask_min_acc']
-            self.ntask_alpha_scale = kw_args['abstain_kwargs']['ntask_alpha_scale']
+            self.ntask_tasks = kw_args["abstain_kwargs"]["ntask_tasks"]
+            self.ntask_alpha = kw_args["abstain_kwargs"]["ntask_alpha"]
+            self.ntask_max_abs = kw_args["abstain_kwargs"]["ntask_max_abs"]
+            self.ntask_min_acc = kw_args["abstain_kwargs"]["ntask_min_acc"]
+            self.ntask_alpha_scale = kw_args["abstain_kwargs"]["ntask_alpha_scale"]
 
             self.ntask_min_scale = min(self.ntask_alpha_scale, 1.0 / self.ntask_alpha_scale)
             self.ntask_max_scale = max(self.ntask_alpha_scale, 1.0 / self.ntask_alpha_scale)
             self.ntask_filter = []
             self.ntask_acc = 0.0
             self.ntask_abs_rate = 0.0
+            self.ntask_acc_array = None
         else:
             self.ntask_tasks = [None]
 
@@ -124,36 +123,39 @@ class AbstainingClassifier():
         self.abs_rates = {}
 
         # these need to be ordered according to self.tasks
-        self.alphas = [float(kw_args['abstain_kwargs']["alphas"][task]) for task in self.tasks]
+        self.alphas = [float(kw_args["abstain_kwargs"]["alphas"][task]) for task in self.tasks]
 
-        self.max_abs = kw_args['abstain_kwargs']['max_abs']
-        self.min_acc = kw_args['abstain_kwargs']['min_acc']
-        self.alpha_scale = kw_args['abstain_kwargs']['alpha_scale']
-        self.alpha_min_scale = {task: min(1.0 / self.alpha_scale[task], self.alpha_scale[task])
-                                for task in self.tasks}
-        self.alpha_max_scale = {task: max(1.0 / self.alpha_scale[task], self.alpha_scale[task])
-                                for task in self.tasks}
+        self.max_abs = kw_args["abstain_kwargs"]["max_abs"]
+        self.min_acc = kw_args["abstain_kwargs"]["min_acc"]
+        self.alpha_scale = kw_args["abstain_kwargs"]["alpha_scale"]
+        self.alpha_min_scale = {
+            task: min(1.0 / self.alpha_scale[task], self.alpha_scale[task]) for task in self.tasks
+        }
+        self.alpha_max_scale = {
+            task: max(1.0 / self.alpha_scale[task], self.alpha_scale[task]) for task in self.tasks
+        }
 
-        self.tune_mode = kw_args['abstain_kwargs']['tune_mode']
-        self.abs_gain = kw_args['abstain_kwargs']['abs_gain']
-        self.acc_gain = kw_args['abstain_kwargs']['acc_gain']
-        self.stop_limit = kw_args['abstain_kwargs']['stop_limit']
-        self.stop_metric = kw_args['abstain_kwargs']['stop_metric']
+        self.tune_mode = kw_args["abstain_kwargs"]["tune_mode"]
+        self.abs_gain = kw_args["abstain_kwargs"]["abs_gain"]
+        self.acc_gain = kw_args["abstain_kwargs"]["acc_gain"]
+        self.stop_limit = kw_args["abstain_kwargs"]["stop_limit"]
+        self.stop_metric = kw_args["abstain_kwargs"]["stop_metric"]
 
         if clc:
-            self.base_loss = torch.nn.NLLLoss(reduction='none')
+            self.base_loss = torch.nn.NLLLoss(reduction="none")
             self.multilabel = False
         else:
             if class_weights is not None:
-                self.class_weights_tensor = torch.FloatTensor(kw_args['train_kwargs']['class_weights']).to(device)
+                self.class_weights_tensor = torch.FloatTensor(kw_args["train_kwargs"]["class_weights"]).to(
+                    device
+                )
             else:
                 self.class_weights_tensor = None
-            self.multilabel = kw_args['data_kwargs']['multilabel']
+            self.multilabel = kw_args["data_kwargs"]["multilabel"]
             if self.multilabel:
-                self.base_loss = torch.nn.BCEWithLogitsLoss(self.class_weights_tensor, reduction='none')
+                self.base_loss = torch.nn.BCEWithLogitsLoss(self.class_weights_tensor, reduction="none")
             else:
-                # self.base_loss = torch.nn.CrossEntropyLoss(self.class_weights_tensor, reduction='none')
-                self.base_loss = torch.nn.NLLLoss(self.class_weights_tensor, reduction='none')
+                self.base_loss = torch.nn.NLLLoss(self.class_weights_tensor, reduction="none")
 
         self.dac_loss = DacLoss(self.base_loss, self.multilabel, self.alphas)
 
@@ -173,24 +175,21 @@ class AbstainingClassifier():
         Must be called before creating PathReports class for DataLoaders.
         """
 
-        self.abstain_labels = {task: len(dw.dict_maps['id2label'][task].keys())
-                               for task in self.tasks}
-        self.n_classes = [len(dw.dict_maps['id2label'][t].keys())+1 for t in self.tasks]
+        self.abstain_labels = {task: len(dw.dict_maps["id2label"][task].keys()) for task in self.tasks}
+        self.n_classes = [len(dw.dict_maps["id2label"][t].keys()) + 1 for t in self.tasks]
         dw.num_classes = copy.deepcopy(self.n_classes)
 
         for task in self.tasks:
-            idx = len(dw.dict_maps['id2label'][task])
-            if dw.dict_maps['id2label'][task][idx-1] != f"abs_{task}":
-                dw.dict_maps['id2label'][task][idx] = f"abs_{task}"
+            idx = len(dw.dict_maps["id2label"][task])
+            if dw.dict_maps["id2label"][task][idx - 1] != f"abs_{task}":
+                dw.dict_maps["id2label"][task][idx] = f"abs_{task}"
 
         if self.ntask:
             dw.num_classes.append(1)
 
-    def abstention_loss(self,
-                        y_pred: torch.tensor,
-                        y_true: torch.tensor,
-                        idx: int,
-                        ntask_abs_prob: int = 1) -> torch.tensor:
+    def abstention_loss(
+        self, y_pred: torch.tensor, y_true: torch.tensor, idx: int, ntask_abs_prob: int = 1
+    ) -> torch.tensor:
         """
         Compute DAC loss.
 
@@ -202,7 +201,6 @@ class AbstainingClassifier():
 
         Pre-condition: Loss function defined in class constructor.
         """
-
 
         loss = self.dac_loss(y_pred, y_true, idx, ntask_abs_prob)
         return torch.mean(loss)
@@ -222,17 +220,23 @@ class AbstainingClassifier():
         pred_idxs = {}
         self.abs_rates.clear()
         # clear accuracy scores from prior epoch
-        del self.accuracy[:]
 
         for task in self.tasks:
+            if task == "Ntask":
+                continue
+            # del self.accuracy[task][:]
             _preds = np.asarray([y.item() for y in y_pred[task]])
             # indices of abstained docs
             pred_idxs[task] = np.where(_preds != self.abstain_labels[task])[0]
+            _trues = np.asarray([y.item() for y in y_true[task]])[pred_idxs[task]]
 
             self.abs_rates[f"{task}_abs"] = 1.0 - _preds[pred_idxs[task]].shape[0] / _preds.shape[0]
 
-            _trues = np.asarray([y.item() for y in y_true[task]])[pred_idxs[task]]
-            self.accuracy.append(accuracy_score(_trues, _preds[pred_idxs[task]]))
+            if _trues.shape[0] > 0 and _preds[pred_idxs[task]].shape[0] > 0:
+                self.accuracy[task] = accuracy_score(_trues, _preds[pred_idxs[task]])
+            else:
+                self.accuracy[task] = 0.0
+
             if self.ntask and task in self.ntask_tasks:
                 tmp = _preds != self.abstain_labels[task]
                 self.ntask_filter = np.logical_and(self.ntask_filter, tmp)
@@ -254,9 +258,9 @@ class AbstainingClassifier():
         """
 
         # ntask 0-1
-        _filter = np.rint(ntask_abs_prob.detach().tolist())
+        _filter = torch.round(ntask_abs_prob)
         # docs ntask is not ok with, ie, ones to abstain on
-        self.ntask_filter.extend(np.logical_not(_filter))
+        self.ntask_filter.extend(torch.logical_not(_filter).tolist())
 
     def compute_ntask_accuracy(self, y_true: list, y_pred: list):
         """Compute ntask abstain 0-1 accuracy and abstention rate.
@@ -276,16 +280,21 @@ class AbstainingClassifier():
             _true = np.asarray([y.item() for y in y_true[task]])[self.ntask_filter]
             _pred = np.asarray([y.item() for y in y_pred[task]])[self.ntask_filter]
 
-            # tmp_mask = np.where(_true == _pred)[0]
-            tmp_mask = _true == _pred
-            self.ntask_acc = np.logical_and(self.ntask_acc, tmp_mask)
-        if self.ntask_acc.shape[0] > 0:
-            self.ntask_acc = self.ntask_acc[self.ntask_acc == True].shape[0] / self.ntask_acc.shape[0]
-        else:
-            self.ntask_acc = 0.0
+            if _true.shape[0] > 0 and _pred.shape[0] > 0:
+                # tmp_mask = np.where(_true == _pred)[0]
+                tmp_mask = _true == _pred
+                self.ntask_acc_array = np.logical_and(self.ntask_acc_array, tmp_mask)
+                # if self.ntask_acc.shape[0] > 0:
+                self.ntask_acc = (
+                    self.ntask_acc_array[self.ntask_acc_array == True].shape[0]
+                    / self.ntask_acc_array.shape[0]
+                )
+            else:
+                self.ntask_acc = 0.0
 
-        self.ntask_abs_rate = 1.0 -\
-            self.ntask_filter[self.ntask_filter == True].shape[0] / self.ntask_filter.shape[0]
+        self.ntask_abs_rate = (
+            1.0 - self.ntask_filter[self.ntask_filter == True].shape[0] / self.ntask_filter.shape[0]
+        )
 
         return (self.ntask_acc, self.ntask_abs_rate)
 
@@ -311,9 +320,9 @@ class AbstainingClassifier():
         n_preds = np_preds[np_preds != self.abstain_labels[idx]]
         abs_rate = 1 - n_preds.shape[0] / len(y_pred)
 
-        abs_scores['abs_rates'] = abs_rate
-        abs_scores['abs_acc'] = accuracy_score(y_true, y_pred)
-        abs_scores['alphas'] = self.alphas
+        abs_scores["abs_rates"] = abs_rate
+        abs_scores["abs_acc"] = accuracy_score(y_true, y_pred)
+        abs_scores["alphas"] = self.alphas
 
         return abs_scores
 
@@ -337,19 +346,19 @@ class AbstainingClassifier():
         stop_metrics = []
 
         for i, task in enumerate(self.tasks):
-
+            if task == "Ntask":
+                continue
             # these are common to all tuning methods
-            if scores[task]['micro'] == 0:
-                acc_error = 1.0 - self.min_acc[task]
+            if scores[task]["micro"] == 0:
+                acc_error = 1 - self.min_acc[task]
                 acc_ratio = 1.0 / self.min_acc[task]
             else:
-                acc_error = scores[task]['micro'] - self.min_acc[task]
-                acc_ratio = scores[task]['micro'] / self.min_acc[task]
+                acc_error = scores[task]["micro"] - self.min_acc[task]
+                acc_ratio = scores[task]["micro"] / self.min_acc[task]
+            abs_error = self.abs_rates[f"{task}_abs"] - self.max_abs[task]
+            abs_ratio = self.abs_rates[f"{task}_abs"] / self.max_abs[task]
 
-            abs_error = self.abs_rates[f'{task}_abs'] - self.max_abs[task]
-            abs_ratio = self.abs_rates[f'{task}_abs'] / self.max_abs[task]
-
-            if self.tune_mode == 'abs_acc':
+            if self.tune_mode == "abs_acc":
                 # modify the scaling factor according to error in target abstention and accuracy
 
                 # clip if accuracy is above min_acc
@@ -367,19 +376,19 @@ class AbstainingClassifier():
 
                 # choose multiplicative or additive scaling
                 if additive:
-                    new_scale = (1.0 + self.acc_gain * acc_error + self.abs_gain * abs_error)
+                    new_scale = 1.0 + self.acc_gain * acc_error + self.abs_gain * abs_error
                 else:
-                    new_scale = (acc_ratio * abs_ratio)
+                    new_scale = acc_ratio * abs_ratio
 
                 # use harmonic mean to rescale the stopping criterion
                 stop_i = (new_scale - 1.0) * ((1.0 / self.acc_gain) + (1.0 / self.abs_gain)) * 0.5
 
-            elif self.tune_mode == 'acc':
-                new_scale = (1.0 + self.acc_gain * acc_error)
+            elif self.tune_mode == "acc":
+                new_scale = 1.0 + self.acc_gain * acc_error
                 stop_i = acc_error
 
-            elif self.tune_mode == 'abs':
-                new_scale = (1.0 + self.abs_gain * abs_error)
+            elif self.tune_mode == "abs":
+                new_scale = 1.0 + self.abs_gain * abs_error
                 stop_i = abs_error
 
             # threshold the scaling to be safe
@@ -414,7 +423,7 @@ class AbstainingClassifier():
         abs_error = self.ntask_abs_rate - self.ntask_max_abs
         abs_ratio = self.ntask_abs_rate / self.ntask_max_abs
 
-        if self.tune_mode == 'abs_acc':
+        if self.tune_mode == "abs_acc":
             # modify the scaling factor according to error in target abstention and accuracy
 
             # clip if accuracy is above min_acc
@@ -432,19 +441,19 @@ class AbstainingClassifier():
 
             # choose multiplicative or additive scaling
             if additive:
-                new_scale = (1.0 + self.acc_gain * acc_error + self.abs_gain * abs_error)
+                new_scale = 1.0 + self.acc_gain * acc_error + self.abs_gain * abs_error
             else:
-                new_scale = (acc_ratio * abs_ratio)
+                new_scale = acc_ratio * abs_ratio
 
             # use harmonic mean to rescale the stopping criterion
             stop_val = (new_scale - 1.0) * ((1.0 / self.acc_gain) + (1.0 / self.abs_gain)) * 0.5
 
-        elif self.tune_mode == 'acc':
-            new_scale = (1.0 + self.acc_gain * acc_error)
+        elif self.tune_mode == "acc":
+            new_scale = 1.0 + self.acc_gain * acc_error
             stop_val = acc_error
 
-        elif self.tune_mode == 'abs':
-            new_scale = (1.0 + self.abs_gain * abs_error)
+        elif self.tune_mode == "abs":
+            new_scale = 1.0 + self.abs_gain * abs_error
             stop_val = abs_error
 
         # threshold the scaling to be safe
@@ -464,7 +473,7 @@ class AbstainingClassifier():
 
         """
 
-        if self.stop_metric == 'max':
+        if self.stop_metric == "max":
             stop_val = np.linalg.norm(stop_metrics, np.inf)
         else:  # l2 norm
             stop_val = np.linalg.norm(stop_metrics)
@@ -475,9 +484,9 @@ class AbstainingClassifier():
         """
         Write header for abstention stats output file.
         """
-        path = 'predictions/abs_stats.txt'
+        path = "predictions/abs_stats.txt"
 
-        with open(path, "w+", encoding='utf-8') as abs_file:
+        with open(path, "w+", encoding="utf-8") as abs_file:
             abs_file.write("Alphas, accuracies, abstention, stop_metric\n")
             # we just want 4 copies on the header line
             for _ in range(4):
@@ -490,8 +499,8 @@ class AbstainingClassifier():
         """
         Save abstention stats to output file.
         """
-        path = 'predictions/abs_stats.txt'
-        with open(path, 'a', encoding='utf-8') as abs_file:
+        path = "predictions/abs_stats.txt"
+        with open(path, "a", encoding="utf-8") as abs_file:
             # write a single line with alphas, accuracy and abstention
             abs_file.write("Alphas:\n")
             for i, task in enumerate(self.tasks):
@@ -511,34 +520,51 @@ class AbstainingClassifier():
         """
         Change output header based on tuning mode.
         """
-        if self.tune_mode == 'abs_acc':
-            print((f"{'task':12s}, {'macro':>10s}, {'micro':>10s}, {'min_acc':>10s},  ") +
-                  (f"{'abs_frac':>10s}, {'max_abs':>10s}, {'alpha':>9s}, ") +
-                  (f"{'scale_frac':>12s}, {'stop_metric':>12s}"))
-        elif self.tune_mode == 'abs':
-            print((f"{'task':12s}, {'macro':>10s}, {'micro':>10s}, ") +
-                  (f"{'abs_frac':>10s}, {'max_abs':>10s}, {'alpha':>9s}, ") +
-                  (f"{'scale_frac':>12s}, {'stop_metric':>12s}"))
-        elif self.tune_mode == 'acc':
-            print((f"{'task':12s}, {'macro':>10s}, {'micro':>10s},  ") +
-                  (f"{'abs_frac':>10s}, {'target_abs':>10s}, {'alpha':>9s}, ") +
-                  (f"{'scale_frac':>12s}, {'stop_metric':>12s}"))
+        if self.tune_mode == "abs_acc":
+            print(
+                (f"{'task':12s}, {'macro':>10s}, {'micro':>10s}, {'min_acc':>10s},  ")
+                + (f"{'abs_frac':>10s}, {'max_abs':>10s}, {'alpha':>9s}, ")
+                + (f"{'scale_frac':>12s}, {'stop_metric':>12s}")
+            )
+        elif self.tune_mode == "abs":
+            print(
+                (f"{'task':12s}, {'macro':>10s}, {'micro':>10s}, ")
+                + (f"{'abs_frac':>10s}, {'max_abs':>10s}, {'alpha':>9s}, ")
+                + (f"{'scale_frac':>12s}, {'stop_metric':>12s}")
+            )
+        elif self.tune_mode == "acc":
+            print(
+                (f"{'task':12s}, {'macro':>10s}, {'micro':>10s},  ")
+                + (f"{'abs_frac':>10s}, {'target_abs':>10s}, {'alpha':>9s}, ")
+                + (f"{'scale_frac':>12s}, {'stop_metric':>12s}")
+            )
 
-    def print_abs_tune_stats(self, task, macro, micro, min_acc, abs_frac,
-                             max_abs, alpha, scale_frac, stop_metric):
+    def print_abs_tune_stats(
+        self, task, macro, micro, min_acc, abs_frac, max_abs, alpha, scale_frac, stop_metric
+    ):
         """
         Print output based on tuning mode.
         """
-        if self.tune_mode == 'abs_acc':
-            print((f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {min_acc:10.4f}, ") +
-                  (f"{abs_frac:10.4f}, {max_abs:10.4f}, {alpha:10.4f},") +
-                  (f"{scale_frac:10.4f}, {stop_metric:10.4f}"))
-        elif self.tune_mode == 'abs':
-            print((f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {abs_frac:10.4f}, " +
-                   f"{max_abs:10.4f}, {alpha:10.4f}, {scale_frac:10.4f}, {stop_metric:10.4f}"))
-        elif self.tune_mode == 'acc':
-            print((f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {abs_frac:10.4f}, " +
-                   f"{min_acc:10.4f}, {alpha:10.4f}, {scale_frac:10.4f}, {stop_metric:10.4f}"))
+        if self.tune_mode == "abs_acc":
+            print(
+                (f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {min_acc:10.4f}, ")
+                + (f"{abs_frac:10.4f}, {max_abs:10.4f}, {alpha:10.4f},")
+                + (f"{scale_frac:10.4f}, {stop_metric:10.4f}")
+            )
+        elif self.tune_mode == "abs":
+            print(
+                (
+                    f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {abs_frac:10.4f}, "
+                    + f"{max_abs:10.4f}, {alpha:10.4f}, {scale_frac:10.4f}, {stop_metric:10.4f}"
+                )
+            )
+        elif self.tune_mode == "acc":
+            print(
+                (
+                    f"{task:12s}, {macro:10.4f}, {micro:10.4f}, {abs_frac:10.4f}, "
+                    + f"{min_acc:10.4f}, {alpha:10.4f}, {scale_frac:10.4f}, {stop_metric:10.4f}"
+                )
+            )
 
     @staticmethod
     def print_abs_header():

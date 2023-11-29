@@ -46,7 +46,7 @@ class MTCNN(nn.Module):
         # normalize and initialize embeddings
         embedding_matrix -= embedding_matrix.mean(axis=0)
         embedding_matrix /= (embedding_matrix.std(axis=0, ddof=1) * embeddings_scale)
-        embedding_matrix[0] = 0
+        embedding_matrix[0] = 0.0
         self.embedding = nn.Embedding.from_pretrained(
                          torch.tensor(embedding_matrix,dtype=torch.float),
                          freeze=False,
@@ -64,20 +64,20 @@ class MTCNN(nn.Module):
         # optional bag of embeddings layers
         self.boe = bag_of_embeddings
         if self.boe:
-            self.boe_dense = nn.Linear(embedding_matrix.shape[1],embedding_matrix.shape[1])
+            self.boe_dense = nn.Linear(embedding_matrix.shape[1], embedding_matrix.shape[1])
             torch.nn.init.xavier_uniform_(self.boe_dense.weight)
             self.boe_dense.bias.data.fill_(0.0)
 
         # dense classification layers
-        self.classify_layers = nn.ModuleList()
-        for n in num_classes:
+        self.classify_layers = nn.ModuleDict()
+        for task, n in num_classes.items():
             in_size = np.sum(num_filters)
             if self.boe:
                 in_size += embedding_matrix.shape[1]
             l = nn.Linear(in_size,n)
             torch.nn.init.xavier_uniform_(l.weight)
             l.bias.data.fill_(0.0)
-            self.classify_layers.append(l)
+            self.classify_layers[task] = l
 
     def forward(self, docs: torch.tensor, return_embeds: bool=False) -> list:
         '''
@@ -123,10 +123,10 @@ class MTCNN(nn.Module):
 
         # generate logits for each task
         doc_embeds = self.drop_layer(concat)
-        logits = []
-        for l in self.classify_layers:
-            logits.append(l(doc_embeds))
+        logits = {}
+        for task, l in self.classify_layers.items():
+            logits[task] = l(doc_embeds)
 
         if return_embeds:
-            return logits,doc_embeds
+            return logits, doc_embeds
         return logits

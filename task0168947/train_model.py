@@ -3,20 +3,16 @@
 """
     Top level module to create information extraction or case-level context models.
 
-    Typical call is $python train_model.py -m ie -args ../configs/model_args.yml
-    This will train a model on the P3B3 dataset. The model_args.yml
-    file may be swapped for any of the provided yml files, or 
-    a custom config file. 
-
 """
 
 import argparse
 import os
 import time
 
-from fresco import run_ie, run_clc
+import run_ie
+import run_clc
 
-from fresco.validate import exceptions
+from validate import exceptions
 
 
 def timestamp():
@@ -60,7 +56,7 @@ def main():
         type=str,
         default="",
         help="""file specifying the model or clc args; default is in
-                                the fresco directory""",
+                                the model_suite directory""",
     )
 
     args = parser.parse_args()

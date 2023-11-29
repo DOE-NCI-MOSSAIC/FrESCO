@@ -23,7 +23,7 @@ class CaseLevelContext(nn.Module):
         self.att_dim_total = att_heads * att_dim_per_head
         self.att_dropout = att_dropout
         self.forward_mask = forward_mask
-        self.num_tasks = len(num_classes)
+        self.num_tasks = len(num_classes.items())
         self.device = device
 
         # Q, K, V, and other layers self-attention
@@ -41,12 +41,12 @@ class CaseLevelContext(nn.Module):
         self.output_drop = nn.Dropout(p=att_dropout)
 
         # prediction layers
-        self.classify_layers = nn.ModuleList()
-        for n in num_classes:
+        self.classify_layers = nn.ModuleDict()
+        for task, n in num_classes.items():
             l = nn.Linear(self.att_dim_total, n)
             torch.nn.init.xavier_uniform_(l.weight)
             l.bias.data.fill_(0.0)
-            self.classify_layers.append(l)
+            self.classify_layers[task] = l
 
     def _split_heads(self, x):
         '''
@@ -157,9 +157,8 @@ class CaseLevelContext(nn.Module):
         att_out = self.output_drop(att_out)                                     # batch x max_seq_len x heads*dim
 
         # classify
-        logits = []
+        logits = {} 
         for _, l in enumerate(self.classify_layers):
-            logit = l(att_out)
-            logits.append(logit)
+            logits[task] = l(att_out)
 
         return logits
