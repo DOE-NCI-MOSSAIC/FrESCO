@@ -17,6 +17,7 @@ train_kwargs:
   patience: 5
   class_weights: #./weights/weights.pickle' # path dict saved as pickle or blank (None)
   mixed_precision: False
+  save_probs: False
 
 # case level context model args
 model_kwargs:
