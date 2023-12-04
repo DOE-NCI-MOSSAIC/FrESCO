@@ -157,8 +157,8 @@ class CaseLevelContext(nn.Module):
         att_out = self.output_drop(att_out)                                     # batch x max_seq_len x heads*dim
 
         # classify
-        logits = {} 
-        for _, l in enumerate(self.classify_layers):
+        logits = {}
+        for task, l in self.classify_layers.items():
             logits[task] = l(att_out)
 
         return logits

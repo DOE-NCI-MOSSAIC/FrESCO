@@ -95,7 +95,7 @@ class ScoreModel:
 
         self.y_preds = {task: [] for task in self.tasks}
         self.y_trues = {task: [] for task in self.tasks}
-        self.logits = [[] for _ in range(len(self.tasks))]  # model output
+        self.logits = {task: [] for task in self.tasks}  # model output
 
         if savepath is None:
             if not os.path.exists("predictions/"):
@@ -211,8 +211,8 @@ class ScoreModel:
             # logits = np.vstack(self.logits[i])
             # scores = scipy.special.softmax(logits, axis=-1)
             if self.abstain:
-                _trues = np.asarray([v.item() for v in self.y_trues[task]], dtype=np.int)[pred_idxs[task]]
-                _preds = np.asarray([v.item() for v in self.y_preds[task]], dtype=np.int)[pred_idxs[task]]
+                _trues = np.asarray([v.item() for v in self.y_trues[task]], dtype=np.int64)[pred_idxs[task]]
+                _preds = np.asarray([v.item() for v in self.y_preds[task]], dtype=np.int64)[pred_idxs[task]]
             else:
                 _trues = [v.item() for v in self.y_trues[task]]
                 _preds = [v.item() for v in self.y_preds[task]]
@@ -237,7 +237,7 @@ class ScoreModel:
             for i, task in enumerate(self.tasks):
                 if task == "Ntask":
                     continue
-                metrics[f"{task}_abs_acc"] = dac.accuracy[i]
+                metrics[f"{task}_abs_acc"] = dac.accuracy[task]
             for k, v in dac.abs_rates.items():
                 metrics[k] = v
             if self.ntask:
@@ -304,7 +304,7 @@ class ScoreModel:
             print(f"\nPredicting {_split} set", flush=True)
             preds = self._predict(data[_split], save_probs, training_phase=training_phase)
             preds["split"] = _split
-            preds_df.append(self.preds_to_dataframe(preds, id2label))
+            preds_df.append(self.preds_to_dataframe(preds, id2label, save_probs))
             if save_probs:
                 for task in self.tasks:
                     preds[f"{task}_probs"] = preds["probs"][task]
@@ -360,7 +360,7 @@ class ScoreModel:
 
         return preds
 
-    def preds_to_dataframe(self, preds: dict, id2label: dict):
+    def preds_to_dataframe(self, preds: dict, id2label: dict, save_probs: bool = False):
         """
         Save test set predictions as DataFrame.
 
@@ -378,7 +378,6 @@ class ScoreModel:
 
         for task in self.tasks:
             cols[f"{task}_pred"] = [i.tolist() for i in preds["pred_ys"][task]]
-            cols[f"{task}_probs"] = [i.tolist() for i in preds["probs"][task]]
             if len(preds["true_ys"][task]) > 0:
                 cols[f"{task}_true"] = [i.tolist() for i in preds["true_ys"][task]]
                 col_ids = [f"{task}_true", f"{task}_pred"]
@@ -556,7 +555,7 @@ class ScoreModel:
                     idxs = torch.nonzero(mask, as_tuple=True)
 
                     # indices in original dataFrame to join with metadata: recordDocId,...
-                    _idxs = batch["index"][mask].cpu()
+                    _idxs = batch["index"][mask.cpu()]
                     data_idxs = [i.item() for i in _idxs]
                     preds["idxs"].extend(data_idxs)
 
@@ -575,7 +574,7 @@ class ScoreModel:
                         continue
                     # for scoring the model
                     if self.clc:
-                        preds["true_ys"][task].extend(batch[f"y_{task}"][idxs])
+                        preds["true_ys"][task].extend(y[task][idxs])
                         preds["pred_ys"][task].extend(torch.argmax(logits[task][idxs], dim=1))
                         if save_probs:
                             preds["probs"][task].extend(F.softmax(logits[task][idxs], dim=1))
@@ -607,14 +606,14 @@ class ScoreModel:
             self.y_trues and self.y_preds populated.
         """
 
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
             if self.clc:
-                self.logits[i].extend(logits[i][idxs].detach().cpu().numpy())
-                self.y_preds[task].extend(torch.argmax(logits[i][idxs], axis=1))
+                self.logits[task].extend(logits[task][idxs].detach().cpu().numpy())
+                self.y_preds[task].extend(torch.argmax(logits[task][idxs], axis=1))
                 self.y_trues[task].extend(y[task][idxs])
             else:
-                self.logits[i].extend(logits[i].detach().cpu().numpy())
-                self.y_preds[task].extend(torch.argmax(logits[i], axis=1))
+                self.logits[task].extend(logits[task].detach().cpu().numpy())
+                self.y_preds[task].extend(torch.argmax(logits[task], axis=1))
                 if self.multilabel:
                     self.y_trues[task].extend(torch.argmax(y[task]), axis=1)
                 else:
@@ -627,10 +626,10 @@ class ScoreModel:
         Post-condition:
             Entries in self.y_trues and self.y_preds deleted.
         """
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
             del self.y_trues[task][:]
             del self.y_preds[task][:]
-            del self.logits[i][:]
+            del self.logits[task][:]
 
     def compute_loss(self, batch, dac=None):
         """
@@ -787,7 +786,7 @@ class ScoreModel:
 
         mask = torch.arange(end=X.shape[1], device=self.device)[None, :] < batch_len[:, None]
         idxs = torch.nonzero(mask, as_tuple=True)
-        _idxs = batch["index"][mask].cpu()
+        _idxs = batch["index"][mask.cpu()]
         data_idxs = [i.item() for i in _idxs]
         # list of indices in orginal DataFrame
         preds["idxs"].extend(data_idxs)
