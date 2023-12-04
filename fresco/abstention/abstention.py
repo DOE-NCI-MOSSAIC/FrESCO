@@ -119,11 +119,11 @@ class AbstainingClassifier:
         # populated in self.add_abstention_classes
         self.n_classes = []
         self.abstain_labels = []
-        self.accuracy = []
+        self.accuracy = {task: [] for task in self.tasks}
         self.abs_rates = {}
 
         # these need to be ordered according to self.tasks
-        self.alphas = [float(kw_args["abstain_kwargs"]["alphas"][task]) for task in self.tasks]
+        self.alphas = {task: float(kw_args["abstain_kwargs"]["alphas"][task]) for task in self.tasks}
 
         self.max_abs = kw_args["abstain_kwargs"]["max_abs"]
         self.min_acc = kw_args["abstain_kwargs"]["min_acc"]
@@ -176,7 +176,7 @@ class AbstainingClassifier:
         """
 
         self.abstain_labels = {task: len(dw.dict_maps["id2label"][task].keys()) for task in self.tasks}
-        self.n_classes = [len(dw.dict_maps["id2label"][t].keys()) + 1 for t in self.tasks]
+        self.n_classes = {t: len(dw.dict_maps["id2label"][t].keys()) + 1 for t in self.tasks}
         dw.num_classes = copy.deepcopy(self.n_classes)
 
         for task in self.tasks:
@@ -185,7 +185,7 @@ class AbstainingClassifier:
                 dw.dict_maps["id2label"][task][idx] = f"abs_{task}"
 
         if self.ntask:
-            dw.num_classes.append(1)
+            dw.num_classes["Ntask"] = 1
 
     def abstention_loss(
         self, y_pred: torch.tensor, y_true: torch.tensor, idx: int, ntask_abs_prob: int = 1
@@ -345,7 +345,7 @@ class AbstainingClassifier:
         scale_factors = {task: None for task in self.tasks}
         stop_metrics = []
 
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
             if task == "Ntask":
                 continue
             # these are common to all tuning methods
@@ -394,7 +394,7 @@ class AbstainingClassifier:
             # threshold the scaling to be safe
             new_scale = min([new_scale, self.alpha_max_scale[task]])
             new_scale = max([new_scale, self.alpha_min_scale[task]])
-            self.alphas[i] = self.alphas[i] * new_scale
+            self.alphas[task] = self.alphas[task] * new_scale
 
             scale_factors[task] = new_scale
             stop_metrics.append(stop_i)
@@ -503,11 +503,11 @@ class AbstainingClassifier:
         with open(path, "a", encoding="utf-8") as abs_file:
             # write a single line with alphas, accuracy and abstention
             abs_file.write("Alphas:\n")
-            for i, task in enumerate(self.tasks):
-                abs_file.write(f"{task:>9s}: {self.alphas[i]:10.5f} ")
+            for task in self.tasks:
+                abs_file.write(f"{task:>9s}: {self.alphas[task]:10.5f} ")
             abs_file.write("\nDAC accuracy:\n")
-            for i, task in enumerate(self.tasks):
-                abs_file.write(f"{task:>9s} {self.accuracy[i]:10.5f} ")
+            for task in self.tasks:
+                abs_file.write(f"{task:>9s} {self.accuracy[task]:10.5f} ")
             abs_file.write("\nAbstention rates:\n")
             for k, v in self.abs_rates.items():
                 abs_file.write(f"{k:>9s}: {v:10.5f} ")

@@ -103,7 +103,7 @@ class MTHiSAN(nn.Module):
 
         # dense classification layers
         self.classify_layers = nn.ModuleDict()
-        for task, n in num_classes:
+        for task, n in num_classes.items():
             in_size = self.att_dim_total
             if self.boe:
                 in_size += embedding_matrix.shape[1]

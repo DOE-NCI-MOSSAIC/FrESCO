@@ -225,7 +225,7 @@ def run_ie(args=None):
     # 5. score predictions from pretrained model or model just trained
     save_path = None
     evaluator = predictions.ScoreModel(
-        valid_params.model_args, inference_loaders, dw, model, device, savepath=save_path
+        valid_params.model_args, inference_loaders, model, device, savepath=save_path
     )
     # Only need one of 5a, 5b, or 5c, depending on requirements
     # 5a. score a model
@@ -238,7 +238,7 @@ def run_ie(args=None):
 
     # 5c. score and predict
     evaluator.evaluate_model(
-        dw.dict_maps["id2label"], dac=dac, save_probs=valid_params["train_kwargs"]["save_probs"]
+        dw.dict_maps["id2label"], dac=dac, save_probs=valid_params.model_args["train_kwargs"]["save_probs"]
     )
 
     # this is the default args filename and path

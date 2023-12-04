@@ -204,7 +204,7 @@ def run_case_level(args):
     # check step 1 config file
     submodel_args.check_data_train_args(from_pretrained=True)
 
-    if clc_params.model_args["data_kwargs"]["tasks"] != submodel_args.model_args["data_kwargs"]["tasks"]:
+    if valid_params.model_args["data_kwargs"]["tasks"] != submodel_args.model_args["data_kwargs"]["tasks"]:
         raise exceptions.ParamError("Tasks must be the same for both original and clc models")
 
     if (
@@ -265,7 +265,6 @@ def run_case_level(args):
     dw.make_grouped_cases(
         outputs,
         valid_params.model_args,
-        device,
         reproducible=valid_params.model_args["data_kwargs"]["reproducible"],
         seed=seed,
     )
@@ -291,20 +290,20 @@ def run_case_level(args):
 
     # 5. score predictions from pretrained model or model just trained
     evaluator = predictions.ScoreModel(
-        valid_params.model_args, dw.grouped_cases, dw, model, device, clc_flag=clc_flag, savepath=None
+        valid_params.model_args, dw.grouped_cases, model, device, clc_flag=clc_flag, savepath=None
     )
 
     # Only need one of 5a, 5b, or 5c, depending on requirements
     # 5a. score a model
-    # evaluator.score(dac=dac)
+    evaluator.score(dac=dac)
 
     # 5b. make predictions
-    # evaluator.predict(dw.dict_maps['id2label'], save_probs=clc_params.model_args["train_kwargs"]["save_probs"])
+    evaluator.predict(dw.dict_maps['id2label'], save_probs=valid_params.model_args["train_kwargs"]["save_probs"])
 
     # 5c. score and predict
 
     evaluator.evaluate_model(
-        dw.dict_maps["id2label"], dac=dac, save_probs=clc_params.model_args["train_kwargs"]["save_probs"]
+        dw.dict_maps["id2label"], dac=dac, save_probs=valid_params.model_args["train_kwargs"]["save_probs"]
     )
 
     # this is the default args filename and path
