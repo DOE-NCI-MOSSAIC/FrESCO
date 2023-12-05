@@ -2,11 +2,9 @@
     Module predicting or scoring a trained model.
 """
 
-# import sys
 import datetime
 import os
 import pickle
-import time
 import torch
 
 import torch.nn.functional as F
@@ -18,10 +16,9 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-# import torchmetrics
 
 
-class ScoreModel():
+class ScoreModel:
     """
     Class to score and make predictions from a trained model.
 
@@ -56,12 +53,12 @@ class ScoreModel():
             metrics (dict): Dict of accuracy metrics, splits are key values.
 
     """
-    def __init__(self, model_args, data_loaders, model, device, savepath=None, clc_flag=False):
 
-        self.tasks = model_args['data_kwargs']['tasks']
-        self.abstain = model_args['abstain_kwargs']['abstain_flag']
-        self.ntask = model_args['abstain_kwargs']['ntask_flag']
-        self.mixed_precision = model_args['train_kwargs']['mixed_precision']
+    def __init__(self, model_args, data_loaders, model, device, savepath=None, clc_flag=False):
+        self.tasks = model_args["data_kwargs"]["tasks"]
+        self.abstain = model_args["abstain_kwargs"]["abstain_flag"]
+        self.ntask = model_args["abstain_kwargs"]["ntask_flag"]
+        self.mixed_precision = model_args["train_kwargs"]["mixed_precision"]
         self.clc = clc_flag
 
         self.model = model
@@ -70,26 +67,24 @@ class ScoreModel():
 
         # setup loss function
         if self.abstain:
-            reduction = 'none'
+            reduction = "none"
         else:
-            reduction = 'mean'
+            reduction = "mean"
 
         if self.clc:
             self.loss_fun = torch.nn.CrossEntropyLoss(reduction=reduction)
         else:
-            self.multilabel = model_args['train_kwargs']['multilabel']
-            if model_args['train_kwargs']['class_weights'] is not None:
-                with open(model_args['train_kwargs']['class_weights'],'rb') as f:
+            self.multilabel = model_args["train_kwargs"]["multilabel"]
+            if model_args["train_kwargs"]["class_weights"] is not None:
+                with open(model_args["train_kwargs"]["class_weights"], "rb") as f:
                     weights = pickle.load(f)
                 self.loss_funs = {}
                 for task in self.tasks:
                     weights_task = torch.FloatTensor(weights[task]).to(self.device)
                     if self.multilabel:
-                        self.loss_funs[task] = torch.nn.BCEWithLogitsLoss(weights_task,
-                                reduction=reduction)
+                        self.loss_funs[task] = torch.nn.BCEWithLogitsLoss(weights_task, reduction=reduction)
                     else:
-                        self.loss_funs[task] = torch.nn.CrossEntropyLoss(weights_task,
-                                reduction=reduction)
+                        self.loss_funs[task] = torch.nn.CrossEntropyLoss(weights_task, reduction=reduction)
             else:
                 self.loss_funs = {}
                 for task in self.tasks:
@@ -100,68 +95,52 @@ class ScoreModel():
 
         self.y_preds = {task: [] for task in self.tasks}
         self.y_trues = {task: [] for task in self.tasks}
-        self.logits = [[] for _ in range(len(self.tasks))]  # model output
+        self.logits = {task: [] for task in self.tasks}  # model output
 
         if savepath is None:
-            if not os.path.exists('predictions/'):
+            if not os.path.exists("predictions/"):
                 os.mkdir("predictions/")
-            self.savepath = "predictions/" + model_args['save_name']
+            self.savepath = "predictions/" + model_args["save_name"]
         else:
             tmp_path = savepath + "predictions/"
             if not os.path.exists(os.path.dirname(tmp_path)):
                 os.mkdir(os.path.dirname(tmp_path))
-            self.savepath = savepath + "predictions/" + model_args['save_name']
+            self.savepath = savepath + "predictions/" + model_args["save_name"]
 
         # define dicts for all scores
         self.scores = {}
         self.metrics = {}
 
-    def score(self, data_loaders=None, split=None, dac=None, training_phase=False):
+    def score(self, split=None, dac=None, training_phase=False):
         """
         Score a dataset in a PathReport class.
 
         Args:
-            data_loaders (dict): Dictionary of PathReport class which provides X, y, and index of the entry in the
-                original dataframe, to tie back to the metadata.
-                The keys are 'train', 'test', and 'val' (if provided).
             split (str): String, one of 'train', 'test', or 'val' if wanting to score only a specific split.
-            training_phase (bool): Sets model to train or eval mode.
             dac (Abstention class): Deep abstaining classifier class.
+            training_phase (bool): Sets model to train or eval mode.
 
         """
-
-        if data_loaders is not None:
-            print(("Error: score function requires a dict with keys 'train', 'test', or 'split'") +
-                  (" and values PathReport classes."))
-            return None
+        # only score a specific split
         if split is not None:
-            if isinstance(split, str) and split not in ['train', 'test', 'val']:
-                print(("Error: score function requires a dict with keys 'train', 'test', or 'split'") +
-                      (" and values PathReport classes."))
+            if isinstance(split, str) and split not in ["train", "test", "val"]:
+                print(
+                    ("Error: score function requires a dict with keys 'train', 'test', or 'split'")
+                    + (" and values PathReport classes.")
+                )
                 return None
-
-        if data_loaders is not None:
-            data = data_loaders
-        elif split is not None:
-            data = self.data_loaders[split]
-        elif data_loaders is None:
+            data = {}
+            data[split] = self.data_loaders[split]
+        else:
             data = self.data_loaders
 
-        if split is None:
-            for _split in data.keys():
-                print(f"\nScoring {_split} set", flush=True)
-                self.clear_pred_lists()
-                self._score(data[_split], _split, training_phase=training_phase, dac=dac)
+        for _split in data.keys():
+            print(f"\nScoring {_split} set", flush=True)
+            self.clear_pred_lists()
+            self._score(data[_split], _split, training_phase=training_phase, dac=dac)
 
-                self.metrics[f'{_split}'] = {}
-                self.metrics[f'{_split}'] = self.compute_scores(dac)
-        else:
-            print(f"\nScoring {split} set", flush=True)
-            self._score(data, split, training_phase=training_phase, dac=dac)
-
-            self.metrics[f'{split}'] = {}
-            self.metrics[f'{split}'] = self.compute_scores(dac)
-
+            self.metrics[f"{_split}"] = {}
+            self.metrics[f"{_split}"] = self.compute_scores(dac)
 
         self.save_scores()
         return None
@@ -194,25 +173,29 @@ class ScoreModel():
 
         with torch.no_grad():
             for batch in data_loader:
-                y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
-
                 if self.clc:
                     loss, logits = self.compute_clc_loss(batch, dac)
-                    max_seq_len = batch['X'].shape[1]
-                    batch_len = batch['len'].to(self.device)
-                    mask = torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
-                    idxs = torch.nonzero(mask, as_tuple=True)
+                    # max_seq_len = batch['X'].shape[1]
+                    batch_len = batch["len"].to(self.device)
 
+                    mask = (
+                        torch.arange(end=batch["X"].shape[1], device=self.device)[None, :]
+                        < batch_len[:, None]
+                    )
+
+                    idxs = torch.nonzero(mask, as_tuple=True)
+                    y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks if task != "Ntask"}
                     self.get_ys(logits, y, idxs)
                 else:
+                    y = {task: batch[f"y_{task}"].cpu().numpy() for task in self.tasks if task != "Ntask"}
                     loss, logits = self.compute_loss(batch, dac)
                     self.get_ys(logits, y)
 
                 losses.append(loss.item())
 
-        self.scores[f'{split}_loss'] = np.mean(losses)
+        self.scores[f"{split}_loss"] = np.mean(losses)
 
-    def compute_scores(self, dac=None):  # , y_preds, y_trues, logits):
+    def compute_scores(self, dac=None):
         """
         Compute metrics to evaluate a model.
         """
@@ -223,39 +206,44 @@ class ScoreModel():
 
         # per task metrics
         for i, task in enumerate(self.tasks):
-            logits = np.vstack(self.logits[i])
-            scores = scipy.special.softmax(logits, axis=-1)
+            if task == "Ntask":
+                continue
+            # logits = np.vstack(self.logits[i])
+            # scores = scipy.special.softmax(logits, axis=-1)
             if self.abstain:
-                _trues = np.asarray([v.item() for v in self.y_trues[task]],
-                                         dtype=np.int)[pred_idxs[task]]
-                _preds = np.asarray([v.item() for v in self.y_preds[task]],
-                                         dtype=np.int)[pred_idxs[task]]
+                _trues = np.asarray([v.item() for v in self.y_trues[task]], dtype=np.int64)[pred_idxs[task]]
+                _preds = np.asarray([v.item() for v in self.y_preds[task]], dtype=np.int64)[pred_idxs[task]]
             else:
                 _trues = [v.item() for v in self.y_trues[task]]
                 _preds = [v.item() for v in self.y_preds[task]]
 
-            metrics[f'{task}_micro'] = f1_score(_preds, _trues, average='micro')
-            metrics[f'{task}_macro'] = f1_score(_preds, _trues, average='macro')
+            metrics[f"{task}_micro"] = f1_score(_preds, _trues, average="micro")
+            metrics[f"{task}_macro"] = f1_score(_preds, _trues, average="macro")
 
-            metrics[f'{task}_accuracy'] = accuracy_score(_preds, _trues)
+            metrics[f"{task}_accuracy"] = accuracy_score(_preds, _trues)
 
-            metrics[f'{task}_precision_micro'] = precision_score(_preds, _trues, average='micro', zero_division=0)
-            metrics[f'{task}_precision_macro'] = precision_score(_preds, _trues, average='macro', zero_division=0)
+            metrics[f"{task}_precision_micro"] = precision_score(
+                _preds, _trues, average="micro", zero_division=0
+            )
+            metrics[f"{task}_precision_macro"] = precision_score(
+                _preds, _trues, average="macro", zero_division=0
+            )
 
-            metrics[f'{task}_recall_micro'] = recall_score(_preds, _trues, average='micro', zero_division=0)
-            metrics[f'{task}_recall_macro'] = recall_score(_preds, _trues, average='macro', zero_division=0)
-
+            metrics[f"{task}_recall_micro"] = recall_score(_preds, _trues, average="micro", zero_division=0)
+            metrics[f"{task}_recall_macro"] = recall_score(_preds, _trues, average="macro", zero_division=0)
 
         if self.abstain:
             _ = dac.compute_accuracy(self.y_trues, self.y_preds)
             for i, task in enumerate(self.tasks):
-                metrics[f"{task}_abs_acc"] = dac.accuracy[i]
+                if task == "Ntask":
+                    continue
+                metrics[f"{task}_abs_acc"] = dac.accuracy[task]
             for k, v in dac.abs_rates.items():
                 metrics[k] = v
             if self.ntask:
                 ntask_scores = dac.compute_ntask_accuracy(self.y_trues, self.y_preds)
-                metrics['ntask_acc'] = ntask_scores[0]
-                metrics['ntask_abs_rate'] = ntask_scores[1]
+                metrics["ntask_acc"] = ntask_scores[0]
+                metrics["ntask_abs_rate"] = ntask_scores[1]
 
         return metrics
 
@@ -264,7 +252,7 @@ class ScoreModel():
         Write scores (metrics), per task, to disk.
         """
         now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        with open(self.savepath + f"_metrics_{now}.csv", "w", encoding='utf-8') as f_out:
+        with open(self.savepath + f"_metrics_{now}.csv", "w", encoding="utf-8") as f_out:
             for split, loss in self.scores.items():
                 f_out.write(f"{split:10s}: {loss:7.6f}\n")
             f_out.write("\n")
@@ -277,17 +265,14 @@ class ScoreModel():
                         f_out.write("\n")
                 f_out.write("\n")
 
-    def predict(self,
-                id2label: dict,
-                data_loaders=None,
-                save_probs=False,
-                training_phase=False):
+    def predict(self, id2label: dict, split=None, save_probs=False, training_phase=False):
         """
         Make predictions from a trained model and save to disk.
 
         Args:
             id2label (dict): Mapping between integers and labels, e.g., C50.
-            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.
+            split (string): one of 'train', 'test', or 'val' if wanting to score only a
+                specific split, else None
             save_probs (bool): Save the final softmax layer to disk.
             training_phase (bool): Sets model to train or eval mode.
             dac (Abstention class): Deep abstaining classifier class.
@@ -298,39 +283,42 @@ class ScoreModel():
         If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.
         """
 
-        if not isinstance(data_loaders, dict) and data_loaders is not None:
-            print(("Error: predict function requires a dict with keys 'train', 'test', or 'split'") +
-                  (" and values PathReport classes."))
-            return None
-        if data_loaders is None:
-            data = self.data_loaders
+        # only predict on a specific split
+        if split is not None:
+            if isinstance(split, str) and split not in ["train", "test", "val"]:
+                print(
+                    ("Error: score function requires a dict with keys 'train', 'test', or 'split'")
+                    + (" and values PathReport classes.")
+                )
+                return None
+            data = {}
+            data[split] = self.data_loaders[split]
         else:
-            data = data_loaders
+            data = self.data_loaders
 
         preds_df = []
         if save_probs:
             probs_dfs = []
 
-        for split in data.keys():
-            print(f"\nPredicting {split} set", flush=True)
-            preds = self._predict(data[split], save_probs,
-                                  training_phase=training_phase)
-            preds["split"] = split
-            preds_df.append(self.preds_to_dataframe(preds, id2label))
+        for _split in data.keys():
+            print(f"\nPredicting {_split} set", flush=True)
+            preds = self._predict(data[_split], save_probs, training_phase=training_phase)
+            preds["split"] = _split
+            preds_df.append(self.preds_to_dataframe(preds, id2label, save_probs))
             if save_probs:
                 for task in self.tasks:
-                    preds[f"{task}_probs"] = preds['probs'][task]
+                    preds[f"{task}_probs"] = preds["probs"][task]
                     probs_dfs.append(self.probs_to_dataframe(preds, id2label))
         print("Saving predictions to csv", flush=True)
         df = pd.concat(preds_df, axis=0)
         # if you want the index, set index=True
         now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        df.to_csv(self.savepath + f"_preds_{now}.csv", float_format='%7.6f', index=False)
+        df.to_csv(self.savepath + f"_preds_{now}.csv", float_format="%7.6f", index=False)
 
         if save_probs:
             print("Saving softmax scores to csv")
             probs_final = pd.concat(probs_dfs, axis=0)
-            probs_final.to_csv(self.savepath + f"_probs_{now}.csv", float_format='%7.6f', index=False)
+            probs_final.to_csv(self.savepath + f"_probs_{now}.csv", float_format="%7.6f", index=False)
 
         return None
 
@@ -353,24 +341,26 @@ class ScoreModel():
             self.model.eval()
 
         preds = {}
-        preds['pred_ys'] = {task: [] for task in self.tasks}
-        preds['true_ys'] = {task: [] for task in self.tasks}
-        preds['probs'] = {task: [] for task in self.tasks}
-        preds['idxs'] = []
+        preds["pred_ys"] = {task: [] for task in self.tasks}
+        preds["true_ys"] = {task: [] for task in self.tasks}
+        preds["idxs"] = []
+
+        if save_probs:
+            preds["probs"] = {task: [] for task in self.tasks}
         if self.ntask:
-            preds['ntask_probs'] = []
+            preds["ntask_probs"] = []
 
         with torch.no_grad():
             for batch in data_loader:
-                preds['idxs'].extend(batch['index'].tolist())
                 if self.clc:
                     preds = self.get_clc_preds(batch, preds, save_probs)
                 else:
+                    preds["idxs"].extend(batch["index"].tolist())
                     preds = self.get_preds(batch, preds, save_probs)
 
         return preds
 
-    def preds_to_dataframe(self, preds: dict, id2label: dict):
+    def preds_to_dataframe(self, preds: dict, id2label: dict, save_probs: bool = False):
         """
         Save test set predictions as DataFrame.
 
@@ -387,19 +377,18 @@ class ScoreModel():
         df_list = []
 
         for task in self.tasks:
-            cols[f"{task}_pred"] = [i.tolist() for i in preds['pred_ys'][task]]
-            cols[f"{task}_probs"] = [i.tolist() for i in preds['probs'][task]]
-            if len(preds['true_ys'][task]) > 0:
-                cols[f"{task}_true"] = [i.tolist() for i in preds['true_ys'][task]]
+            cols[f"{task}_pred"] = [i.tolist() for i in preds["pred_ys"][task]]
+            if len(preds["true_ys"][task]) > 0:
+                cols[f"{task}_true"] = [i.tolist() for i in preds["true_ys"][task]]
                 col_ids = [f"{task}_true", f"{task}_pred"]
             else:
                 col_ids = [f"{task}_pred"]
             if self.clc:
                 df = pd.DataFrame(cols, columns=col_ids)
             else:
-                df = pd.DataFrame(cols, columns=col_ids, index=preds['idxs'])
+                df = pd.DataFrame(cols, columns=col_ids, index=preds["idxs"])
 
-            if len(preds['true_ys'][task]) > 0:
+            if len(preds["true_ys"][task]) > 0:
                 df[f"{task}_true"] = df[f"{task}_true"].map(id2label[task])
             df[f"{task}_pred"] = df[f"{task}_pred"].map(id2label[task])
             df_list.append(df)
@@ -407,9 +396,7 @@ class ScoreModel():
         final_df = pd.concat(df_list, axis=1)
         return final_df
 
-    def probs_to_dataframe(self,
-                           preds: dict,
-                           id2label: dict):
+    def probs_to_dataframe(self, preds: dict, id2label: dict):
         """
         Create dataframe with softmax scores and metadata from generated data.
 
@@ -423,17 +410,18 @@ class ScoreModel():
 
         cols = {}
         df_list = []
+        col_list = []
 
         for task in self.tasks:
-            cols[f"{task}_true"] = [i.tolist() for i in preds['true_ys'][task]]
-            cols[f"{task}_pred"] = [i.tolist() for i in preds['pred_ys'][task]]
-            cols[f"{task}_probs"] = [i.tolist() for i in preds['probs'][task]]
+            if task == "Ntask":
+                continue
+            cols[f"{task}_true"] = [i.tolist() for i in preds["true_ys"][task]]
+            cols[f"{task}_pred"] = [i.tolist() for i in preds["pred_ys"][task]]
+            cols[f"{task}_probs"] = [i.tolist() for i in preds["probs"][task]]
 
-            col_ids = [f"{task}_true", f'{task}_pred', f'{task}_probs']
-            if self.clc:
-                df = pd.DataFrame(cols, columns=col_ids)
-            else:
-                df = pd.DataFrame(cols, columns=col_ids, index=preds['idxs'])
+            col_ids = [f"{task}_true", f"{task}_pred", f"{task}_probs"]
+
+            df = pd.DataFrame(cols, columns=col_ids, index=preds["idxs"])
             df[f"{task}_true"] = df[f"{task}_true"].map(id2label[task])
             df[f"{task}_pred"] = df[f"{task}_pred"].map(id2label[task])
 
@@ -445,18 +433,14 @@ class ScoreModel():
 
         return final_df
 
-    def evaluate_model(self,
-                       id2label: dict,
-                       data_loaders=None,
-                       save_probs=False,
-                       dac=None,
-                       training_phase=False):
+    def evaluate_model(self, id2label: dict, split=None, save_probs=False, dac=None, training_phase=False):
         """
         Score and predict from trained model.
 
         Args:
             id2label (dict): Dictionary mapping between integers and labels, i.e., C50.
-            data_loaders (PathReports class): PathReports class with inputs, outputs, and indices in the original DataFrame.
+            split (string): one of 'train', 'test', or 'val' if wanting to evaluate only a
+                specific split
             save_probs (bool): Whether to save the final softmax layer to disk.
             dac (Abstention class): Deep abstaining classifier class.
             training_phase (bool): Sets the model to train or eval mode.
@@ -467,37 +451,39 @@ class ScoreModel():
         If data_loaders is None, we will score each split, train, test, and val. Otherwise, it will just score one data_loader split.
         """
 
-        if not isinstance(data_loaders, dict) and data_loaders is not None:
-            print(("Error: predict function requires a dict with keys 'train', 'test', or 'split'") +
-                  (" and values PathReport classes."))
-            return
-        if data_loaders is None:
-            data = self.data_loaders
+        # only predict on a specific split
+        if split is not None:
+            if isinstance(split, str) and split not in ["train", "test", "val"]:
+                print(
+                    ("Error: score function requires a dict with keys 'train', 'test', or 'split'")
+                    + (" and values PathReport classes.")
+                )
+                return None
+            data = {}
+            data[split] = self.data_loaders[split]
         else:
-            data = data_loaders
+            data = self.data_loaders
 
         preds_df = []
 
         if save_probs:
             probs_df = []
 
-        for split in data.keys():
-            print(f"\nEvaluating {split} set", flush=True)
+        for _split in data.keys():
+            print(f"\nEvaluating {_split} set", flush=True)
             self.clear_pred_lists()
-            preds = self.pred_and_score(data[split],
-                                        split,
-                                        save_probs=save_probs,
-                                        dac=dac,
-                                        training_phase=training_phase)
-            preds["split"] = split
+            preds = self.pred_and_score(
+                data[_split], _split, save_probs=save_probs, dac=dac, training_phase=training_phase
+            )
+            preds["split"] = _split
             preds_df.append(self.preds_to_dataframe(preds, id2label))
             if save_probs:
                 for task in self.tasks:
-                    preds[f"{task}_probs"] = preds['probs'][task]
+                    preds[f"{task}_probs"] = preds["probs"][task]
                     probs_df.append(self.probs_to_dataframe(preds, id2label))
 
-            self.metrics[f'{split}'] = {}
-            self.metrics[f'{split}'] = self.compute_scores(dac)
+            self.metrics[f"{_split}"] = {}
+            self.metrics[f"{_split}"] = self.compute_scores(dac)
 
         self.save_scores()
 
@@ -507,7 +493,7 @@ class ScoreModel():
 
         # if you want the index, set index=True
         now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        all_preds.to_csv(self.savepath + f"_preds{now}.csv", float_format='%7.6f', index=False)
+        all_preds.to_csv(self.savepath + f"_preds{now}.csv", float_format="%7.6f", index=False)
 
         if save_probs:
             print("Saving softmax scores to csv")
@@ -515,7 +501,7 @@ class ScoreModel():
             all_probs.sort_index(inplace=True)
 
             # if you want the index, set index=True
-            all_probs.to_csv(self.savepath + f"_probs_{now}.csv", float_format='%7.6f', index=False)
+            all_probs.to_csv(self.savepath + f"_probs_{now}.csv", float_format="%7.6f", index=False)
 
     def pred_and_score(self, data_loader, split, save_probs=False, dac=None, training_phase=False):
         """
@@ -542,54 +528,68 @@ class ScoreModel():
         loss = torch.tensor(0.0, device=self.device, dtype=torch.float32)
 
         preds = {}
-        preds['pred_ys'] = {task: [] for task in self.tasks}
-        preds['true_ys'] = {task: [] for task in self.tasks}
-        preds['probs'] = {task: [] for task in self.tasks}
-        preds['idxs'] = []
+        preds["pred_ys"] = {task: [] for task in self.tasks if task != "Ntask"}
+        preds["true_ys"] = {task: [] for task in self.tasks if task != "Ntask"}
+        preds["idxs"] = []
+
+        if save_probs:
+            preds["probs"] = {task: [] for task in self.tasks if task != "Ntask"}
 
         if self.ntask:
-            preds['ntask_probs'] = []
+            preds["ntask_probs"] = []
             dac.ntask_filter = []
 
         with torch.no_grad():
             for batch in data_loader:
-                y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
-                preds['idxs'].extend(batch['index'].tolist())
+                y = {
+                    task: batch[f"y_{task}"].to(self.device, non_blocking=True)
+                    for task in self.tasks
+                    if task != "Ntask"
+                }
 
                 if self.clc:
-                    max_seq_len = batch['X'].shape[1]
-                    batch_len = batch['len'].to(self.device)
+                    max_seq_len = batch["X"].shape[1]
+                    batch_len = batch["len"].to(self.device)
                     mask = torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
+
                     idxs = torch.nonzero(mask, as_tuple=True)
+
+                    # indices in original dataFrame to join with metadata: recordDocId,...
+                    _idxs = batch["index"][mask.cpu()]
+                    data_idxs = [i.item() for i in _idxs]
+                    preds["idxs"].extend(data_idxs)
 
                     loss, logits = self.compute_clc_loss(batch, dac)
                     self.get_ys(logits, y, idxs)
                 else:
+                    preds["idxs"].extend(batch["index"].tolist())
                     loss, logits = self.compute_loss(batch, dac)
                     self.get_ys(logits, y)
                 if self.ntask:
-                    ntask_abs = torch.sigmoid(logits[-1])[:, -1]
-                    preds['ntask_probs'].append(ntask_abs)
+                    ntask_abs = torch.sigmoid(logits["Ntask"])[:, -1]
+                    preds["ntask_probs"].append(ntask_abs)
 
-                for j, task in enumerate(self.tasks):
+                for task in self.tasks:
+                    if task == "Ntask":
+                        continue
                     # for scoring the model
                     if self.clc:
-                        preds['true_ys'][task].extend(y[f"{task}"][idxs])
-                        preds['pred_ys'][task].extend(torch.argmax(logits[j][idxs], dim=1))
+                        preds["true_ys"][task].extend(y[task][idxs])
+                        preds["pred_ys"][task].extend(torch.argmax(logits[task][idxs], dim=1))
                         if save_probs:
-                            preds['probs'][task].extend(F.softmax(logits[j][idxs], dim=1))
+                            preds["probs"][task].extend(F.softmax(logits[task][idxs], dim=1))
                     else:
-                        preds['true_ys'][task].extend(batch[f"y_{task}"])
-                        preds['pred_ys'][task].extend(torch.argmax(logits[j], dim=1))
+                        preds["true_ys"][task].extend(batch[f"y_{task}"])
+                        preds["pred_ys"][task].extend(torch.argmax(logits[task], dim=1))
                         if save_probs:
                             if self.multilabel:
-                                preds['probs'][task].extend(torch.logit(logits[j], dim=1))
+                                preds["probs"][task].extend(torch.logit(logits[task], dim=1))
                             else:
-                                preds['probs'][task].extend(F.softmax(logits[j], dim=1))
+                                preds["probs"][task].extend(F.softmax(logits[task], dim=1))
 
                 losses.append(loss.item())
 
-        self.scores[f'{split}_loss'] = np.mean(losses)
+        self.scores[f"{split}_loss"] = np.mean(losses)
 
         return preds
 
@@ -606,14 +606,14 @@ class ScoreModel():
             self.y_trues and self.y_preds populated.
         """
 
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
             if self.clc:
-                self.logits[i].extend(logits[i][idxs].detach().cpu().numpy())
-                self.y_preds[task].extend(torch.argmax(logits[i][idxs], axis=1))
+                self.logits[task].extend(logits[task][idxs].detach().cpu().numpy())
+                self.y_preds[task].extend(torch.argmax(logits[task][idxs], axis=1))
                 self.y_trues[task].extend(y[task][idxs])
             else:
-                self.logits[i].extend(logits[i].detach().cpu().numpy())
-                self.y_preds[task].extend(torch.argmax(logits[i], axis=1))
+                self.logits[task].extend(logits[task].detach().cpu().numpy())
+                self.y_preds[task].extend(torch.argmax(logits[task], axis=1))
                 if self.multilabel:
                     self.y_trues[task].extend(torch.argmax(y[task]), axis=1)
                 else:
@@ -626,10 +626,10 @@ class ScoreModel():
         Post-condition:
             Entries in self.y_trues and self.y_preds deleted.
         """
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
             del self.y_trues[task][:]
             del self.y_preds[task][:]
-            del self.logits[i][:]
+            del self.logits[task][:]
 
     def compute_loss(self, batch, dac=None):
         """
@@ -649,7 +649,7 @@ class ScoreModel():
         """
 
         X = batch["X"].to(self.device)
-        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks}
+        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks if task != "Ntask"}
         with torch.cuda.amp.autocast(enabled=self.mixed_precision):
             logits = self.model(X)
 
@@ -659,16 +659,18 @@ class ScoreModel():
                 ntask_abs = torch.sigmoid(logits[-1])[:, -1]
                 dac.get_ntask_filter(ntask_abs)
 
-            for i, task in enumerate(self.tasks):
+            for task in self.tasks:
+                if task == "Ntask":
+                    continue
                 if self.ntask:
                     if task in dac.ntask_tasks:
-                        loss += dac.abstention_loss(logits[i], y[task], i, ntask_abs_prob=ntask_abs)
+                        loss += dac.abstention_loss(logits[task], y[task], task, ntask_abs_prob=ntask_abs)
                     else:
-                        loss += dac.abstention_loss(logits[i], y[task], i)
+                        loss += dac.abstention_loss(logits[task], y[task], task)
                 elif self.abstain:  # just the dac
-                    loss += dac.abstention_loss(logits[i], y[task], i)
+                    loss += dac.abstention_loss(logits[task], y[task], task)
                 else:  # nothing fancy
-                    loss += self.loss_funs[task](logits[i], y[task])
+                    loss += self.loss_funs[task](logits[task], y[task])
 
             if self.ntask:
                 loss = loss - torch.mean(dac.ntask_alpha * torch.log(1 - ntask_abs + 1e-6))
@@ -693,8 +695,8 @@ class ScoreModel():
         """
 
         X = batch["X"].to(self.device)
-        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks}
-        batch_len = batch['len'].to(self.device)
+        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks if task != "Ntask"}
+        batch_len = batch["len"].to(self.device)
         max_seq_len = X.shape[1]
         logits = self.model(X, batch_len)
 
@@ -706,17 +708,19 @@ class ScoreModel():
             ntask_abs = torch.sigmoid(logits[-1][idxs])[:, -1]
             dac.get_ntask_filter(ntask_abs)
 
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
+            if task == "Ntask":
+                continue
             y_true = y[task][idxs]
-            y_pred = logits[i][idxs]
+            y_pred = logits[task][idxs]
 
             if self.ntask:
                 if task in dac.ntask_tasks:
-                    loss += dac.abstention_loss(y_pred, y_true, i, ntask_abs_prob=ntask_abs)
+                    loss += dac.abstention_loss(y_pred, y_true, task, ntask_abs_prob=ntask_abs)
                 else:
-                    loss += dac.abstention_loss(y_pred, y_true, i)
+                    loss += dac.abstention_loss(y_pred, y_true, task)
             elif self.abstain:  # just the dac
-                loss += dac.abstention_loss(y_pred, y_true, i)
+                loss += dac.abstention_loss(y_pred, y_true, task)
             else:  # nothing fancy
                 loss += self.loss_fun(y_pred, y_true)
 
@@ -746,19 +750,21 @@ class ScoreModel():
 
         if self.ntask:
             ntask_prob = torch.sigmoid(logits[-1])[:, -1].detach().cpu().numpy()
-            preds['ntask_probs'].extend(ntask_prob)
+            preds["ntask_probs"].extend(ntask_prob)
 
-        for j, task in enumerate(self.tasks):
-            outputs = logits[j].detach().cpu().numpy()
-            preds['pred_ys'][task].extend(np.argmax(outputs, axis=1))
-            if f'y_{task}' in batch.keys():
-                preds['true_ys'][task].extend(batch[f"y_{task}"].numpy())
+        for task in self.tasks:
+            if task == "Ntask":
+                continue
+            outputs = logits[task].detach().cpu().numpy()
+            preds["pred_ys"][task].extend(np.argmax(outputs, axis=1))
+            if f"y_{task}" in batch.keys():
+                preds["true_ys"][task].extend(batch[f"y_{task}"].numpy())
 
             if save_probs:
                 if self.multilabel:
-                    preds['probs'][task].extend(scipy.special.expit(outputs))  # logistic sigmoid
+                    preds["probs"][task].extend(scipy.special.expit(outputs))  # logistic sigmoid
                 else:
-                    preds['probs'][task].extend(scipy.special.softmax(outputs, axis=1))
+                    preds["probs"][task].extend(scipy.special.softmax(outputs, axis=1))
 
         return preds
 
@@ -774,23 +780,26 @@ class ScoreModel():
         """
 
         X = batch["X"].to(self.device)
-        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks}
-        batch_len = batch['len'].to(self.device)
-        max_seq_len = X.shape[1]
+        y = {task: batch[f"y_{task}"].to(self.device) for task in self.tasks if task != "Ntask"}
+        batch_len = batch["len"].to(self.device)
         logits = self.model(X, batch_len)
 
-        mask = torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
+        mask = torch.arange(end=X.shape[1], device=self.device)[None, :] < batch_len[:, None]
         idxs = torch.nonzero(mask, as_tuple=True)
+        _idxs = batch["index"][mask.cpu()]
+        data_idxs = [i.item() for i in _idxs]
+        # list of indices in orginal DataFrame
+        preds["idxs"].extend(data_idxs)
 
-        if self.ntask:
-            ntask_prob = torch.sigmoid(logits[-1][idxs])[:, -1]
-            preds['ntask_probs'].extend(ntask_prob)
-
-        for i, task in enumerate(self.tasks):
-            _preds = logits[i][idxs].detach().cpu().numpy()
-            preds['pred_ys'][task].extend(np.argmax(_preds, axis=1))
-            preds['true_ys'][task].extend(y[task][idxs])
-            if save_probs:
-                preds['probs'][task].extend(scipy.special.softmax(_preds, axis=1))
+        for task in self.tasks:
+            if self.ntask:
+                ntask_prob = torch.sigmoid(logits[-1][idxs])[:, -1]
+                preds["ntask_probs"].extend(ntask_prob)
+            else:
+                _preds = logits[task][idxs].detach().cpu().numpy()
+                preds["pred_ys"][task].extend(np.argmax(_preds, axis=1))
+                preds["true_ys"][task].extend(y[task][idxs])
+                if save_probs:
+                    preds["probs"][task].extend(scipy.special.softmax(_preds, axis=1))
 
         return preds

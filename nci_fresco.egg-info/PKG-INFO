@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: nci-fresco
+Version: 0.2.7
+Home-page: https://github.com/DOE-NCI-MOSSAIC/FrESCO
+Author: Adam Spannaus
+Author-email: spannausat@ornl.gov
+License: MIT
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.9
+License-File: LICENSE

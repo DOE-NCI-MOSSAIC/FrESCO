@@ -102,15 +102,15 @@ class MTHiSAN(nn.Module):
             self.boe_drop = nn.Dropout(p=0.5)
 
         # dense classification layers
-        self.classify_layers = nn.ModuleList()
-        for n in num_classes:
+        self.classify_layers = nn.ModuleDict()
+        for task, n in num_classes.items():
             in_size = self.att_dim_total
             if self.boe:
                 in_size += embedding_matrix.shape[1]
             l = nn.Linear(in_size, n)
             torch.nn.init.xavier_uniform_(l.weight)
             l.bias.data.fill_(0.0)
-            self.classify_layers.append(l)
+            self.classify_layers[task] = l
 
     def _split_heads(self, x):
         '''
@@ -297,9 +297,9 @@ class MTHiSAN(nn.Module):
             doc_embeds = torch.cat([doc_embeds, bag_embeds], 1)                   # batch x heads*dim+embed
 
         # generate logits for each task
-        logits = []
-        for l in self.classify_layers:
-            logits.append(l(doc_embeds))                                        # batch x num_classes
+        logits = {}
+        for task, l in self.classify_layers.items():
+            logits[task] = l(doc_embeds)                                        # batch x num_classes
 
         if return_embeds:
             return logits, doc_embeds

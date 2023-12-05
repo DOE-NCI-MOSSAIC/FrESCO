@@ -1,7 +1,6 @@
 """
     Module for training a deep learning model>
 """
-import copy
 import datetime
 import os
 import pickle
@@ -9,6 +8,7 @@ import sys
 import time
 
 import torch
+
 # import torch.nn.functional as F
 
 import numpy as np
@@ -20,12 +20,12 @@ from torch.profiler import profile, record_function, ProfilerActivity, schedule
 
 
 def trace_handler(p):
-    output = p.key_averages(group_by_stack_n=5).table(sort_by='self_cpu_time_total', row_limit=50)
+    output = p.key_averages(group_by_stack_n=5).table(sort_by="self_cpu_time_total", row_limit=50)
     print(output)
     p.export_chrome_trace(f"trace_{p.step_num}.json")
 
 
-class ModelTrainer():
+class ModelTrainer:
     """
     Training class definition.
 
@@ -57,34 +57,34 @@ class ModelTrainer():
 
         class_weights (list): List of floats for class weighting schemes.
     """
-    def __init__(self, kw_args, model, dw, class_weights=None, device=None, fold=None, clc=False):
 
-        path = 'savedmodels/' + kw_args['save_name'] + "/"
+    def __init__(self, kw_args, model, dw, class_weights=None, device=None, fold=None, clc=False):
+        path = "savedmodels/" + kw_args["save_name"] + "/"
         if not os.path.exists(path):
             os.makedirs(os.path.dirname(path))
 
         if fold is None:
-            self.fold = kw_args['data_kwargs']['fold_number']
+            self.fold = kw_args["data_kwargs"]["fold_number"]
         else:
             self.fold = fold
 
         self.savepath = path
-        self.savename = path + kw_args['save_name'] + f"_fold{self.fold}.h5"
+        self.savename = path + kw_args["save_name"] + f"_fold{self.fold}.h5"
         self.class_weights = class_weights
 
-        self.abstain = kw_args['abstain_kwargs']['abstain_flag']
-        self.ntask = kw_args['abstain_kwargs']['ntask_flag']
-        self.mixed_precision = kw_args['train_kwargs']['mixed_precision']
+        self.abstain = kw_args["abstain_kwargs"]["abstain_flag"]
+        self.ntask = kw_args["abstain_kwargs"]["ntask_flag"]
+        self.mixed_precision = kw_args["train_kwargs"]["mixed_precision"]
 
         # setup loss function
         if self.abstain:
-            reduction = 'none'
+            reduction = "none"
         else:
-            reduction = 'mean'
+            reduction = "mean"
 
         self.clc = clc
 
-        self.tasks = kw_args['data_kwargs']['tasks']
+        self.tasks = kw_args["data_kwargs"]["tasks"]
 
         self.model = model
         self.device = device
@@ -93,20 +93,18 @@ class ModelTrainer():
         if self.clc:
             self.loss_fun = torch.nn.CrossEntropyLoss(self.class_weights, reduction=reduction)
         else:
-            self.multilabel = kw_args['train_kwargs']['multilabel']
+            self.multilabel = kw_args["train_kwargs"]["multilabel"]
             # setup class weights
-            if kw_args['train_kwargs']['class_weights'] is not None:
-                with open(kw_args['train_kwargs']['class_weights'],'rb') as f:
+            if kw_args["train_kwargs"]["class_weights"] is not None:
+                with open(kw_args["train_kwargs"]["class_weights"], "rb") as f:
                     weights = pickle.load(f)
                 self.loss_funs = {}
                 for task in self.tasks:
                     weights_task = torch.FloatTensor(weights[task]).to(self.device, non_blocking=True)
                     if self.multilabel:
-                        self.loss_funs[task] = torch.nn.BCEWithLogitsLoss(weights_task,
-                                reduction=reduction)
+                        self.loss_funs[task] = torch.nn.BCEWithLogitsLoss(weights_task, reduction=reduction)
                     else:
-                        self.loss_funs[task] = torch.nn.CrossEntropyLoss(weights_task,
-                                reduction=reduction)
+                        self.loss_funs[task] = torch.nn.CrossEntropyLoss(weights_task, reduction=reduction)
             else:
                 self.loss_funs = {}
                 for task in self.tasks:
@@ -116,10 +114,10 @@ class ModelTrainer():
                         self.loss_funs[task] = torch.nn.CrossEntropyLoss(None, reduction=reduction)
 
         self.patience_ctr = 0
-        self.epochs = kw_args['train_kwargs']['max_epochs']
-        self.patience_stop = kw_args['train_kwargs']['patience']
+        self.epochs = kw_args["train_kwargs"]["max_epochs"]
+        self.patience_stop = kw_args["train_kwargs"]["patience"]
 
-        self.bs = kw_args['train_kwargs']['batch_per_gpu']
+        self.bs = kw_args["train_kwargs"]["batch_per_gpu"]
 
         if self.clc:
             self.y_preds = {task: [] for task in self.tasks}
@@ -158,19 +156,25 @@ class ModelTrainer():
             preds = self.y_preds
             trues = self.y_trues
 
-        for i, task in enumerate(self.tasks):
-            if logits[i].shape[0] == self.bs:
-                preds[task][idx*self.bs:(idx+1)*self.bs] = np.argmax(logits[i].detach().cpu().numpy(), 1)
+        for task in self.tasks:
+            if task == "Ntask":
+                continue
+            if logits[task].shape[0] == self.bs:
+                preds[task][idx * self.bs : (idx + 1) * self.bs] = np.argmax(
+                    logits[task].detach().cpu().numpy(), 1
+                )
                 if self.multilabel:
-                    trues[task][idx*self.bs:(idx+1)*self.bs] = np.argmax(y[task].detach().cpu().numpy(), 1)
+                    trues[task][idx * self.bs : (idx + 1) * self.bs] = np.argmax(
+                        y[task].detach().cpu().numpy(), 1
+                    )
                 else:
-                    trues[task][idx*self.bs:(idx+1)*self.bs] = y[task].detach().cpu().numpy()
+                    trues[task][idx * self.bs : (idx + 1) * self.bs] = y[task].detach().cpu().numpy()
             else:
-                preds[task][idx*self.bs:] = np.argmax(logits[i].detach().cpu().numpy(), 1)
+                preds[task][idx * self.bs :] = np.argmax(logits[task].detach().cpu().numpy(), 1)
                 if self.multilabel:
-                    trues[task][idx*self.bs:] = np.argmax(y[task].detach().cpu().numpy(), 1)
+                    trues[task][idx * self.bs :] = np.argmax(y[task].detach().cpu().numpy(), 1)
                 else:
-                    trues[task][idx*self.bs:] = y[task].detach().cpu().numpy()
+                    trues[task][idx * self.bs :] = y[task].detach().cpu().numpy()
 
     def profile_fit_model(self, train_loader, dac=None):
         """
@@ -182,7 +186,7 @@ class ModelTrainer():
         """
 
         for epoch in range(self.epochs):
-            print(f'\nepoch: {epoch+1}', flush=True)
+            print(f"\nepoch: {epoch+1}", flush=True)
             self.model.train()
             if self.ntask:
                 dac.ntask_filter = []
@@ -194,21 +198,19 @@ class ModelTrainer():
             start_time = time.time()
             with profile(
                 activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-                schedule=torch.profiler.schedule(
-                    wait=1,
-                    warmup=1,
-                    active=5),
-                on_trace_ready=trace_handler
+                schedule=torch.profiler.schedule(wait=1, warmup=1, active=5),
+                on_trace_ready=trace_handler,
             ) as p:
                 for i, batch in enumerate(train_loader):
                     self.opt.zero_grad()
                     X = batch["X"].to(self.device, non_blocking=True)
-                    y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True)
-                         for task in self.tasks}
+                    y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
                     if self.clc:
-                        batch_len = batch['len'].to(self.device, non_blocking=True)
+                        batch_len = batch["len"].to(self.device, non_blocking=True)
                         max_seq_len = X.shape[1]
-                        mask = torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
+                        mask = (
+                            torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
+                        )
                         idxs = torch.nonzero(mask, as_tuple=True)
                         logits = self.model(X, batch_len)
                         loss = self.compute_clc_loss(logits, y, idxs, dac)
@@ -240,11 +242,10 @@ class ModelTrainer():
 
         all_scores = {}
         best_loss = np.inf
-        model_weights = None
         scaler = torch.cuda.amp.GradScaler(enabled=self.mixed_precision)
 
         for epoch in range(self.epochs):
-            print(f'\nepoch: {epoch+1}', flush=True)
+            print(f"\nepoch: {epoch+1}", flush=True)
             self.model.train()
             if self.ntask:
                 dac.ntask_filter = []
@@ -259,12 +260,12 @@ class ModelTrainer():
                 with torch.cuda.amp.autocast(enabled=self.mixed_precision):
                     self.opt.zero_grad()
                     X = batch["X"].to(self.device, non_blocking=True)
-                    y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True)
-                         for task in self.tasks}
+                    y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True) for task in self.tasks}
                     if self.clc:
-                        batch_len = batch['len'].to(self.device, non_blocking=True)
-                        max_seq_len = X.shape[1]
-                        mask = torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
+                        batch_len = batch["len"].to(self.device, non_blocking=True)
+                        mask = (
+                            torch.arange(end=X.shape[1], device=self.device)[None, :] < batch_len[:, None]
+                        )
                         idxs = torch.nonzero(mask, as_tuple=True)
                         logits = self.model(X, batch_len)
                         loss = self.compute_clc_loss(logits, y, idxs, dac)
@@ -285,35 +286,39 @@ class ModelTrainer():
             print(f"Training loss: {loss_np:.6f}")
 
             train_scores = self.train_metrics(dac)
-            train_scores['train_loss'] = loss_np
-            all_scores[f'epoch_{epoch}_train_scores'] = train_scores
+            train_scores["train_loss"] = loss_np
+            all_scores[f"epoch_{epoch}_train_scores"] = train_scores
 
             print(f"\nepoch {epoch+1} validation\n", flush=True)
             stop, val_scores = self.score(epoch, val_loader=val_loader, dac=dac)
-            all_scores[f'epoch_{epoch}_val_scores'] = val_scores
+            all_scores[f"epoch_{epoch}_val_scores"] = val_scores
 
-            if val_scores['val_loss'][0] < best_loss:
-                best_loss = val_scores['val_loss'][0]
-                torch.save({'epoch': epoch,
-                            'model_state_dict': self.model.state_dict(),
-                            'opt_state_dict': self.opt.state_dict(),
-                            'val_loss': best_loss
-                            }, self.savename)
+            if val_scores["val_loss"][0] < best_loss:
+                best_loss = val_scores["val_loss"][0]
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "model_state_dict": self.model.state_dict(),
+                        "opt_state_dict": self.opt.state_dict(),
+                        "val_loss": best_loss,
+                    },
+                    self.savename,
+                )
 
             if stop:
                 print(f"saving to {self.savename}", flush=True)
                 # loading weights of best model
                 checkpoint = torch.load(self.savename)
-                self.model.load_state_dict(checkpoint['model_state_dict'])
+                self.model.load_state_dict(checkpoint["model_state_dict"])
                 scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
                 with open(self.savepath + scores, "wb") as f_out:
                     pickle.dump(all_scores, f_out, pickle.HIGHEST_PROTOCOL)
                 break
         if epoch + 1 == self.epochs:
-            print('\nModel training hit max epochs, not converged')
+            print("\nModel training hit max epochs, not converged")
             # loading weights of best model
             checkpoint = torch.load(self.savename)
-            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.model.load_state_dict(checkpoint["model_state_dict"])
             print(f"saving to {self.savename}", flush=True)
             scores = f"epoch_{epoch}_scores_fold{self.fold}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pkl"
             with open(self.savepath + scores, "wb") as f_out:
@@ -330,43 +335,60 @@ class ModelTrainer():
             pred_idxs = dac.compute_accuracy(self.y_trues, self.y_preds)
             if self.ntask:
                 ntask_scores = dac.compute_ntask_accuracy(self.y_trues, self.y_preds)
-                scores['ntask'] = {}
-                scores['ntask']['ntask_acc'] = ntask_scores[0]
-                scores['ntask']['ntask_abs_rate'] = ntask_scores[1]
+                scores["ntask"] = {}
+                scores["ntask"]["ntask_acc"] = ntask_scores[0]
+                scores["ntask"]["ntask_abs_rate"] = ntask_scores[1]
 
         for task in self.tasks:
+            if task == "Ntask":
+                continue
             _trues = self.y_trues[task]
             _preds = self.y_preds[task]
 
             if self.abstain:
+                scores[task]["abs_rate"] = dac.abs_rates[f"{task}_abs"]
                 _true = np.array(_trues)
                 _pred = np.array(_preds)
-                scores[task]['macro'] = f1_score(_true[pred_idxs[task]],
-                                                 _pred[pred_idxs[task]],
-                                                 average='macro')
-                scores[task]['micro'] = f1_score(_true[pred_idxs[task]],
-                                                 _pred[pred_idxs[task]],
-                                                 average='micro')
-                scores[task]['abs_rate'] = dac.abs_rates[f'{task}_abs']
+                if pred_idxs[task].shape[0] > 0:
+                    scores[task]["macro"] = f1_score(
+                        _true[pred_idxs[task]],
+                        _pred[pred_idxs[task]],
+                        average="macro",
+                        zero_division=0,
+                    )
+                    scores[task]["micro"] = f1_score(
+                        _true[pred_idxs[task]],
+                        _pred[pred_idxs[task]],
+                        average="micro",
+                        zero_division=0,
+                    )
+                else:
+                    scores[task]["micro"] = 0.0
+                    scores[task]["macro"] = 0.0
             else:
-                scores[task]['macro'] = f1_score(_trues, _preds, average='macro')
-                scores[task]['micro'] = f1_score(_trues, _preds, average='micro')
+                scores[task]["macro"] = f1_score(_trues, _preds, average="macro")
+                scores[task]["micro"] = f1_score(_trues, _preds, average="micro")
 
         # print/write stats
         if self.abstain:
             dac.print_abs_header()
             for task in self.tasks:
-                dac.print_abs_stats(task, scores[task]['micro'],
-                                    scores[task]['macro'],
-                                    scores[task]['abs_rate'])
+                dac.print_abs_stats(
+                    task,
+                    scores[task]["micro"],
+                    scores[task]["macro"],
+                    scores[task]["abs_rate"],
+                )
         else:
             print(f"{'task':>12s}: {'micro':>10s} {'macro':>12s}")
             for task in self.tasks:
                 print(f"{task:>12s}: {scores[task]['micro']:>10.4f}, {scores[task]['macro']:>10.4f}")
 
         if self.ntask:
-            print(f"{'ntask':12s}: {ntask_scores[0]:10.4f}, " +
-                  f"{ntask_scores[0]:10.4f}, {ntask_scores[1]:10.4f}")
+            print(
+                f"{'ntask':12s}: {ntask_scores[0]:10.4f}, "
+                + f"{ntask_scores[0]:10.4f}, {ntask_scores[1]:10.4f}"
+            )
 
         return scores
 
@@ -380,8 +402,12 @@ class ModelTrainer():
             dac (Abstention): Deep abstaining classifier class. Are we using the dac?
         """
 
-        val_scores = {'val_loss': [], 'abs_stop_vals': [],
-                      'val_micro': [], 'val_macro': []}
+        val_scores = {
+            "val_loss": [],
+            "abs_stop_vals": [],
+            "val_micro": [],
+            "val_macro": [],
+        }
         if self.abstain:
             abs_scores = {}
             # abs_stop_vals = []
@@ -401,17 +427,22 @@ class ModelTrainer():
             pred_idxs = dac.compute_accuracy(self.val_trues, self.val_preds)
             if self.ntask:
                 ntask_scores = dac.compute_ntask_accuracy(self.val_trues, self.val_preds)
-                scores['ntask'] = {}
-                scores['ntask']['ntask_acc'] = ntask_scores[0]
-                scores['ntask']['ntask_abs_rate'] = ntask_scores[1]
+                scores["ntask"] = {}
+                scores["ntask"]["ntask_acc"] = ntask_scores[0]
+                scores["ntask"]["ntask_abs_rate"] = ntask_scores[1]
 
         for task in self.tasks:
+            if task == "Ntask":
+                continue
             _trues = self.val_trues[task]
             _preds = self.val_preds[task]
             if self.abstain:
-                score, _abs_scores = self.compute_scores(np.array(_trues)[pred_idxs[task]],
-                                                         np.array(_preds)[pred_idxs[task]],
-                                                         task, dac)
+                score, _abs_scores = self.compute_scores(
+                    np.array(_trues)[pred_idxs[task]],
+                    np.array(_preds)[pred_idxs[task]],
+                    task,
+                    dac,
+                )
                 abs_scores[task] = _abs_scores
             else:
                 score, _ = self.compute_scores(_trues, _preds, task)
@@ -424,25 +455,28 @@ class ModelTrainer():
                 ntask_scale, ntask_stop_val = dac.modify_ntask_alpha()
                 abs_stop_vals.append(ntask_stop_val)
 
-            stop, _ = self.stop_metrics(scores['val_loss'],
-                                        epoch,
-                                        abs_stop_vals,
-                                        dac)
-            val_scores['abs_stop_vals'].append(abs_stop_vals)
+            stop, _ = self.stop_metrics(scores["val_loss"], epoch, abs_stop_vals, dac)
+            val_scores["abs_stop_vals"].append(abs_stop_vals)
         else:
-            stop, _ = self.stop_metrics(scores['val_loss'], epoch)
+            stop, _ = self.stop_metrics(scores["val_loss"], epoch)
 
-        val_scores['val_loss'].append(scores['val_loss'])
-        macro = {task: scores[task]['macro'] for task in self.tasks}
-        micro = {task: scores[task]['micro'] for task in self.tasks}
-        val_scores['val_macro'].append(macro)
-        val_scores['val_micro'].append(micro)
+        val_scores["val_loss"].append(scores["val_loss"])
+        macro = {task: scores[task]["macro"] for task in self.tasks}
+        micro = {task: scores[task]["micro"] for task in self.tasks}
+        val_scores["val_macro"].append(macro)
+        val_scores["val_micro"].append(micro)
 
         # print/write stats
         if self.ntask:
-            self.output_scores(scores, abs_scores=abs_scores,
-                               dac=dac, stop_vals=abs_stop_vals, alpha_scale=alpha_scale,
-                               ntask_stop_val=ntask_stop_val, ntask_alpha_scale=ntask_scale)
+            self.output_scores(
+                scores,
+                abs_scores=abs_scores,
+                dac=dac,
+                stop_vals=abs_stop_vals,
+                alpha_scale=alpha_scale,
+                ntask_stop_val=ntask_stop_val,
+                ntask_alpha_scale=ntask_scale,
+            )
         elif self.abstain:
             self.output_scores(scores, abs_scores, dac, abs_stop_vals, alpha_scale)
         else:
@@ -450,10 +484,10 @@ class ModelTrainer():
 
         if not stop and self.abstain:
             # update alphas
-            val_scores['abs_stop_vals'].append(abs_stop_vals)
+            val_scores["abs_stop_vals"].append(abs_stop_vals)
             if self.ntask:
                 print(f"Updated ntask alpha: {dac.ntask_alpha:0.6f}")
-            print('Updated alphas: ', dac.alphas)
+            print("Updated alphas: ", dac.alphas)
 
         return stop, val_scores
 
@@ -483,28 +517,30 @@ class ModelTrainer():
             for i, batch in enumerate(data_loader):
                 with torch.cuda.amp.autocast(enabled=self.mixed_precision):
                     X = batch["X"].to(self.device, non_blocking=True)
-                    y = {task: batch[f"y_{task}"].to(self.device, non_blocking=True)
-                         for task in self.tasks}
+                    y = {
+                        task: batch[f"y_{task}"].to(self.device, non_blocking=True)
+                        for task in self.tasks
+                        if task != "Ntask"
+                    }
                     if self.clc:
-                        batch_len = batch['len'].to(self.device, non_blocking=True)
-                        max_seq_len = X.shape[1]
-                        mask = torch.arange(end=max_seq_len, device=self.device)[None, :] < batch_len[:, None]
+                        batch_len = batch["len"].to(self.device, non_blocking=True)
+                        mask = (
+                            torch.arange(end=X.shape[1], device=self.device)[None, :] < batch_len[:, None]
+                        )
                         idxs = torch.nonzero(mask, as_tuple=True)
                         logits = self.model(X, batch_len)
-                        losses[i] = self.compute_clc_loss(logits, y, idxs, dac, val=True).detach().cpu().numpy()
+                        losses[i] = (
+                            self.compute_clc_loss(logits, y, idxs, dac, val=True).detach().cpu().numpy()
+                        )
                     else:
                         logits = self.model(X)
                         losses[i] = self.compute_loss(logits, y, dac).detach().cpu().numpy()
                         self.get_ys(logits, y, i, val=True)
-        scores['val_loss'] = np.mean(losses)
+        scores["val_loss"] = np.mean(losses)
 
         return scores
 
-    def compute_scores(self,
-                       y_true,
-                       y_pred,
-                       task,
-                       dac=None):
+    def compute_scores(self, y_true, y_pred, task, dac=None):
         """
         Compute macro/micro scores per task.
 
@@ -519,31 +555,37 @@ class ModelTrainer():
         """
         scores = {}
         _y_pred = [y.item() for y in y_pred]
-        micro = f1_score(y_true, _y_pred, average='micro')
-        scores['micro'] = micro
-        macro = f1_score(y_true, _y_pred, average='macro')
-        scores['macro'] = macro
+        if len(y_true) > 0 and len(_y_pred) > 0:
+            micro = f1_score(y_true, _y_pred, average="micro", zero_division=0)
+            macro = f1_score(y_true, _y_pred, average="macro", zero_division=0)
+        else:
+            micro = 0.0
+            macro = 0.0
+        scores["micro"] = micro
+        scores["macro"] = macro
 
         if self.abstain:
-            abs_scores = {}  # dac.compute_abs_scores(y_true, _y_pred, tasks)
-            abs_scores['macro'] = macro
-            abs_scores['micro'] = micro
-            abs_scores['stop_metrics'] = macro
-            abs_scores['abs_rates'] = dac.abs_rates[f"{task}_abs"]
-            abs_scores['abs_acc'] = accuracy_score(y_true, _y_pred)
+            abs_scores = {}
+            abs_scores["macro"] = macro
+            abs_scores["micro"] = micro
+            abs_scores["stop_metrics"] = macro
+            abs_scores["abs_rates"] = dac.abs_rates[f"{task}_abs"]
+            abs_scores["abs_acc"] = accuracy_score(y_true, _y_pred)
         else:
             abs_scores = None
 
         return scores, abs_scores
 
-    def output_scores(self,
-                      scores,
-                      abs_scores=None,
-                      dac=None,
-                      stop_vals=None,
-                      alpha_scale=None,
-                      ntask_stop_val=None,
-                      ntask_alpha_scale=None):
+    def output_scores(
+        self,
+        scores,
+        abs_scores=None,
+        dac=None,
+        stop_vals=None,
+        alpha_scale=None,
+        ntask_stop_val=None,
+        ntask_alpha_scale=None,
+    ):
         """
         Print stats to the terminal.
 
@@ -557,22 +599,35 @@ class ModelTrainer():
 
         """
         if self.abstain:
-            abs_micros = [abs_scores[task]['micro'] for task in self.tasks]
+            abs_micros = [abs_scores[task]["micro"] for task in self.tasks if task != "Ntask"]
             dac.write_abs_stats(abs_micros)
 
             dac.print_abs_tune_header()
             for i, task in enumerate(self.tasks):
-                dac.print_abs_tune_stats(task, scores[task]['macro'],
-                                         scores[task]['micro'], dac.min_acc[task],
-                                         abs_scores[task]['abs_rates'], dac.max_abs[task],
-                                         dac.alphas[i], alpha_scale[task],
-                                         stop_vals[i])
-            # print ntask stats
-            if self.ntask:
-                dac.print_abs_tune_stats('ntask', dac.ntask_acc, dac.ntask_acc,
-                                         dac.ntask_min_acc, dac.ntask_abs_rate,
-                                         dac.ntask_max_abs, dac.ntask_alpha,
-                                         ntask_alpha_scale, ntask_stop_val)
+                if task == "Ntask":
+                    dac.print_abs_tune_stats(
+                        "ntask",
+                        dac.ntask_acc,
+                        dac.ntask_acc,
+                        dac.ntask_min_acc,
+                        dac.ntask_abs_rate,
+                        dac.ntask_max_abs,
+                        dac.ntask_alpha,
+                        ntask_alpha_scale,
+                        ntask_stop_val,
+                    )
+                else:
+                    dac.print_abs_tune_stats(
+                        task,
+                        scores[task]["macro"],
+                        scores[task]["micro"],
+                        dac.min_acc[task],
+                        abs_scores[task]["abs_rates"],
+                        dac.max_abs[task],
+                        dac.alphas[task],
+                        alpha_scale[task],
+                        stop_vals[i],
+                    )
         else:
             print(f"{'task':>12s}: {'micro':>10s} {'macro':>12s}")
             self.print_stats(scores)
@@ -598,16 +653,18 @@ class ModelTrainer():
         if self.ntask:
             ntask_abs = torch.sigmoid(logits[-1])[:, -1]
             dac.get_ntask_filter(ntask_abs)
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
+            if task == "Ntask":
+                continue
             if self.ntask:
                 if task in dac.ntask_tasks:
-                    loss += dac.abstention_loss(logits[i], y[task], i, ntask_abs_prob=ntask_abs)
+                    loss += dac.abstention_loss(logits[task], y[task], task, ntask_abs_prob=ntask_abs)
                 else:
-                    loss += dac.abstention_loss(logits[i], y[task], i)
+                    loss += dac.abstention_loss(logits[task], y[task], task)
             elif self.abstain:  # just the dac
-                loss += dac.abstention_loss(logits[i], y[task], i)
+                loss += dac.abstention_loss(logits[task], y[task], task)
             else:  # nothing fancy
-                loss += self.loss_funs[task](logits[i], y[task])
+                loss += self.loss_funs[task](logits[task], y[task])
 
         if self.ntask:
             loss = loss - torch.mean(dac.ntask_alpha * torch.log(1 - ntask_abs + 1e-6))
@@ -643,17 +700,19 @@ class ModelTrainer():
             ntask_abs = torch.sigmoid(logits[-1][idxs])[:, -1]
             dac.get_ntask_filter(ntask_abs)
 
-        for i, task in enumerate(self.tasks):
+        for task in self.tasks:
+            if task == "Ntask":
+                continue
             y_true = y[task][idxs]
-            y_pred = logits[i][idxs]
+            y_pred = logits[task][idxs]
 
             if self.ntask:
                 if task in dac.ntask_tasks:
-                    loss += dac.abstention_loss(y_pred, y_true, i, ntask_abs_prob=ntask_abs)
+                    loss += dac.abstention_loss(y_pred, y_true, task, ntask_abs_prob=ntask_abs)
                 else:
-                    loss += dac.abstention_loss(y_pred, y_true, i)
+                    loss += dac.abstention_loss(y_pred, y_true, task)
             elif self.abstain:  # just the dac
-                loss += dac.abstention_loss(y_pred, y_true, i)
+                loss += dac.abstention_loss(y_pred, y_true, task)
             else:  # nothing fancy
                 loss += self.loss_fun(y_pred, y_true)
             y_preds[task].extend(np.argmax(y_pred.detach().cpu().numpy(), 1))
@@ -687,17 +746,17 @@ class ModelTrainer():
         If not abstaining, patience counter is updated.
         """
 
+        stop = False
+
         if self.abstain:
             stop_val = dac.check_abs_stop_metric(np.asarray(stop_metrics))
             if stop_val < dac.stop_limit:
-                print(f'Stopping criterion reached: {stop_val:.4f} < {dac.stop_limit:.4f}')
+                print(f"Stopping criterion reached: {stop_val:.4f} < {dac.stop_limit:.4f}")
                 stop = True
             else:
-                print(f'Stopping criterion not reached: {stop_val:.4f} > {dac.stop_limit:.4f}')
-                stop = False
+                print(f"Stopping criterion not reached: {stop_val:.4f} > {dac.stop_limit:.4f}")
         else:
             stop_val = None
-            stop = False
             print(f"epoch {epoch+1:d} val loss: {loss:.8f}, best val loss: {self.best_loss:.8f}")
             # use patience based on val loss
             if loss < self.best_loss:
@@ -707,7 +766,7 @@ class ModelTrainer():
                 self.patience_ctr += 1
                 if self.patience_ctr >= self.patience_stop:
                     stop = True
-            print(f'patience counter is at {self.patience_ctr} of {self.patience_stop}')
+            print(f"patience counter is at {self.patience_ctr} of {self.patience_stop}")
         return stop, stop_val
 
     def print_stats(self, scores):
