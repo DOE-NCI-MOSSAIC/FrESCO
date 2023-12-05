@@ -66,6 +66,7 @@ def load_model(model_dict, device, dw):
     if torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
 
+    model_state_dict = model_dict["model_state_dict"]
     model_dict = {k: v for k, v in model_dict.items() if k != "metadata_package"}
     # Line 83 is needed if loading trained model on different system than
     # that which the model was trained on, ie dufferent number of gpus, gout train, load on cpu, etc
@@ -183,7 +184,7 @@ def main():
     model = load_model(model_dict, device, dw)
 
     # 5. score predictions from pretrained model or model just trained
-    evaluator = predictions.ScoreModel(model_args.model_args, data_loaders, dw, model, device)
+    evaluator = predictions.ScoreModel(model_args.model_args, data_loaders, model, device)
 
     #  make predictions
     evaluator.predict(

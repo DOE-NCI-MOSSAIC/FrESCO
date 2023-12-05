@@ -28,6 +28,7 @@ train_kwargs:
   max_epochs: 100
   patience: 5
   mixed_precision: False
+  save_probs: False
   class_weights: #  './weights/P3B3_weights.pickle' # path, dict, or blank
   # copied from data_kwargs
   # multilabel: False
