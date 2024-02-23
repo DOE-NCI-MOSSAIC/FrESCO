@@ -188,7 +188,7 @@ class AbstainingClassifier:
             dw.num_classes["Ntask"] = 1
 
     def abstention_loss(
-        self, y_pred: torch.tensor, y_true: torch.tensor, idx: int, ntask_abs_prob: int = 1
+        self, y_pred: torch.tensor, y_true: torch.tensor, idx: int, ntask_abs_prob: float = 1
     ) -> torch.tensor:
         """
         Compute DAC loss.
