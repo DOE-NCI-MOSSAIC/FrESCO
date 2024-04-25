@@ -12,6 +12,16 @@ data_kwargs:
   # tasks: ['sentiment']  # ["task_1", "task_2", "task_3", "task_4"]
   fold_number: 0  # 0-based fold indexing
   data_path: '../data/P3B3/'
+  # data_pipeline: 'gaudi' # gaudi or mod_pipeline
+  # # data_kwargs used for gaudi generated data
+  # data_files:
+  #   data:
+  #     - 'gaudi_processed_data.parquet'
+  #   vocab: 'id_to_token.json'
+  #   id_to_label_mapping: 'id_to_label.json'
+  #   embeddings: 'embedding_matrix.npy'
+  #   metadata: 
+  #     - 'metadata.json'
   subset_proportion: 1.0
   add_noise_flag: True
   add_noise: 0.1
