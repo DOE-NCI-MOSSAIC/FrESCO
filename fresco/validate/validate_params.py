@@ -198,7 +198,6 @@ class ValidateParams:
                 "embeddings_scale",
             ],
             "train_kwargs": [
-                "keywords",
                 "max_epochs",
                 "patience",
                 "class_weights",
