@@ -8,7 +8,6 @@ import datetime
 import json
 import math
 import os
-
 from typing import Set
 
 import yaml
@@ -20,14 +19,21 @@ class ValidateParams:
     """Class to validate model-specific paramaters for MOSSAIC models.
 
     Args:
-        cli_args: argparse list of command line args.
-        data_source (str): Indicates where the data will come from. Should be one of:
+        cli_args: argparse list of command line args
+        data_source (str): indicates where the data will come from,
+        should be one of
             - pre-generated: data_args.yml will indicate the source.
 
     Post-condition: model_args dict loaded and sanity checked.
     """
 
-    def __init__(self, cli_args, data_source: str = "pre-generated", model_args: dict = None):
+    def __init__(
+        self,
+        cli_args,
+        data_source: str = "pre-generated",
+        model_args: dict = None,
+    ):
+
         if model_args is None:
             if len(cli_args.model_args) > 0:
                 mod_args_file = cli_args.model_args
@@ -91,7 +97,9 @@ class ValidateParams:
             self.model_args["data_kwargs"]["subset_proportion"] > 1
             or self.model_args["data_kwargs"]["subset_proportion"] <= 0
         ):
-            raise exceptions.ParamError("subset proportion must be float value between 0 and 1.")
+            raise exceptions.ParamError(
+                "subset proportion must be float value between 0 and 1."
+            )
 
         if not isinstance(self.model_args["data_kwargs"]["batch_per_gpu"], int):
             raise exceptions.ParamError("Batch size must be an int value.")
@@ -189,7 +197,14 @@ class ValidateParams:
                 "bag_of_embeddings",
                 "embeddings_scale",
             ],
-            "train_kwargs": ["max_epochs", "patience", "mixed_precision", "class_weights", "save_probs"],
+            "train_kwargs": [
+                "keywords",
+                "max_epochs",
+                "patience",
+                "class_weights",
+                "mixed_precision",
+                "save_probs",
+            ],
         }
 
         if from_pretrained:
@@ -361,40 +376,6 @@ class ValidateParams:
                     "Invalid path; please provide a valid path for " + "class weights"
                 )
 
-    def check_data_files(self, data_path=None):
-        """
-        Verify the necessary data files exist.
-
-        Args:
-            data_path (str): From argparser, optional path to dataset.
-
-        Note: Setting data_path will override the path set in model_args.yml.
-        """
-        data_files = ["data_fold.csv", "word_embeds_fold.npy", "id2labels_fold.json"]
-
-        if data_path is not None:  # reading from argparser
-            if os.path.exists(os.path.dirname(data_path)):
-                _data_path = data_path
-            else:
-                raise exceptions.ParamError(f"user defined data_path {data_path} does not exist, exiting")
-        else:
-            _data_path = self.model_args["data_kwargs"]["data_path"]
-        fold = self.model_args["data_kwargs"]["fold_number"]
-
-        tasks = self.model_args["data_kwargs"]["tasks"]
-        with open(
-            os.path.join(_data_path, "id2labels_fold" + str(fold) + ".json"), "r", encoding="utf-8"
-        ) as f:
-            tmp = json.load(f)
-
-        for f_in in data_files:
-            data_file = os.path.join(_data_path, f_in.replace("fold", f"fold{fold}"))
-            if f_in == "word_embeds_fold.npy" and not os.path.isfile(data_file):
-                print("Word embeddings file does not exist; will default to random embeddings.")
-            elif not os.path.isfile(data_file):
-                raise exceptions.ParamError(f" the file {data_file} does not exist.")
-        self.validate_tasks(tasks)
-
     def validate_tasks(self, data_tasks: Set[str]) -> None:
         """Confirm that tasks supplied in the id_to_label mapping aligns with tasks defined
         in the model_args
@@ -415,32 +396,178 @@ class ValidateParams:
                 )
             )
 
+    def validate_gaudi_data_requirements(self, data_path: str) -> None:
+        """Confirm that files specified in model_args exist
+
+        Check the path of each file specified in model_args ensuring they exist.
+        Open the id_to_label file and make sure the keys match the tasks specified
+        in model_args
+
+        Arguments:
+            data_path: str
+                path to a directory containing data files
+
+        Returns:
+
+        """
+
+        # Confirm that data files were specified in model_args
+        try:
+            data_files = self.model_args["data_kwargs"]["data_files"]["data"]
+        except KeyError:
+            raise exceptions.ParamError("No data files were specified in model_args.")
+
+        # Confirm that data files specified in model_args exist
+        for file_name in data_files:
+            file_path = os.path.join(data_path, file_name)
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError(
+                    f"The file {file_path} specified in model_args could not be found."
+                )
+
+        # Load the set of tasks included in the label mapping and validate them
+        # against tasks in model_args
+        id_to_label_file_name = self.model_args["data_kwargs"]["data_files"][
+            "id_to_label_mapping"
+        ]
+        id_to_label_file_path = os.path.join(data_path, id_to_label_file_name)
+        if not os.path.isfile(id_to_label_file_path):
+            raise FileNotFoundError(
+                f"The file {id_to_label_file_path} specified in model_args could not be found."
+            )
+        with open(id_to_label_file_path, "r", encoding="utf-8") as f:
+            id_to_label_mapping = json.load(f)
+        data_tasks = set(id_to_label_mapping.keys())
+        self.validate_tasks(data_tasks)
+
+        # Confirm that a vocab exists
+        vocab_file_name = self.model_args["data_kwargs"]["data_files"]["vocab"]
+        vocab_file_path = os.path.join(data_path, vocab_file_name)
+        if not os.path.isfile(vocab_file_path):
+            raise FileNotFoundError(
+                f"The file {vocab_file_path} specified in model_args could not be found."
+            )
+
+        # Confirm that the embeddings file exists
+        embeddings_file_name = self.model_args["data_kwargs"]["data_files"][
+            "embeddings"
+        ]
+        embeddings_file_path = os.path.join(data_path, vocab_file_name)
+        if not os.path.isfile(embeddings_file_path):
+            raise FileNotFoundError(
+                f"The file {embeddings_file_path} specified in model_args could not be found."
+            )
+
+    def validate_mod_pipeline_data_requirements(self, data_path: str) -> None:
+        """docstring"""
+
+        fold = self.model_args["data_kwargs"]["fold_number"]
+        data_files = [
+            "data_fold.csv",
+            "word_embeds_fold.npy",
+            "id2labels_fold.json",
+            "id2word_fold.json",
+            "metadata.json",
+            "schema.json",
+            "query.txt",
+        ]
+
+        # Confirm that the required files are present in the supplied data path
+        for file_name in data_files:
+            file_path = os.path.join(
+                data_path, file_name.replace("fold", f"fold{fold}")
+            )
+            if not os.path.isfile(file_path):
+                raise exceptions.ParamError(f" the file {file_path} does not exist.")
+
+        # Load the set of labels included in the id2labels file and validate them
+        # against tasks in model_args
+        id2label_path = os.path.join(data_path, f"id2labels_fold{str(fold)}.json")
+        with open(id2label_path, "r", encoding="utf-8") as f:
+            id2label_contents = json.load(f)
+        data_tasks = set(id2label_contents.keys())
+        self.validate_tasks(data_tasks)
+
+    def check_data_files(self, data_path=None):
+        """Verify the necessary data files exist and confirm that the contents
+        of the id_to_labels file matches the model_args defined tasks
+
+            Args:
+                data_path: str, from argparser, optional path to dataset
+                            setting data_path will override the path set in model_args.yml
+        """
+
+        # confirm the provided data_path exists
+        if data_path:
+            # user defined check
+            if not os.path.exists(os.path.dirname(data_path)):
+                raise exceptions.ParamError(
+                    f"user defined data_path {data_path} does not exist, exiting"
+                )
+        else:
+            # model_args defined check
+            data_path = self.model_args["data_kwargs"]["data_path"]
+            if not os.path.exists(os.path.dirname(data_path)):
+                raise exceptions.ParamError(
+                    f"model_args defined data_path {data_path} does not exist, exiting"
+                )
+
+        # Gather appropriate set of validation info for the pipeline utilized
+        try:
+            pipeline = self.model_args["data_kwargs"]["data_pipeline"]
+        except KeyError:
+            # defaulting to mod_pipeline validations to keep from breaking existing
+            # workflows with existing mod_pipeline data
+            pipeline = "mod_pipeline"
+            print(
+                "data_pipeline was not specified in model_args. "
+                "FrESCO is defaulting to mod_pipeline specs. "
+                "If you meant to specify GAuDI, please add "
+                'data_pipeline: "gaudi" to data_kwargs.'
+            )
+        if pipeline == "mod_pipeline":
+            self.validate_mod_pipeline_data_requirements(data_path)
+        elif pipeline == "gaudi":
+            self.validate_gaudi_data_requirements(data_path)
+        else:
+            raise exceptions.ParamError((f"data pipeline {pipeline} is not supported."))
+
 
 class ValidateClcParams:
-    """
-    Class to validate model-specific parameters for MOSSAIC models.
+    """Class to validate model-specific paramaters for MOSSAIC models.
 
     Args:
-        cli_args: Argparse list of command line args.
-        data_source (str): Indicates where the data will come from. Should be one of:
+        cli_args: argparse list of command line args
+        data_source (str): indicates where the data will come from,
+        should be one of
             - pre-generated: data_args.yml will indicate the source.
 
     Post-condition: model_args dict loaded and sanity checked.
     """
 
-    def __init__(self, cli_args, data_source: str = "pre-generated"):
-        if len(cli_args.model_args) > 0:
-            mod_args_file = cli_args.model_args
-        else:
-            mod_args_file = "clc_args.yml"
+    def __init__(
+        self,
+        cli_args,
+        data_source: str = "pre-generated",
+        model_args: dict = None,
+    ):
+        if model_args is None:
+            if len(cli_args.model_args) > 0:
+                mod_args_file = cli_args.model_args
+            else:
+                mod_args_file = "clc_args.yml"
 
-        if os.path.isfile(mod_args_file):
-            with open(mod_args_file, "r", encoding="utf-8") as f_in:
-                self.model_args = yaml.safe_load(f_in)
+            if os.path.isfile(mod_args_file):
+                with open(mod_args_file, "r", encoding="utf-8") as f_in:
+                    self.model_args = yaml.safe_load(f_in)
+            else:
+                raise exceptions.ParamError(
+                    "within Fresco the "
+                    + "clc_args.yml file is needed to set "
+                    + "the model arguments"
+                )
         else:
-            raise exceptions.ParamError(
-                "within Fresco the " + "clc_args.yml file is needed to set " + "the model arguments"
-            )
+            self.model_args = model_args
 
         if (
             self.model_args["abstain_kwargs"]["ntask_flag"]
@@ -540,7 +667,6 @@ class ValidateClcParams:
                 "exclude_single",
                 "shuffle_case_order",
                 "subset_proportion",
-                "model_path",
                 "random_seed",
                 "reproducible",
             ],
@@ -555,6 +681,7 @@ class ValidateClcParams:
                 "max_epochs",
                 "patience",
                 "class_weights",
+                "mixed_precision",
                 "save_probs",
             ],
         }

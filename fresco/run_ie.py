@@ -12,7 +12,6 @@ import numpy as np
 
 from fresco.data_loaders import data_utils
 from fresco.abstention import abstention
-from fresco.keywords import keywords
 from fresco.models import mthisan, mtcnn
 from fresco.predict import predictions
 from fresco.training import training

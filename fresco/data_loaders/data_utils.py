@@ -68,7 +68,7 @@ class DataHandler:
 
         self.dict_maps = {}
 
-        self.metadata = {"metadata": None, "packages": None, "query": None, "schema": None, "commits": None}
+        self.metadata = {"metadata": None, "packages": None}
 
         self.splits = []
         self.num_classes = {}
@@ -124,7 +124,6 @@ class DataHandler:
                 "numpy": str(np.__version__),
                 "pandas": str(pd.__version__),
             },
-            "commit": commit,
             "model_metadata": model_metadata,
             "fold": fold,
         }
@@ -138,7 +137,6 @@ class DataHandler:
 
         self.metadata["pipeline_metadata"] = loaded["pipeline_metadata"]
         self.metadata["packages"] = loaded["packages"]
-        self.metadata["commits"] = commit
 
         self.num_classes = {t: len(self.dict_maps["id2label"][t].keys()) for t in self.tasks}
 
@@ -258,27 +256,6 @@ class DataHandler:
         with open(vocab_file_path, "r", encoding="utf-8") as f:
             vocab = json.load(f)
         loaded_data["id2word"] = {int(token_id): str(token) for token_id, token in vocab.items()}
-
-        # Load pipeline metadata for data and model provenance
-        # Metadata files are specified in the data_kwargs section of model_args as a list
-        # of files. Files of type txt and json are opened and the contents are added to the
-        # loaded_data dictionary under a parent key 'pipeline_metadata' and child key
-        # <filename>. For any other file types, the path to the file is added.
-        metadata_file_names = self.model_args["data_kwargs"]["data_files"]["metadata"]
-        metadata_files = {
-            metadata_file_name: os.path.join(data_path, metadata_file_name)
-            for metadata_file_name in metadata_file_names
-        }
-        for metadata_file_name in metadata_files.keys():
-            metadata_file_path = metadata_files[metadata_file_name]
-            if match(r".*\.json", metadata_file_name):
-                with open(metadata_file_path, "r", encoding="utf-8") as f:
-                    loaded_data["pipeline_metadata"][metadata_file_name] = json.load(f)
-            elif match(r".*\.txt", metadata_file_name):
-                with open(metadata_file_path, "r", encoding="utf-8") as f:
-                    loaded_data["pipeline_metadata"][metadata_file_name] = f.read()
-            else:
-                loaded_data["pipeline_metadata"][metadata_file_name] = metadata_file_path
 
     def load_mod_pipeline_data(
         self, loaded_data: dict, data_path: str, fold: int, subset_frac: float
