@@ -1,30 +1,38 @@
 import math
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class MTHiSAN(nn.Module):
     '''
-    Multitask hierarchical self-attention network for classifying cancer pathology reports.
+    multitask hierarchical self-attention network for classifying cancer pathology reports
 
-    Args:
-        embedding_matrix (numpy array): Numpy array of word embeddings.
-            Each row should represent a word embedding.
-            NOTE: The word index 0 is masked, so the first row is ignored.
-        num_classes (list[int]): Number of possible output classes for each task.
-        max_words_per_line (int): Number of words per line.
-            Used to split documents into smaller chunks.
-        max_lines (int): Maximum number of lines per document.
-            Additional lines beyond this limit are ignored.
-        att_dim_per_head (int, default: 50): Dimension size of output from each attention head.
-            Total output dimension is att_dim_per_head * att_heads.
-        att_heads (int, default: 8): Number of attention heads for multihead attention.
-        att_dropout (float, default: 0.1): Dropout rate for attention softmaxes and intermediate embeddings.
-        bag_of_embeddings (bool, default: False): Adds a parallel bag of embeddings layer.
-            Concats to the final document embedding.
-        embeddings_scale (float, default: 2.5): Scaling of word embeddings matrix columns.
+    parameters:
+      - embedding_matrix: numpy array
+        numpy array of word embeddings
+        each row should represent a word embedding
+        NOTE: the word index 0 is masked, so the first row is ignored
+      - num_classes: dict, keys are tasks, values are ints
+        number of possible output classes for each task
+      - max_words_per_line: int
+        number of words per line
+        used to split documents into smaller chunks
+      - max_lines: int
+        maximum number of lines per document
+        additional lines beyond this limit are ignored
+      - att_dim_per_head: int (default: 50)
+        dimension size of output from each attention head
+        total output dimension is att_dim_per_head * att_heads
+      - att_heads: int (default: 8)
+        number of attention heads for multihead attention
+      - att_dropout: float (default: 0.1)
+        dropout rate for attention softmaxes and intermediate embeddings
+      - bag_of_embeddings: bool (default: False)
+        adds a parallel bag of embeddings layer, concats to final doc embedding
+      - embeddings_scale: float (default: 2.5)
+        scaling of word embeddings matrix columns
     '''
 
     def __init__(self,
@@ -53,8 +61,13 @@ class MTHiSAN(nn.Module):
 
         embedding_matrix[0] = 0
         self.embedding = nn.Embedding.from_pretrained(
-                         torch.tensor(embedding_matrix, dtype=torch.float),
-                         freeze=False, padding_idx=0)
+                                                      torch.tensor(embedding_matrix,
+                                                                   dtype=torch.float
+                                                                   ),
+                                                      padding_idx=0,
+                                                      freeze=False
+                                                      )
+
         self.word_embed_drop = nn.Dropout(p=att_dropout)
 
         # Q, K, V, and other layers for word-level self-attention
@@ -103,7 +116,7 @@ class MTHiSAN(nn.Module):
 
         # dense classification layers
         self.classify_layers = nn.ModuleDict()
-        for task, n in num_classes:
+        for task, n in num_classes.items():
             in_size = self.att_dim_total
             if self.boe:
                 in_size += embedding_matrix.shape[1]
@@ -114,36 +127,32 @@ class MTHiSAN(nn.Module):
 
     def _split_heads(self, x):
         '''
-        Splits the final dimension of a tensor into multiple heads for multihead attention.
+        splits final dim of tensor into multiple heads for multihead attention
 
-        Args:
-            x (torch.tensor): Float tensor of shape [batch_size x seq_len x dim].
+        parameters:
+          - x: torch.tensor (float) [batch_size x seq_len x dim]
 
-        Returns:
-            torch.tensor: Float tensor of shape [batch_size x att_heads x seq_len x att_dim_per_head].
-            Reshaped tensor for multihead attention.
+        outputs:
+          - torch.tensor (float) [batch_size x att_heads x seq_len x att_dim_per_head]
+            reshaped tensor for multihead attention
         '''
-
         batch_size = x.size(0)
         x = x.view(batch_size, -1, self.att_heads, self.att_dim_per_head)
         return torch.transpose(x, 1, 2)
 
     def _attention(self, q, k, v, drop=None, mask_q=None, mask_k=None, mask_v=None):
         '''
-        Flexible attention operation for self and target attention.
+        flexible attention operation for self and target attention
 
-        Args:
-            q (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].
-            k (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].
-            v (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim2].
-                NOTE: q and k must have the same dimension, but v can be different.
-            drop (torch.nn.Dropout): Dropout layer.
-            mask_q (torch.tensor): Boolean tensor of shape [batch x seq_len].
-            mask_k (torch.tensor): Boolean tensor of shape [batch x seq_len].
-            mask_v (torch.tensor): Boolean tensor of shape [batch x seq_len].
-
-        Returns:
-            None
+        parameters:
+          - q: torch.tensor (float) [batch x heads x seq_len x dim1]
+          - k: torch.tensor (float) [batch x heads x seq_len x dim1]
+          - v: torch.tensor (float) [batch x heads x seq_len x dim2]
+            NOTE: q and k must have the same dimension, but v can be different
+          - drop: torch.nn.Dropout layer
+          - mask_q: torch.tensor (bool) [batch x seq_len]
+          - mask_k: torch.tensor (bool) [batch x seq_len]
+          - mask_v: torch.tensor (bool) [batch x seq_len]
         '''
 
         # generate attention matrix
@@ -186,20 +195,16 @@ class MTHiSAN(nn.Module):
 
     def forward(self, docs, return_embeds=False):
         '''
-        Flexible attention operation for self and target attention.
+        mthisan forward pass
 
-        Args:
-            q (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].
-            k (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim1].
-            v (torch.tensor): Float tensor of shape [batch x heads x seq_len x dim2].
-                NOTE: q and k must have the same dimension, but v can be different.
-            drop (torch.nn.Dropout): Dropout layer.
-            mask_q (torch.tensor): Boolean tensor of shape [batch x seq_len].
-            mask_k (torch.tensor): Boolean tensor of shape [batch x seq_len].
-            mask_v (torch.tensor): Boolean tensor of shape [batch x seq_len].
+        parameters:
+          - docs: torch.tensor (int) [batch_size x words]
+            batch of documents to classify
+            each document should be a 0-padded row of mapped word indices
 
-        Returns:
-            None
+        outputs:
+          - list[torch.tensor (float) [batch_size x num_classes]]
+            list of predicted logits for each task
         '''
 
         # bag of embeddings operations if enabled

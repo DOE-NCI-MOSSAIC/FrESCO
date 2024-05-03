@@ -34,7 +34,6 @@ class ModelTrainer:
         savepath - str: path for saving models and metrics
         epochs - int: max number of epochs to train for
         patince_stop - int: patience stopping criteria
-        keywords - bool: use keywords model
         tasks - list: list of tasks, each task is a string
         n_task - bool: are we using ntask?
 
@@ -107,7 +106,6 @@ class ModelTrainer:
                 self.class_weights, reduction=reduction
             )
         else:
-            self.keywords = kw_args["train_kwargs"]["keywords"]
             self.multilabel = kw_args["train_kwargs"]["multilabel"]
             # setup class weights
             if kw_args["train_kwargs"]["class_weights"] is not None:
