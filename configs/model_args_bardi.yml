@@ -1,11 +1,6 @@
 save_name: 'model'  # foldX.h5 will be appended at the end; leave blank to autopopulate with a timestamp
 task_unks:
-   task_1: 'dark_side_dx'
-#  task_1: 'n1'
-#  task_2: 'b2'
-#  task_3: 'b3'
-#  task_4: 'c4'
-#  sentiment: 'negative'
+   dark_side_dx: '2'
 
 # dataloader settings
 data_kwargs:

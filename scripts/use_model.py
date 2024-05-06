@@ -167,7 +167,7 @@ def main():
     # 2. load data
     print("Loading data and creating DataLoaders")
 
-    dw = data_utils.DataHandler(data_source, model_args.model_args, cache_class)
+    dw = data_utils.DataHandler(data_source, model_args.model_args)
     dw.load_folds(fold=0)
     if model_args.model_args["data_kwargs"]["data_pipeline"] == "mod_pipeline":
         dw.convert_y(inference=True)

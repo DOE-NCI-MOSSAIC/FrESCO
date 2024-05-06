@@ -11,7 +11,6 @@ import random
 from re import match
 from typing import Optional
 
-import git
 import numpy as np
 import pandas as pd
 import polars as pl
