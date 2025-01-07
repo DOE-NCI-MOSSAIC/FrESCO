@@ -106,7 +106,7 @@ class ModelTrainer:
                 self.class_weights, reduction=reduction
             )
         else:
-            self.multilabel = kw_args["train_kwargs"]["multilabel"]
+            self.multilabel = False  #  kw_args["train_kwargs"]["multilabel"]
             # setup class weights
             if kw_args["train_kwargs"]["class_weights"] is not None:
                 with open(kw_args["train_kwargs"]["class_weights"], "rb") as f:

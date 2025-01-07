@@ -49,7 +49,7 @@ class ScoreModel:
         if self.clc:
             self.loss_fun = torch.nn.CrossEntropyLoss(reduction=reduction)
         else:
-            self.multilabel = model_args["train_kwargs"]["multilabel"]
+            self.multilabel = False  #  model_args["train_kwargs"]["multilabel"]
             if model_args["train_kwargs"]["class_weights"] is not None:
                 with open(model_args["train_kwargs"]["class_weights"], "rb") as f:
                     weights = pickle.load(f)
@@ -482,7 +482,7 @@ class ScoreModel:
 
                 df[f"{task}_true"] = df[f"{task}_true"].map(id2label[task])
                 df[f"{task}_pred"] = df[f"{task}_pred"].map(id2label[task])
-            
+
             df_list.append(df)
             col_list.extend(col_ids)
         all_preds = pd.concat(df_list, axis=1)
@@ -516,12 +516,12 @@ class ScoreModel:
             cols[f"{task}_true"] = preds["true_ys"][task]
             cols[f"{task}_pred"] = [i.tolist() for i in preds["pred_ys"][task]]
             temp[f"{task}_probs"] = [i.tolist() for i in preds["probs"][task]]
-            max_classes = len(temp[f"{task}_probs"][0]) 
-            
-            # case where there are more than 5 possible classes and we return top 5 
+            max_classes = len(temp[f"{task}_probs"][0])
+
+            # case where there are more than 5 possible classes and we return top 5
             if max_classes > 5:
                 max_classes = 5
-                
+
             top_preds_list = []
             top_probs_list = []
             for i in range(len(temp[f"{task}_probs"])):
@@ -533,10 +533,10 @@ class ScoreModel:
                 # add for each instance that is predicted on
                 top_preds_list.append(top_indexes)
                 top_probs_list.append(top_probs)
-                
+
             cols[f"{task}_top_preds"] = top_preds_list
             cols[f"{task}_top_probs"] = top_probs_list
-  
+
             col_ids = [f"{task}_true", f"{task}_pred", f"{task}_top_preds", f"{task}_top_probs" ]
 
             df = pd.DataFrame(cols, columns=col_ids, index=preds["idxs"])
@@ -547,7 +547,7 @@ class ScoreModel:
                 df[f"{task}_top_preds"] = df[f"{task}_top_preds"].map(id2label[task])
             else:
                 df[f"{task}_top_preds"] = df[f"{task}_top_preds"].apply(lambda idx: [id2label[task][i] for i in idx])
-  
+
             df_list.append(df)
             col_list.extend(col_ids)
 

@@ -54,10 +54,10 @@ class DataHandler:
 
     """
 
-    def __init__(self, data_source: str, model_args: dict, cache_class: list, clc_flag: bool = False):
+    def __init__(self, data_source: str, model_args: dict, clc_flag: bool = False):
         self.data_source = data_source
         self.model_args = model_args
-        self.cache_class = cache_class
+        # self.cache_class = cache_class
 
         try:
             self.data_pipeline = self.model_args["data_kwargs"]["data_pipeline"]
@@ -286,74 +286,74 @@ class DataHandler:
     # def load_mod_pipeline_data(
     #     self, loaded_data: dict, data_path: str, fold: int, subset_frac: float
     # ) -> None:
-        with open(
-            os.path.join(data_path, "id2labels_fold" + str(fold) + ".json"), "r", encoding="utf-8"
-        ) as f:
-            tmp = json.load(f)
+    #     with open(
+    #         os.path.join(data_path, "id2labels_fold" + str(fold) + ".json"), "r", encoding="utf-8"
+    #     ) as f:
+    #         tmp = json.load(f)
 
-        loaded_data["id2label"] = {
-            task: {int(k): str(v) for k, v in labels.items()} for task, labels in tmp.items()
-        }
+    #     loaded_data["id2label"] = {
+    #         task: {int(k): str(v) for k, v in labels.items()} for task, labels in tmp.items()
+    #     }
 
-        df = pd.read_csv(
-            os.path.join(data_path, "data_fold" + str(fold) + ".csv"),
-            dtype=str,
-            engine="c",
-            memory_map=True,
-        )
+    #     df = pd.read_csv(
+    #         os.path.join(data_path, "data_fold" + str(fold) + ".csv"),
+    #         dtype=str,
+    #         engine="c",
+    #         memory_map=True,
+    #     )
 
-        # check if data has 'split' column, if not, it is added on line 320.
-        try:
-            self.splits = list(set(df["split"].values))
-        except KeyError:
-            self.splits = []
+    #     # check if data has 'split' column, if not, it is added on line 320.
+    #     try:
+    #         self.splits = list(set(df["split"].values))
+    #     except KeyError:
+    #         self.splits = []
 
-        if len(self.splits) == 3:
-            self.splits = ["train", "test", "val"]
-        elif len(self.splits) == 2:
-            if "val" in self.splits:
-                self.splits = sorted(self.splits)
-            else:
-                self.splits = ["train", "test"]
-        elif len(self.splits) == 0:
-            self.splits = ["test"]
-            df.insert(df.shape[1], column="split", value="test")
+    #     if len(self.splits) == 3:
+    #         self.splits = ["train", "test", "val"]
+    #     elif len(self.splits) == 2:
+    #         if "val" in self.splits:
+    #             self.splits = sorted(self.splits)
+    #         else:
+    #             self.splits = ["train", "test"]
+    #     elif len(self.splits) == 0:
+    #         self.splits = ["test"]
+    #         df.insert(df.shape[1], column="split", value="test")
 
-        for split in self.splits:
-            loaded_data["X"][split] = df[df["split"] == split]["X"].apply(
-                lambda x: np.array(json.loads(x), dtype=np.int32)
-            )
-            loaded_data["Y"][split] = df[df["split"] == split][sorted(loaded_data["id2label"].keys())]
-            loaded_data["metadata"][split] = df[df["split"] == split][
-                [v for v in df.columns if v not in ["X", *loaded_data["id2label"].keys()]]
-            ]
-        if subset_frac < 1:
-            rng = np.random.default_rng(self.model_args["train_kwargs"]["random_seed"])
-            for split in self.splits:
-                data_size = len(loaded_data["X"][split])
-                idxs = rng.choice(data_size, size=math.ceil(data_size * subset_frac), replace=False)
-                loaded_data["X"][split] = loaded_data["X"][split].loc[loaded_data["X"][split].index[idxs]]
-                loaded_data["Y"][split] = loaded_data["Y"][split].loc[loaded_data["Y"][split].index[idxs]]
-                loaded_data["metadata"][split] = loaded_data["metadata"][split].loc[
-                    loaded_data["metadata"][split].index[idxs]
-                ]
+    #     for split in self.splits:
+    #         loaded_data["X"][split] = df[df["split"] == split]["X"].apply(
+    #             lambda x: np.array(json.loads(x), dtype=np.int32)
+    #         )
+    #         loaded_data["Y"][split] = df[df["split"] == split][sorted(loaded_data["id2label"].keys())]
+    #         loaded_data["metadata"][split] = df[df["split"] == split][
+    #             [v for v in df.columns if v not in ["X", *loaded_data["id2label"].keys()]]
+    #         ]
+    #     if subset_frac < 1:
+    #         rng = np.random.default_rng(self.model_args["train_kwargs"]["random_seed"])
+    #         for split in self.splits:
+    #             data_size = len(loaded_data["X"][split])
+    #             idxs = rng.choice(data_size, size=math.ceil(data_size * subset_frac), replace=False)
+    #             loaded_data["X"][split] = loaded_data["X"][split].loc[loaded_data["X"][split].index[idxs]]
+    #             loaded_data["Y"][split] = loaded_data["Y"][split].loc[loaded_data["Y"][split].index[idxs]]
+    #             loaded_data["metadata"][split] = loaded_data["metadata"][split].loc[
+    #                 loaded_data["metadata"][split].index[idxs]
+    #             ]
 
-        loaded_data["we"] = np.load(os.path.join(data_path, "word_embeds_fold" + str(fold) + ".npy"))
+    #     loaded_data["we"] = np.load(os.path.join(data_path, "word_embeds_fold" + str(fold) + ".npy"))
 
-        with open(
-            os.path.join(data_path, "id2word_fold" + str(fold) + ".json"), "r", encoding="utf-8"
-        ) as f:
-            tmp = json.load(f)
-        loaded_data["id2word"] = {int(k): str(v) for k, v in tmp.items()}
+    #     with open(
+    #         os.path.join(data_path, "id2word_fold" + str(fold) + ".json"), "r", encoding="utf-8"
+    #     ) as f:
+    #         tmp = json.load(f)
+    #     loaded_data["id2word"] = {int(k): str(v) for k, v in tmp.items()}
 
-        with open(os.path.join(data_path, "metadata.json"), "r", encoding="utf-8") as f:
-            loaded_data["pipeline_metadata"]["model_metadata"] = json.load(f)
+    #     with open(os.path.join(data_path, "metadata.json"), "r", encoding="utf-8") as f:
+    #         loaded_data["pipeline_metadata"]["model_metadata"] = json.load(f)
 
-        with open(os.path.join(data_path, "schema.json"), "r", encoding="utf-8") as f:
-            loaded_data["pipeline_metadata"]["schema"] = json.load(f)
+    #     with open(os.path.join(data_path, "schema.json"), "r", encoding="utf-8") as f:
+    #         loaded_data["pipeline_metadata"]["schema"] = json.load(f)
 
-        with open(os.path.join(data_path, "query.txt"), "r", encoding="utf-8") as f:
-            loaded_data["pipeline_metadata"]["query"] = f.read()
+    #     with open(os.path.join(data_path, "query.txt"), "r", encoding="utf-8") as f:
+    #         loaded_data["pipeline_metadata"]["query"] = f.read()
 
     def convert_y(self, inference: bool = False):
         """Add task unknown labels to Y and map values to integers for inference.
@@ -509,7 +509,7 @@ class DataHandler:
 
         vocab_size = self.inference_data["word_embedding"].shape[0]
         unk_tok = vocab_size - 1
-        
+
         _transform = None
 
         _transform = None
@@ -558,7 +558,7 @@ class DataHandler:
         random_num_gen=None,
     ) -> dict:
         """Create dataloaders for training step.
- 
+
              Returns dict of pytorch DataLoaders (train, val) for training module.
 
         Params:
@@ -569,8 +569,8 @@ class DataHandler:
             num_workers - int: number of multiprocessing workers for DataLoader
             reproducible - bool: set all random number generator seeds
             worker - function: creates random number generator independently for each process
-            random_num_gen - function: random number generator for each process 
-        
+            random_num_gen - function: random number generator for each process
+
         """
 
         loaders = {}
@@ -644,7 +644,7 @@ class DataHandler:
             clc_flag - bool: are we running a clc model?
             clc_args - dict: dict of clc_args
             worker - function: creates random number generator independently for each process
-            random_num_gen - function: random number generator for each process 
+            random_num_gen - function: random number generator for each process
             num_workers - int: number of multiprocessing workers for DataLoader
             pin_mem - bool: pins gpu memory if running with gpu enabled
 
@@ -705,13 +705,13 @@ class DataHandler:
 
     def make_grouped_cases(self, doc_embeds, clc_args, reproducible=True, seed: int = None):
         """Created GroupedCases class for torch DataLoaders.
-        
+
             Params:
                 doc_embeds - numpy.ndarray: document embeddings from base model
                 clc_args - dict: dict of clc_args
                 reproducible - bool: set all random number generator seeds
                 seed - int: seed for random number generator
-        
+
         """
 
         if reproducible:
@@ -855,12 +855,12 @@ class PathReports(Dataset):
 
     def __getitem__(self, idx: int) -> dict:
         """Get PathReports item.
-        
+
             Returns dict with keys:
                 X - tensor of ints
                 y_task - class labels
                 idxs - index in original data to match up with metadata
-        
+
         """
         doc = self.X.iat[idx]
         if self.transform:
@@ -921,7 +921,7 @@ class GroupedCases(Dataset):
         registry = "_meta_registry"
         patient = "patient_id_number"
         tumor = "tumor_record_number"
-       
+
         try:
             metadata["_meta_registry"]
         except KeyError:

@@ -19,20 +19,38 @@ class ValidateParams:
     """Class to validate model-specific paramaters for MOSSAIC models.
 
     Args:
+        cached_class (list): the CachedClass will be passed through all
+            modules and keep track of the pipeline arguements
         cli_args: argparse list of command line args
         data_source (str): indicates where the data will come from,
         should be one of
             - pre-generated: data_args.yml will indicate the source.
+            - pipeline:      the pipeline is used; uses cache_class
+            - official:      the pipeline is used to generate "official" data; uses cache_class
+
+    Pre-condition: cached_class is set in the calling function.
 
     Post-condition: model_args dict loaded and sanity checked.
     """
 
     def __init__(
         self,
+        # cached_class: list,
         cli_args,
         data_source: str = "pre-generated",
         model_args: dict = None,
     ):
+        if data_source in ["pre-generated", "pipeline", "official"]:
+            self.data_source = data_source
+            if data_source == "official":
+                raise exceptions.ParamError(
+                    "A run type of 'official' is not yet implemented."
+                )
+        else:
+            raise exceptions.ParamError(
+                "if run_type is not 'pre-generated', "
+                + "use_pipeline.py must be run first."
+            )
 
         if model_args is None:
             if len(cli_args.model_args) > 0:
@@ -101,6 +119,12 @@ class ValidateParams:
                 "subset proportion must be float value between 0 and 1."
             )
 
+        # if cached_class[0]:
+        #     self.model_args["train_kwargs"]["doc_max_len"] = cached_class[1].mod_args(
+        #         "sequence_length"
+        #     )
+        #     self.save_name = os.path.join("Model_Suite", self.save_name)
+
         if not isinstance(self.model_args["data_kwargs"]["batch_per_gpu"], int):
             raise exceptions.ParamError("Batch size must be an int value.")
         if (
@@ -120,7 +144,7 @@ class ValidateParams:
 
         Parameters: none
 
-        Pre-condition: self.model_args is not None
+        Pre-condtition: self.model_args is not None
 
         Post-condition:
             self.model_args['MTHiSAN_kwargs']['max_lines'] modified to be
@@ -173,11 +197,14 @@ class ValidateParams:
                 "doc_max_len",
                 "tasks",
                 "fold_number",
+                "data_files",
                 "data_path",
+                # "mutual_info_filter",
+                # "mutual_info_threshold",
                 "subset_proportion",
                 "add_noise",
                 "add_noise_flag",
-                "multilabel",
+                # "multilabel",
                 "random_seed",
                 "batch_per_gpu",
                 "reproducible",
@@ -198,11 +225,15 @@ class ValidateParams:
                 "embeddings_scale",
             ],
             "train_kwargs": [
+                "keywords",
                 "max_epochs",
                 "patience",
                 "class_weights",
                 "mixed_precision",
                 "save_probs",
+                "learning_rate",
+                "beta_1",
+                "beta_2"
             ],
         }
 
@@ -211,8 +242,9 @@ class ValidateParams:
                 "batch_per_gpu",
                 "class_weights",
                 "doc_max_len",
+                "keywords",
                 "max_epochs",
-                "multilabel",
+                # "multilabel",
                 "patience",
                 "random_seed",
                 "reproducible",
@@ -270,7 +302,7 @@ class ValidateParams:
             "doc_max_len",
             "batch_per_gpu",
             "random_seed",
-            "multilabel",
+            # "multilabel",
             "reproducible",
         ]
         for word in copy_kwds:
@@ -395,7 +427,7 @@ class ValidateParams:
                 )
             )
 
-    def validate_gaudi_data_requirements(self, data_path: str) -> None:
+    def validate_bardi_data_requirements(self, data_path: str) -> None:
         """Confirm that files specified in model_args exist
 
         Check the path of each file specified in model_args ensuring they exist.
@@ -526,8 +558,8 @@ class ValidateParams:
             )
         if pipeline == "mod_pipeline":
             self.validate_mod_pipeline_data_requirements(data_path)
-        elif pipeline == "gaudi":
-            self.validate_gaudi_data_requirements(data_path)
+        elif pipeline == "bardi":
+            self.validate_bardi_data_requirements(data_path)
         else:
             raise exceptions.ParamError((f"data pipeline {pipeline} is not supported."))
 
@@ -536,32 +568,52 @@ class ValidateClcParams:
     """Class to validate model-specific paramaters for MOSSAIC models.
 
     Args:
+        cached_class (list): the CachedClass will be passed through all
+            modules and keep track of the pipeline arguements
         cli_args: argparse list of command line args
         data_source (str): indicates where the data will come from,
         should be one of
             - pre-generated: data_args.yml will indicate the source.
+            - pipeline:      the pipeline is used; uses cache_class
+            - official:      the pipeline is used to generate "official" data; uses cache_class
+
+    Pre-condition: cached_class is set in the calling function.
 
     Post-condition: model_args dict loaded and sanity checked.
     """
 
     def __init__(
         self,
+        # cached_class: list,
         cli_args,
         data_source: str = "pre-generated",
         model_args: dict = None,
     ):
+        if data_source in ["pre-generated", "pipeline", "official"]:  #  or cached_class[0]:
+            self.data_source = data_source
+            if data_source == "official":
+                raise exceptions.ParamError(
+                    "A run type of 'official' is not yet implemented."
+                )
+        else:
+            raise exceptions.ParamError(
+                "if run_type is not 'pre-generated', "
+                + "use_pipeline.py must be run first."
+            )
         if model_args is None:
             if len(cli_args.model_args) > 0:
                 mod_args_file = cli_args.model_args
             else:
                 mod_args_file = "clc_args.yml"
+            # if cached_class[0]:
+            #     mod_args_file = os.path.join("Model_Suite", mod_args_file)
 
             if os.path.isfile(mod_args_file):
                 with open(mod_args_file, "r", encoding="utf-8") as f_in:
                     self.model_args = yaml.safe_load(f_in)
             else:
                 raise exceptions.ParamError(
-                    "within Fresco the "
+                    "within the Model_Suite the "
                     + "clc_args.yml file is needed to set "
                     + "the model arguments"
                 )
@@ -586,6 +638,12 @@ class ValidateClcParams:
                 f"savepath {os.path.dirname(self.save_name)} does not exist, creating it"
             )
             os.makedirs(os.path.dirname(self.save_name))
+
+        # if cached_class[0]:
+        #     self.model_args["train_kwargs"]["doc_max_len"] = cached_class[1].mod_args(
+        #         "sequence_length"
+        #     )
+        #     self.save_name = os.path.join("Model_Suite", self.save_name)
 
         if (
             self.model_args["data_kwargs"]["subset_proportion"] > 1
@@ -612,7 +670,7 @@ class ValidateClcParams:
 
         Parameters: none
 
-        Pre-condition: self.model_args is not None
+        Pre-condtition: self.model_args is not None
 
         Post-condition:
             self.model_args['MTHiSAN_kwargs']['max_lines'] modified to be
@@ -665,6 +723,8 @@ class ValidateClcParams:
                 "tasks",
                 "exclude_single",
                 "shuffle_case_order",
+                "split_by_tumorid",
+                "model_path",
                 "subset_proportion",
                 "random_seed",
                 "reproducible",
