@@ -9,12 +9,6 @@ Documentation is available over at [Read the Docs](https://doe-nci-fresco.readth
 
 
 ## Quickstart Guide
-### Install via pip
-Install from [pypi](https://pypi.org/project/nci-fresco/) using 
-```shell
-pip install nci-fresco
-```
-As an alternative, you may download the source code.
 
 ### Install from source
 Clone the repo
@@ -28,7 +22,7 @@ git checkout main
 ```
 Setup the conda environment (the default name for the environment is "ms39", this can be edited in the ms39.yml file)
 ```shell
-conda env create -n fresco python=3.9
+conda env create -n fresco python=3.11
 conda activate fresco
 ```
 Install the FrESCO library and dependencies
@@ -54,9 +48,25 @@ The three datasets are:
   - P3B3: benchmark multi-task classification task, and
   - clc: case-level context multi-task classfication data.
 
-We have prepared `model_args` files for each dataset within the `configs/` directory. For the `P3B3` and `clc` datasets we have provided the required files. To create 
-these files for the `imdb` dataset, you may run the `data_setup.py` script within the `scripts` folder to create the necessary files for model training.
+To create the data files for the `imdb` dataset, you may run the `bardi_data.py` script within the `scripts` folder to create the necessary files for model training.
 
+### Model Training
+The `model_args.yaml` file controls the settings for model training. Edit this file as desired based on your requirements and desired outcome.
+The `"save_name"` entry controls the name used for model checkpoints and prediction outputs; if left empty, a datetime stamp will be used.
+
+The following commands allow setting your GPUs, if enabled, before training your model.
+```shell
+nvidia-smi                             #check GPU utilization
+export CUDA_VISIBLE_DEVICES=0,1        #replace 0,1 with the GPUs you want to use
+echo $CUDA_VISIBLE_DEVICES             #check which GPUs you have chosen
+```
+To train the model for any information extraction task, multi-task calssification, simply run
+```shell
+python train_model.py -m ie -args ../configs/model_args_bardi.yml
+```
+from the `scripts` directory which will train a model on the `imdb` dataset.
+
+We have supplied test data for each of the model types provided. Information extraction models may be created with either `P3B3` or `imdb` data.
 To run with your own data,
 the following instructions explain the requirements for the training data.
 
@@ -81,23 +91,7 @@ If working with hierarchical data, and the case-level context model is the desir
 corresponding `data_fold0.csv` must contain an additional integer-valued column `group` where the values describe the hierarchy 
 present within the data. For example, all rows where `group = 17` are associated for the purpose of training a case-level context model.
 
-### Model Training
-The `model_args.yaml` file controls the settings for model training. Edit this file as desired based on your requirements and desired outcome.
-The `"save_name"` entry controls the name used for model checkpoints and prediction outputs; if left empty, a datetime stamp will be used.
 
-The following commands allow setting your GPUs, if enabled, before training your model.
-```shell
-nvidia-smi                             #check GPU utilization
-export CUDA_VISIBLE_DEVICES=0,1        #replace 0,1 with the GPUs you want to use
-echo $CUDA_VISIBLE_DEVICES             #check which GPUs you have chosen
-```
-To train the model for any information extraction task, multi-task calssification, simply run
-```shell
-python train_model.py -m ie -args ../configs/model_args.yml
-```
-from the `scripts` directory which will train a model on the `P3B3` dataset.
-
-We have supplied test data for each of the model types provided. Information extraction models may be created with either `P3B3` or `imdb` data.
 
 #### Case-Level Context Model
 

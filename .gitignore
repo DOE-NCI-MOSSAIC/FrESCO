@@ -1,5 +1,8 @@
 **/.DS_Store_/**
 
+_build/**
+
+
 **/__pycache__/**
 __pycache__/**
 **.pyd

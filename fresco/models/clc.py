@@ -1,8 +1,8 @@
 import math
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class CaseLevelContext(nn.Module):
@@ -126,21 +126,18 @@ class CaseLevelContext(nn.Module):
 
         return result
 
-
     def forward(self, doc_embeds, num_docs):
         '''
-        Case level context forward pass.
+        case level context forward pass
 
-        Args:
-            doc_embeds (torch.tensor): Float tensor of shape [batch_size x max_seq_length x doc_embed_size].
-                Document embeddings.
-            num_docs (torch.tensor): Integer tensor of shape [batch_size].
-                Number of reports per case.
+        parameters:
+          - doc_embeds: torch.tensor (float) [batch_size x max_seq_length x doc_embed_size]
+          - num_docs: torch.tensor (int) [batch_size]
+            number of reports per case
 
-        Returns:
-            None
+        outputs:
+
         '''
-
         # create mask
         batch_size = num_docs.shape[0]
         max_seq_len = doc_embeds.shape[1]

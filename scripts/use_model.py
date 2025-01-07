@@ -21,13 +21,15 @@ from fresco.models import mthisan, mtcnn
 from fresco.predict import predictions
 
 
-def load_model_dict(model_path):
+def load_model_dict(model_path, data_path):
     """Load pretrained model from disk.
 
     Args:
         model_path: str, from command line args, points to saved model
+        data_path: str, data to make predictions on
 
-    We check if the supplied model path is valid.
+    We check if the supplied path is valid and if the packages match needed
+        to run the pretrained model.
 
     """
     if os.path.exists(model_path):
@@ -36,30 +38,28 @@ def load_model_dict(model_path):
     else:
         raise exceptions.ParamError(f"the model at {model_path} does not exist.")
 
+    if not os.path.exists(data_path):
+        raise exceptions.ParamError(f"the data at {data_path} does not exist.")
+
     return model_dict
 
 
 def load_model(model_dict, device, dw):
-    """Load pretrained model_state_dict from disk.
-
-    Args:
-        model_path: str, from command line args, points to saved model
-        device: torch.device, either 'cpu' or 'cuda'
-        dw: DataHandler class
-
-    Loads the model type and state_dict for inference from a pretrained model.
-
-    """
+    """Load pretrained model architecture."""
     model_args = model_dict["metadata_package"]["mod_args"]
 
     if model_args["model_type"] == "mthisan":
         model = mthisan.MTHiSAN(
-            dw.inference_data["word_embedding"], dw.num_classes, **model_args["MTHiSAN_kwargs"]
+            dw.inference_data["word_embedding"],
+            dw.num_classes,
+            **model_args["MTHiSAN_kwargs"],
         )
 
     elif model_args["model_type"] == "mtcnn":
         model = mtcnn.MTCNN(
-            dw.inference_data["word_embedding"], dw.num_classes, **model_args["MTCNN_kwargs"]
+            dw.inference_data["word_embedding"],
+            dw.num_classes,
+            **model_args["MTCNN_kwargs"],
         )
 
     model.to(device)
@@ -67,10 +67,13 @@ def load_model(model_dict, device, dw):
         model = torch.nn.DataParallel(model)
 
     model_state_dict = model_dict["model_state_dict"]
-    model_dict = {k: v for k, v in model_dict.items() if k != "metadata_package"}
-    # Line 83 is needed if loading trained model on different system than
-    # that which the model was trained on, ie dufferent number of gpus, gout train, load on cpu, etc
-    model.load_state_dict(model_dict)
+    model_state_dict = {
+        k.replace("module.", ""): v
+        for k, v in model_state_dict.items()
+        if k != " metadata_package"
+    }
+    model.load_state_dict(model_state_dict)
+    model.eval()
 
     print("model loaded")
 
@@ -78,7 +81,9 @@ def load_model(model_dict, device, dw):
 
 
 def main():
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument(
         "--model_path",
         "-mp",
@@ -108,15 +113,16 @@ def main():
         os.makedirs("predictions")
     args = parser.parse_args()
 
-    if len(args.model_path) == 0 and len(args.data_path) == 0:
-        raise exceptions.ParamError("Model and data path cannot be empty, please specify both.")
+    if len(args.model_path) == 0 or len(args.data_path) == 0:
+        raise exceptions.ParamError(
+            "Model and/or data path cannot be empty, please specify both."
+        )
 
     # 1. validate model/data args
     print("Validating kwargs in model_args.yml file")
     data_source = "pre-generated"
-    # use the model args file from training
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_dict = load_model_dict(args.model_path)
+    model_dict = load_model_dict(args.model_path, args.data_path)
 
     if len(args.model_args) > 0:  # get config file from cli
         print("Reading config file from command-line args")
@@ -163,12 +169,15 @@ def main():
 
     dw = data_utils.DataHandler(data_source, model_args.model_args)
     dw.load_folds(fold=0)
+    if model_args.model_args["data_kwargs"]["data_pipeline"] == "mod_pipeline":
+        dw.convert_y(inference=True)
+        # maps labels to int, eg, C50 -> <some int>
 
     data_loaders = dw.make_torch_dataloaders(
         reproducible=model_args.model_args["data_kwargs"]["reproducible"],
         seed=seed,
         inference=True,
-        clc_flag=False,
+        clc_flag=False
     )
 
     if model_args.model_args["abstain_kwargs"]["abstain_flag"]:
@@ -184,13 +193,22 @@ def main():
     model = load_model(model_dict, device, dw)
 
     # 5. score predictions from pretrained model or model just trained
-    evaluator = predictions.ScoreModel(model_args.model_args, data_loaders, model, device)
+    evaluator = predictions.ScoreModel(
+        model_args.model_args, data_loaders, dw, model, device
+    )
 
-    #  make predictions
+    # 5a. score a model
+    # evaluator.score(dac=dac)
+
+    # 5b. make predictions
     evaluator.predict(
+        dw.metadata["metadata"],
         dw.dict_maps["id2label"],
         save_probs=model_args.model_args["train_kwargs"]["save_probs"],
     )
+
+    # 5c. score and predict
+    # evaluator.evaluate_model(dw.metadata['metadata'], dw.dict_maps['id2label'], dac=dac)
 
 
 if __name__ == "__main__":

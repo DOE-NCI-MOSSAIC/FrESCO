@@ -1,5 +1,5 @@
 """
-Simple module to catch exception errors and print helpful messages.
+    Simple module to catch exception errors and print helpful messages.
 """
 import os
 import sys
@@ -7,7 +7,7 @@ import sys
 
 class ParamError(Exception):
     """
-    Simple class to catch exception errors and print helpful debugging messages.
+        Simple class to catch exception errors and print helpful debugging messages.
     """
     def __init__(self, msg: str):
         self.msg = msg
