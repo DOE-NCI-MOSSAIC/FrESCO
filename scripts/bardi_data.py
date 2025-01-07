@@ -35,7 +35,7 @@ output_dir = '../data/imdb/output/'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-df = pd.read_csv("../data/imdb/imdb_test.csv")
+df = pd.read_csv("../data/imdb/IMDB Dataset.csv")
 df['id'] = range(len(df))
 
 # register a dataset
