@@ -1,6 +1,6 @@
 """
 
-Module for loading pre-generated Gaudi or mod_pipeline data.
+Module for loading pre-generated Bardi or mod_pipeline data.
 
 """
 import json
@@ -45,6 +45,8 @@ class DataHandler:
         data_source - str: defines how data was generated, needs to be
             'pre-generated', 'pipeline', or 'official' (not implemented)
         model_args - dict: keywords necessary to load data, build, and train a model_args
+        cache_class - list: the CachedClass will be passed through all
+            modules and keep track of the pipeline arguements
         clc_flag - bool: flag for running clc or standard model
 
     Note: the present implementation is only for 1 fold. We presently cannot
@@ -52,9 +54,10 @@ class DataHandler:
 
     """
 
-    def __init__(self, data_source: str, model_args: dict, clc_flag: bool = False):
+    def __init__(self, data_source: str, model_args: dict, cache_class: list, clc_flag: bool = False):
         self.data_source = data_source
         self.model_args = model_args
+        self.cache_class = cache_class
 
         try:
             self.data_pipeline = self.model_args["data_kwargs"]["data_pipeline"]
@@ -67,7 +70,7 @@ class DataHandler:
 
         self.dict_maps = {}
 
-        self.metadata = {"metadata": None, "packages": None}
+        self.metadata = {"metadata": None, "packages": None, "query": None, "schema": None, "commits": None}
 
         self.splits = []
         self.num_classes = {}
@@ -95,7 +98,10 @@ class DataHandler:
 
         """
 
-        data_loader = self.load_from_saved
+        if self.data_source == "pre-generated":
+            data_loader = self.load_from_saved
+        else:
+            data_loader = self.load_from_cache
 
         if fold is None:
             fold = self.model_args["data_kwargs"]["fold_number"]
@@ -159,13 +165,13 @@ class DataHandler:
         # The load methods will modify the dictionary in place
         if self.data_pipeline == "mod_pipeline":
             self.load_mod_pipeline_data(loaded_data, data_path, fold, subset_frac)
-        elif self.data_pipeline == "gaudi":
-            self.load_gaudi_data(loaded_data, data_path, subset_frac)
+        elif self.data_pipeline == "bardi":
+            self.load_bardi_data(loaded_data, data_path, subset_frac)
 
         return loaded_data
 
-    def load_gaudi_data(self, loaded_data: dict, data_path: str, subset_frac: float) -> None:
-        """Load data that has been preprocessed with a GAuDI pipeline
+    def load_bardi_data(self, loaded_data: dict, data_path: str, subset_frac: float) -> None:
+        """Load data that has been preprocessed with a Bardi pipeline
 
         Arguments:
             loaded_data: dictionary reference
@@ -256,9 +262,30 @@ class DataHandler:
             vocab = json.load(f)
         loaded_data["id2word"] = {int(token_id): str(token) for token_id, token in vocab.items()}
 
-    def load_mod_pipeline_data(
-        self, loaded_data: dict, data_path: str, fold: int, subset_frac: float
-    ) -> None:
+        # Load pipeline metadata for data and model provenance
+        # Metadata files are specified in the data_kwargs section of model_args as a list
+        # of files. Files of type txt and json are opened and the contents are added to the
+        # loaded_data dictionary under a parent key 'pipeline_metadata' and child key
+        # <filename>. For any other file types, the path to the file is added.
+        metadata_file_names = self.model_args["data_kwargs"]["data_files"]["metadata"]
+        metadata_files = {
+            metadata_file_name: os.path.join(data_path, metadata_file_name)
+            for metadata_file_name in metadata_file_names
+        }
+        for metadata_file_name in metadata_files.keys():
+            metadata_file_path = metadata_files[metadata_file_name]
+            if match(r".*\.json", metadata_file_name):
+                with open(metadata_file_path, "r", encoding="utf-8") as f:
+                    loaded_data["pipeline_metadata"][metadata_file_name] = json.load(f)
+            elif match(r".*\.txt", metadata_file_name):
+                with open(metadata_file_path, "r", encoding="utf-8") as f:
+                    loaded_data["pipeline_metadata"][metadata_file_name] = f.read()
+            else:
+                loaded_data["pipeline_metadata"][metadata_file_name] = metadata_file_path
+
+    # def load_mod_pipeline_data(
+    #     self, loaded_data: dict, data_path: str, fold: int, subset_frac: float
+    # ) -> None:
         with open(
             os.path.join(data_path, "id2labels_fold" + str(fold) + ".json"), "r", encoding="utf-8"
         ) as f:
@@ -386,7 +413,7 @@ class DataHandler:
 
         if self.data_pipeline == "mod_pipeline":
             label_map = "id2labels_fold" + str(fold) + ".json"
-        else:  # gaudi data
+        else:  # bardi data
             label_map = self.model_args["data_kwargs"]["data_files"]["id_to_label_mapping"]
         with open(os.path.join(data_path, label_map), "r", encoding="utf-8") as f:
             tmp = json.load(f)
@@ -482,7 +509,7 @@ class DataHandler:
 
         vocab_size = self.inference_data["word_embedding"].shape[0]
         unk_tok = vocab_size - 1
-
+        
         _transform = None
 
         _transform = None
@@ -531,7 +558,7 @@ class DataHandler:
         random_num_gen=None,
     ) -> dict:
         """Create dataloaders for training step.
-
+ 
              Returns dict of pytorch DataLoaders (train, val) for training module.
 
         Params:
@@ -542,8 +569,8 @@ class DataHandler:
             num_workers - int: number of multiprocessing workers for DataLoader
             reproducible - bool: set all random number generator seeds
             worker - function: creates random number generator independently for each process
-            random_num_gen - function: random number generator for each process
-
+            random_num_gen - function: random number generator for each process 
+        
         """
 
         loaders = {}
@@ -617,7 +644,7 @@ class DataHandler:
             clc_flag - bool: are we running a clc model?
             clc_args - dict: dict of clc_args
             worker - function: creates random number generator independently for each process
-            random_num_gen - function: random number generator for each process
+            random_num_gen - function: random number generator for each process 
             num_workers - int: number of multiprocessing workers for DataLoader
             pin_mem - bool: pins gpu memory if running with gpu enabled
 
@@ -678,13 +705,13 @@ class DataHandler:
 
     def make_grouped_cases(self, doc_embeds, clc_args, reproducible=True, seed: int = None):
         """Created GroupedCases class for torch DataLoaders.
-
+        
             Params:
                 doc_embeds - numpy.ndarray: document embeddings from base model
                 clc_args - dict: dict of clc_args
                 reproducible - bool: set all random number generator seeds
                 seed - int: seed for random number generator
-
+        
         """
 
         if reproducible:
@@ -702,7 +729,9 @@ class DataHandler:
                 doc_embeds[split]["index"],
                 self.model_args["data_kwargs"]["tasks"],
                 self.metadata["metadata"][split],
+                exclude_single=clc_args["data_kwargs"]["exclude_single"],
                 shuffle_case_order=clc_args["data_kwargs"]["shuffle_case_order"],
+                split_by_tumor_id=clc_args["data_kwargs"]["split_by_tumorid"],
             )
             for split in self.splits
         }
@@ -826,12 +855,12 @@ class PathReports(Dataset):
 
     def __getitem__(self, idx: int) -> dict:
         """Get PathReports item.
-
+        
             Returns dict with keys:
                 X - tensor of ints
                 y_task - class labels
                 idxs - index in original data to match up with metadata
-
+        
         """
         doc = self.X.iat[idx]
         if self.transform:
@@ -892,7 +921,7 @@ class GroupedCases(Dataset):
         registry = "_meta_registry"
         patient = "patient_id_number"
         tumor = "tumor_record_number"
-
+       
         try:
             metadata["_meta_registry"]
         except KeyError:
