@@ -10,6 +10,7 @@ setup(
     license='MIT',
     packages=find_packages(include=['fresco', 'fresco.*']),
     install_requires=['pandas',
+                      'bardi==0.5.0',
                       'scikit-learn',
                       'pyyaml',
                       'gensim',
