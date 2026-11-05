@@ -68,7 +68,9 @@ class ModelTrainer:
         device=None,
         fold=None,
         clc=False,
+        hierarchy=None,
     ):
+        self.hierarchy = hierarchy
         path = "./savedmodels/" + kw_args["save_name"] + "/"
         if not os.path.exists(path):
             os.makedirs(os.path.dirname(path))
@@ -190,6 +192,13 @@ class ModelTrainer:
             preds = self.y_preds
             trues = self.y_trues
 
+        override = {}
+        if self.hierarchy is not None and self.hierarchy.consistent_decoding:
+            override = {
+                t: p.detach().cpu().numpy()
+                for t, p in self.hierarchy.decode(logits).items()
+            }
+
         for task in self.tasks:
             if logits[task].shape[0] == self.bs:
                 if task == "Ntask":
@@ -198,8 +207,10 @@ class ModelTrainer:
                     )
                     continue  # there is no truth
                 else:
-                    preds[task][idx * self.bs : (idx + 1) * self.bs] = np.argmax(
-                        logits[task].detach().cpu().numpy(), 1
+                    preds[task][idx * self.bs : (idx + 1) * self.bs] = (
+                        override[task]
+                        if task in override
+                        else np.argmax(logits[task].detach().cpu().numpy(), 1)
                     )
                 if self.multilabel:
                     trues[task][idx * self.bs : (idx + 1) * self.bs] = np.argmax(
@@ -216,8 +227,10 @@ class ModelTrainer:
                     )
                     continue  # there is no truth
                 else:
-                    preds[task][idx * self.bs :] = np.argmax(
-                        logits[task].detach().cpu().numpy(), 1
+                    preds[task][idx * self.bs :] = (
+                        override[task]
+                        if task in override
+                        else np.argmax(logits[task].detach().cpu().numpy(), 1)
                     )
                 if self.multilabel:
                     trues[task][idx * self.bs :] = np.argmax(
@@ -764,7 +777,10 @@ class ModelTrainer:
         if self.ntask:
             loss = loss - torch.mean(dac.ntask_alpha * torch.log(1 - ntask_abs + 1e-6))
         # average over all tasks
-        return loss / len(self.tasks)
+        loss = loss / len(self.tasks)
+        if self.hierarchy is not None and self.hierarchy.consistency_lambda > 0:
+            loss = loss + self.hierarchy.loss(logits)
+        return loss
 
     def compute_clc_loss(self, logits, y, idxs, dac=None, val=False):
         """Compute forward pass and case level loss function.

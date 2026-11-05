@@ -13,6 +13,8 @@ import scipy.special
 import torch
 import torchmetrics
 
+from fresco.hierarchy.hierarchy import inconsistency_rate
+
 
 class ScoreModel:
     """Class to score and make predictions from a trained model.
@@ -28,8 +30,17 @@ class ScoreModel:
     """
 
     def __init__(
-        self, model_args, data_loaders, dw, model, device, savepath=None, clc_flag=False
+        self,
+        model_args,
+        data_loaders,
+        dw,
+        model,
+        device,
+        savepath=None,
+        clc_flag=False,
+        hierarchy=None,
     ):
+        self.hierarchy = hierarchy
         self.tasks = dw.num_classes.keys()
         self.abstain = model_args["abstain_kwargs"]["abstain_flag"]
         self.ntask = model_args["abstain_kwargs"]["ntask_flag"]
@@ -277,6 +288,14 @@ class ScoreModel:
                 task="multiclass", num_classes=num_classes, average="macro"
             ).to(self.device)
             metrics[f"{task}_recall_macro"] = recall_macro(_preds, _trues)
+
+        if self.hierarchy is not None and not self.clc:
+            h = self.hierarchy
+            metrics["hierarchy_inconsistency"] = inconsistency_rate(
+                torch.tensor([int(v) for v in self.y_preds[h.parent]]),
+                torch.tensor([int(v) for v in self.y_preds[h.child]]),
+                h.mask_np,
+            )
 
         if self.abstain:
             _ = dac.compute_accuracy(self.y_trues, self.y_preds)
@@ -745,6 +764,10 @@ class ScoreModel:
                 self.y_trues and self.y_preds populated.
 
         """
+        override = {}
+        if not self.clc and self.hierarchy is not None and self.hierarchy.consistent_decoding:
+            override = self.hierarchy.decode(logits)
+
         for task in self.tasks:
             if task == "Ntask":
                 self.y_preds[task].extend(torch.sigmoid(logits[task]).flatten().cpu().tolist())
@@ -755,7 +778,9 @@ class ScoreModel:
                 self.y_trues[task].extend(y[task][idxs].detach().cpu().tolist())
             else:
                 self.logits[task].extend(logits[task])
-                self.y_preds[task].extend(torch.argmax(logits[task], axis=1))
+                self.y_preds[task].extend(
+                    override[task] if task in override else torch.argmax(logits[task], axis=1)
+                )
                 if self.multilabel:
                     self.y_trues[task].extend(np.argmax(y[task]), axis=1)
                 else:
@@ -888,12 +913,20 @@ class ScoreModel:
         X = batch["X"].to(self.device)
         logits = self.model(X)
 
+        override = {}
+        if self.hierarchy is not None and self.hierarchy.consistent_decoding:
+            override = {
+                t: p.detach().cpu().numpy() for t, p in self.hierarchy.decode(logits).items()
+            }
+
         for task in self.tasks:
             if task == "Ntask":
                 preds["pred_ys"]["Ntask"].extend(torch.sigmoid(logits[task])[:, -1].detach().cpu().tolist())
                 continue
             outputs = logits[task].detach().cpu().numpy()
-            preds["pred_ys"][task].extend(np.argmax(outputs, axis=1))
+            preds["pred_ys"][task].extend(
+                override[task] if task in override else np.argmax(outputs, axis=1)
+            )
             if f"y_{task}" in batch.keys():
                 preds["true_ys"][task].extend(batch[f"y_{task}"].tolist())
 

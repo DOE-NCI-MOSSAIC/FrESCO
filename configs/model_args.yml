@@ -84,3 +84,13 @@ abstain_kwargs:
   ntask_max_abs: 0.9
   ntask_min_acc: 0.975
 
+
+# optional: parent/child task hierarchy (omit the block to disable)
+hierarchy_kwargs:
+  hierarchy_flag: False
+  parent: "task_1"
+  child: "task_2"
+  mapping_file:            # optional JSON (n_child x n_parent) 0/1 matrix, row = child id with a 1 in its parent's column; else derived from training co-occurrence
+  min_count: 1             # min co-occurrences for a (parent, child) pair to be valid
+  consistent_decoding: True  # joint argmax over valid (parent, child) pairs at validation/inference
+  consistency_lambda: 0.0  # weight of KL(parent || child marginalised to parents); 0 disables

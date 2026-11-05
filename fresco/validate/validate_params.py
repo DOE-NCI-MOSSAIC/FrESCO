@@ -282,6 +282,10 @@ class ValidateParams:
             "train_kwargs",
         ]
 
+        if "hierarchy_kwargs" in self.model_args:  # optional block
+            model_kwds = sorted(model_kwds + ["hierarchy_kwargs"])
+            self.check_hierarchy_args()
+
         if sorted(self.model_args.keys()) != model_kwds:
             print("\nReceived: ", sorted(self.model_args.keys()))
             print("Expected: ", model_kwds)
@@ -388,6 +392,22 @@ class ValidateParams:
                 raise exceptions.ParamError(
                     "Ntask tasks are not a subset of the data tasks."
                 )
+
+    def check_hierarchy_args(self):
+        """Validate the optional hierarchy_kwargs block."""
+        hk = self.model_args["hierarchy_kwargs"]
+        if not hk.get("hierarchy_flag", False):
+            return
+        tasks = self.model_args["data_kwargs"]["tasks"]
+        for key in ("parent", "child"):
+            if hk.get(key) not in tasks:
+                raise exceptions.ParamError(
+                    f"hierarchy_kwargs {key} must be one of the tasks {tasks}"
+                )
+        if hk["parent"] == hk["child"]:
+            raise exceptions.ParamError("hierarchy parent and child must differ")
+        if hk.get("consistency_lambda", 0.0) < 0:
+            raise exceptions.ParamError("hierarchy consistency_lambda must be >= 0")
 
     def check_keyword_args(self):
         """Validate keyword args."""

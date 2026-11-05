@@ -12,6 +12,7 @@ import numpy as np
 
 from fresco.data_loaders import data_utils
 from fresco.abstention import abstention
+from fresco.hierarchy.hierarchy import Hierarchy
 from fresco.models import mthisan, mtcnn
 from fresco.predict import predictions
 from fresco.training import training
@@ -179,6 +180,18 @@ def run_ie(args=None):
     else:
         dac = None
 
+    hier_kwargs = valid_params.model_args.get("hierarchy_kwargs")
+    if hier_kwargs is not None and hier_kwargs.get("hierarchy_flag", False):
+        hierarchy = Hierarchy.from_data(
+            dw, hier_kwargs, abstain=valid_params.model_args["abstain_kwargs"]["abstain_flag"]
+        )
+        print(
+            f"Hierarchy {hierarchy.parent} -> {hierarchy.child}: "
+            + f"{int(hierarchy.mask_np.sum())} valid pairs"
+        )
+    else:
+        hierarchy = None
+
     #    data_loaders = dw.make_torch_dataloaders(valid_params.model_args['data_kwargs']['add_noise'],
     #                                             reproducible=valid_params.model_args['data_kwargs']['reproducible'],
     #                                             seed=seed)
@@ -200,7 +213,12 @@ def run_ie(args=None):
     # batch = valid_params.model_args['data_kwargs']['batch_per_gpu']
 
     trainer = training.ModelTrainer(
-        valid_params.model_args, model, dw, class_weights=dw.weights, device=device
+        valid_params.model_args,
+        model,
+        dw,
+        class_weights=dw.weights,
+        device=device,
+        hierarchy=hierarchy,
     )
 
     if valid_params.model_args["abstain_kwargs"]["abstain_flag"]:
@@ -237,6 +255,7 @@ def run_ie(args=None):
         model,
         device,
         savepath=save_path,
+        hierarchy=hierarchy,
     )
 
     # Only need one of 5a, 5b, or 5c, depending on requirements
